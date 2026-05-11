@@ -1,7 +1,0 @@
-.worktrees/
-worktrees/
-node_modules/
-dist/
-.DS_Store
-*.local
-.env
