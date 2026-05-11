@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+}
+
+* {
+  @apply transition-colors duration-300;
+}
+
+body {
+  @apply bg-white dark:bg-dark-bg text-gray-900 dark:text-dark-text;
+}
+
+.gradient-bg {
+  background: linear-gradient(-45deg, #0ea5e9, #8b5cf6, #06b6d4, #10b981);
+  background-size: 400% 400%;
+}
+
+.code-block {
+  @apply font-mono text-sm bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-x-auto;
+}
