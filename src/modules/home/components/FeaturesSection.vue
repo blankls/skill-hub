@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Search, Folder, Download, Github, MagicStick, Monitor } from '@element-plus/icons-vue'
+import { Search, Folder, Download, Link, MagicStick, Monitor } from '@element-plus/icons-vue'
 
 const features = ref([
   {
@@ -41,7 +41,7 @@ const features = ref([
     description: '支持 ZIP 格式导出，方便分享和迁移'
   },
   {
-    icon: Github,
+    icon: Link,
     title: 'GitHub 集成',
     description: '直接跳转原始仓库，查看完整源代码'
   },

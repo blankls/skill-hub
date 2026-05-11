@@ -36,7 +36,7 @@
       </div>
       <div class="flex flex-col gap-3">
         <ZipExportBtn :skill="skill" />
-        <el-button v-if="skill.githubUrl" type="success" :icon="Github" @click="openGithub">
+        <el-button v-if="skill.githubUrl" type="success" :icon="Link" @click="openGithub">
           GitHub 仓库
         </el-button>
       </div>
@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { Github, User, Star, Download, Clock } from '@element-plus/icons-vue'
+import { Link, User, Star, Download, Clock } from '@element-plus/icons-vue'
 import ZipExportBtn from '@/components/features/ZipExportBtn.vue'
 import type { Skill } from '@/types'
 
