@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-slate-900">
+  <div class="min-h-screen bg-[var(--dark-bg)]">
     <SkillToolbar
       v-model="searchQuery"
       :tags="allTags"
@@ -9,13 +9,13 @@
 
     <div class="max-w-7xl mx-auto p-6">
       <div v-if="skillStore.loading" class="text-center py-20">
-        <el-icon class="text-4xl text-primary-500 animate-spin"><Loading /></el-icon>
-        <p class="mt-4 text-gray-600">加载中...</p>
+        <el-icon class="text-4xl text-[var(--neon-cyan)] animate-spin"><Loading /></el-icon>
+        <p class="mt-4 text-[var(--text-muted)] font-mono">> Loading Skills...</p>
       </div>
       <div v-else-if="skillStore.filteredSkills.length === 0" class="text-center py-20">
-        <p class="text-gray-500">暂无技能</p>
-        <el-button type="primary" class="mt-4" @click="showImport = true">
-          导入第一个技能
+        <p class="text-[var(--text-muted)] font-mono text-xl">> No Skills Found</p>
+        <el-button type="primary" class="mt-4 bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold" @click="showImport = true">
+          [Import First Skill]
         </el-button>
       </div>
       <div v-else>

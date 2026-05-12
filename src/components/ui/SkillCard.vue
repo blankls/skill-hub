@@ -1,28 +1,38 @@
 <template>
-  <div class="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-700 hover:shadow-xl transition-all duration-300 cursor-pointer" @click="handleClick">
+  <div class="group skill-card rounded-2xl overflow-hidden cursor-pointer" @click="handleClick">
     <div class="p-6">
       <div class="flex items-start justify-between mb-4">
-        <div class="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center text-white text-xl font-bold">
+      <div class="flex items-center gap-3">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-2xl font-black font-mono shadow-lg">
           {{ skill.name.charAt(0).toUpperCase() }}
         </div>
-        <el-tag :type="skill.source.type === 'github' ? 'primary' : 'success'" size="small">
-          {{ getSourceLabel(skill.source.type) }}
-        </el-tag>
+        <div>
+          <span class="text-[var(--neon-yellow)] text-xs font-mono uppercase tracking-wider">
+            [{{ getSourceLabel(skill.source.type) }}]
+          </span>
+        </div>
       </div>
-      <h3 class="text-lg font-semibold mb-2 group-hover:text-primary-600 transition-colors">
+      </div>
+      
+      <h3 class="text-xl font-bold mb-3 text-[var(--text-light)] group-hover:text-[var(--neon-cyan)] transition-colors font-mono">
         {{ skill.name }}
       </h3>
-      <p class="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
+      
+      <p class="text-[var(--text-muted)] text-sm mb-5 line-clamp-2">
         {{ skill.description }}
       </p>
-      <div class="flex flex-wrap gap-2 mb-4">
-        <el-tag v-for="tag in skill.tags" :key="tag" size="small" effect="plain" class="text-xs">
-          {{ tag }}
-        </el-tag>
+      
+      <div class="flex flex-wrap gap-2 mb-5">
+        <span v-for="tag in skill.tags" :key="tag" class="px-3 py-1 bg-[var(--neon-purple)]/20 border border-[var(--neon-purple)]/30 text-[var(--neon-purple)] rounded-full text-xs font-mono">
+          #{{ tag }}
+        </span>
       </div>
-      <div class="flex items-center justify-between text-sm text-gray-500">
-        <span>v{{ skill.version }}</span>
-        <span class="text-xs text-gray-400">
+      
+      <div class="flex items-center justify-between pt-4 border-t border-[var(--neon-cyan)]/10">
+        <span class="text-[var(--neon-yellow)] font-mono text-sm font-semibold">
+        v{{ skill.version }}
+        </span>
+        <span class="text-[var(--text-muted)] text-xs font-mono">
           {{ formatDate(skill.updatedAt) }}
         </span>
       </div>
@@ -47,12 +57,12 @@ const handleClick = () => {
 
 const getSourceLabel = (type: string) => {
   const labels: Record<string, string> = {
-    local: '本地',
+    local: 'LOCAL',
     zip: 'ZIP',
-    github: 'GitHub',
-    skillmd: 'Markdown'
+    github: 'GITHUB',
+    skillmd: 'MD'
   }
-  return labels[type] || '本地'
+  return labels[type] || 'LOCAL'
 }
 
 const formatDate = (date: Date | string) => {

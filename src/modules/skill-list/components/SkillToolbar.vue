@@ -1,22 +1,23 @@
 <template>
-  <div class="bg-white dark:bg-slate-800 shadow-sm p-4 sticky top-0 z-20">
+  <div class="bg-[var(--dark-card)]/90 backdrop-blur-xl border-b border-[var(--neon-cyan)]/20 p-5 sticky top-0 z-20">
     <div class="max-w-7xl mx-auto flex flex-wrap gap-4 items-center justify-between">
       <div class="flex items-center gap-4 flex-1">
         <el-input
           v-model="searchQuery"
-          placeholder="搜索技能..."
+          placeholder="> Search skills..."
           :prefix-icon="Search"
           clearable
           class="w-80"
           @input="handleSearch"
+          style="--el-input-bg-color: var(--dark-bg); --el-input-border-color: rgba(0, 245, 255, 0.3); --el-input-text-color: var(--text-light); --el-input-placeholder-color: var(--text-muted);"
         />
-        <el-select v-model="selectedTag" placeholder="筛选标签" clearable class="w-40">
+        <el-select v-model="selectedTag" placeholder="#Filter" clearable class="w-40" style="--el-select-bg-color: var(--dark-bg); --el-select-border-color: rgba(0, 245, 255, 0.3);">
           <el-option v-for="tag in allTags" :key="tag" :label="tag" :value="tag" />
         </el-select>
       </div>
 
       <div class="flex items-center gap-3">
-        <el-radio-group v-model="viewMode" size="small" @change="handleViewModeChange">
+        <el-radio-group v-model="viewMode" size="small" @change="handleViewModeChange" style="--el-radio-button-text-color: var(--text-muted); --el-radio-button-bg-color: var(--dark-bg); --el-radio-button-border-color: rgba(0, 245, 255, 0.3); --el-radio-button-checked-text-color: var(--text-light); --el-radio-button-checked-bg-color: var(--neon-cyan); --el-radio-button-checked-border-color: var(--neon-cyan);">
           <el-radio-button value="grid">
             <el-icon><Grid /></el-icon>
           </el-radio-button>
@@ -24,8 +25,8 @@
             <el-icon><List /></el-icon>
           </el-radio-button>
         </el-radio-group>
-        <el-button type="primary" :icon="Upload" @click="showImport = true">
-          导入技能
+        <el-button type="primary" :icon="Upload" @click="showImport = true" class="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold shadow-lg hover:shadow-[0_0_20px_rgba(0,245,255,0.5)]">
+          [Import Skill]
         </el-button>
       </div>
     </div>

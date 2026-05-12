@@ -1,51 +1,73 @@
 <template>
   <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
-    <div class="absolute inset-0 gradient-bg animate-gradient-x"></div>
+    <div class="absolute inset-0 gradient-bg"></div>
     
-    <div class="absolute inset-0 overflow-hidden">
-      <div v-for="i in 20" :key="i" class="absolute rounded-full"
-           :class="themeStore.isDark ? 'bg-white/5' : 'bg-black/5'"
+    <!-- Animated Grid Lines -->
+    <div class="absolute inset-0 opacity-20">
+      <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--neon-cyan)" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      </svg>
+    </div>
+    
+    <!-- Floating Orbs -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div v-for="i in 12" :key="i" class="absolute rounded-full"
            :style="{
-             width: Math.random() * 300 + 50 + 'px',
-             height: Math.random() * 300 + 50 + 'px',
-             left: Math.random() * 100 + '%',
-             top: Math.random() * 100 + '%',
-             animation: `float ${Math.random() * 10 + 5}s ease-in-out infinite`,
-             animationDelay: Math.random() * 5 + 's'
+             width: (i % 3 === 0 ? 100 : 60) + 'px',
+             height: (i % 3 === 0 ? 100 : 60) + 'px',
+             left: `${(i * 8) % 100}%`,
+             top: `${(i * 12) % 100}%`,
+             background: `radial-gradient(circle, ${i % 2 === 0 ? 'rgba(0, 245, 255, 0.3)' : 'rgba(255, 0, 110, 0.3)'} 0%, transparent 70%)`,
+             animation: `float ${5 + (i % 5)}s ease-in-out infinite`,
+             animationDelay: `${i * 0.3}s`,
+             filter: 'blur(10px)'
            }"></div>
     </div>
 
+    <!-- Main Content -->
     <div class="relative z-10 w-full max-w-3xl px-6 text-center">
-      <h1 class="text-5xl md:text-7xl font-extrabold text-white mb-6 drop-shadow-lg">
-        Skill Hub
+      <!-- Logo Text -->
+      <h1 class="text-6xl md:text-8xl font-black mb-6 tracking-tight glitch-effect neon-text" style="font-family: 'Courier New', monospace;">
+        SKILL HUB
+        <span class="block text-lg md:text-2xl text-[var(--neon-yellow)] mt-2 font-normal">
+          // AI Skills Manager v2.0
+        </span>
       </h1>
-      <p class="text-xl md:text-2xl text-white/90 mb-12">
-        发现、分享、管理你的 AI 技能
+      
+      <p class="text-xl md:text-2xl text-[var(--text-muted)] mb-10 max-w-2xl mx-auto leading-relaxed">
+        Discover · Share · Manage your AI Skills
       </p>
 
-      <div class="relative group">
-        <div class="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
-        <div class="relative flex items-center bg-white rounded-full shadow-2xl p-2">
+      <!-- Search Area -->
+      <div class="relative mb-12">
+        <div class="absolute -inset-1 bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-pink)] rounded-full blur opacity-70"></div>
+        <div class="relative flex items-center bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 rounded-full p-3 shadow-2xl">
           <el-input
             v-model="searchQuery"
             size="large"
-            placeholder="搜索技能，例如：代码生成、翻译、写作..."
-            class="flex-1"
+            placeholder="> Search skills... (e.g. 代码生成)"
+            class="flex-1 bg-transparent"
             @keyup.enter="handleSearch"
           >
             <template #prefix>
-              <el-icon class="text-gray-400"><Search /></el-icon>
+              <el-icon class="text-[var(--neon-cyan)]"><Search /></el-icon>
             </template>
           </el-input>
-          <el-button type="primary" size="large" round class="ml-2" @click="handleSearch">
-            搜索
+          <el-button type="primary" size="large" round class="ml-3 bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold shadow-lg hover:shadow-[0_0_20px_rgba(0,245,255,0.5)]" @click="handleSearch">
+            LAUNCH
           </el-button>
         </div>
       </div>
 
-      <div class="mt-10 flex flex-wrap justify-center gap-3">
+      <!-- Popular Tags -->
+      <div class="flex flex-wrap justify-center gap-3">
         <router-link v-for="tag in popularTags" :key="tag" :to="`/skills?tag=${tag}`"
-          class="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur text-white rounded-full transition hover:scale-105">
+          class="px-5 py-2 bg-[var(--dark-card)] hover:bg-[var(--neon-cyan)]/20 border border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)] text-[var(--text-light)] rounded-full transition-all duration-300 font-mono text-sm hover:shadow-[0_0_15px_rgba(0,245,255,0.3)]">
           #{{ tag }}
         </router-link>
       </div>
@@ -57,9 +79,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search } from '@element-plus/icons-vue'
-import { useThemeStore } from '@/stores/themeStore'
 
-const themeStore = useThemeStore()
 const router = useRouter()
 const searchQuery = ref('')
 const popularTags = ['代码生成', '翻译', '写作', '数据分析', '创意', '编程', '学习']
