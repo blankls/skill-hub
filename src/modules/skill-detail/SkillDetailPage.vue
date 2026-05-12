@@ -4,7 +4,21 @@
       <el-icon class="text-4xl text-primary-600 animate-spin"><Loading /></el-icon>
     </div>
     <template v-else-if="skill">
-      <SkillHeader :skill="skill" />
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="text-3xl font-bold mb-2">{{ skill.name }}</h1>
+          <p class="text-gray-600 dark:text-gray-400">{{ skill.description }}</p>
+        </div>
+        <div class="flex gap-2">
+          <el-button @click="showEditor = true">
+            <el-icon><Edit /></el-icon> 编辑
+          </el-button>
+          <el-button type="danger" @click="handleDelete">
+            <el-icon><Delete /></el-icon> 删除
+          </el-button>
+          <ZipExportBtn :skill="skill" />
+        </div>
+      </div>
       <div class="mt-8">
         <el-tabs v-model="activeTab" class="dark:text-white">
           <el-tab-pane label="概览" name="overview">
@@ -26,26 +40,51 @@
       </router-link>
     </div>
   </div>
+
+  <SkillEditor v-model="showEditor" :skill="skill" @save="handleSave" />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { Loading } from '@element-plus/icons-vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Loading, Edit, Delete } from '@element-plus/icons-vue'
 import { useSkillStore } from '@/stores/skillStore'
-import SkillHeader from './components/SkillHeader.vue'
+import SkillEditor from '@/components/features/SkillEditor.vue'
+import ZipExportBtn from '@/components/features/ZipExportBtn.vue'
 import OverviewTab from './components/OverviewTab.vue'
 import ToolsTab from './components/ToolsTab.vue'
 import FilesTab from './components/FilesTab.vue'
 
 const route = useRoute()
+const router = useRouter()
 const skillStore = useSkillStore()
 const loading = ref(true)
 const activeTab = ref('overview')
+const showEditor = ref(false)
 
 const skill = computed(() => {
   return skillStore.skills.find(s => s.id === route.params.id) || null
 })
+
+async function handleSave(updatedSkill: any) {
+  await skillStore.updateSkill(updatedSkill)
+  ElMessage.success('技能更新成功')
+}
+
+async function handleDelete() {
+  try {
+    await ElMessageBox.confirm('确定要删除这个技能吗？', '确认删除', {
+      type: 'warning'
+    })
+    if (skill.value) {
+      await skillStore.deleteSkill(skill.value.id)
+      ElMessage.success('技能删除成功')
+      router.push('/skills')
+    }
+  } catch (e) {
+  }
+}
 
 onMounted(async () => {
   if (skillStore.skills.length === 0) {

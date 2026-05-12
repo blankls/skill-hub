@@ -1,12 +1,12 @@
 <template>
-  <div class="group bg-white dark:bg-dark-card rounded-2xl overflow-hidden border border-gray-200 dark:border-dark-border hover:shadow-xl hover:shadow-primary-500/10 transition-all duration-300 cursor-pointer" @click="handleClick">
+  <div class="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-700 hover:shadow-xl transition-all duration-300 cursor-pointer" @click="handleClick">
     <div class="p-6">
       <div class="flex items-start justify-between mb-4">
         <div class="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center text-white text-xl font-bold">
           {{ skill.name.charAt(0).toUpperCase() }}
         </div>
-        <el-tag :type="skill.sourceType === 'github' ? 'primary' : 'success'" size="small">
-          {{ skill.sourceType === 'github' ? 'GitHub' : '本地' }}
+        <el-tag :type="skill.source.type === 'github' ? 'primary' : 'success'" size="small">
+          {{ getSourceLabel(skill.source.type) }}
         </el-tag>
       </div>
       <h3 class="text-lg font-semibold mb-2 group-hover:text-primary-600 transition-colors">
@@ -21,15 +21,10 @@
         </el-tag>
       </div>
       <div class="flex items-center justify-between text-sm text-gray-500">
-        <span class="flex items-center gap-1">
-          <el-icon><Star /></el-icon>
-          {{ skill.rating }}
-        </span>
-        <span class="flex items-center gap-1">
-          <el-icon><Download /></el-icon>
-          {{ formatDownloads(skill.downloadCount) }}
-        </span>
         <span>v{{ skill.version }}</span>
+        <span class="text-xs text-gray-400">
+          {{ formatDate(skill.updatedAt) }}
+        </span>
       </div>
     </div>
   </div>
@@ -37,7 +32,6 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { Star, Download } from '@element-plus/icons-vue'
 import type { Skill } from '@/types'
 
 interface Props {
@@ -51,9 +45,18 @@ const handleClick = () => {
   router.push(`/skills/${props.skill.id}`)
 }
 
-const formatDownloads = (num: number): string => {
-  if (num >= 10000) return `${(num / 10000).toFixed(1)}万`
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}k`
-  return String(num)
+const getSourceLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    local: '本地',
+    zip: 'ZIP',
+    github: 'GitHub',
+    skillmd: 'Markdown'
+  }
+  return labels[type] || '本地'
+}
+
+const formatDate = (date: Date | string) => {
+  const d = new Date(date)
+  return d.toLocaleDateString('zh-CN')
 }
 </script>
