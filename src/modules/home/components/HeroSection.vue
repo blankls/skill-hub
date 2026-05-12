@@ -33,14 +33,14 @@
     <div class="relative z-10 w-full max-w-3xl px-6 text-center">
       <!-- Logo Text -->
       <h1 class="text-6xl md:text-8xl font-black mb-6 tracking-tight glitch-effect neon-text" style="font-family: 'Courier New', monospace;">
-        技能中心
+        SKILL HUB
         <span class="block text-lg md:text-2xl text-[var(--neon-yellow)] mt-2 font-normal">
-          // AI 技能管理器 v2.0
+          // AI Skills Manager v2.0
         </span>
       </h1>
       
       <p class="text-xl md:text-2xl text-[var(--text-muted)] mb-10 max-w-2xl mx-auto leading-relaxed">
-        发现 · 分享 · 管理你的 AI 技能
+        Discover · Share · Manage your AI Skills
       </p>
 
       <!-- Search Area -->
@@ -50,7 +50,7 @@
           <el-input
             v-model="searchQuery"
             size="large"
-            placeholder="> 搜索技能... (例如：代码生成)"
+            placeholder="> Search skills... (e.g. 代码生成)"
             class="flex-1 bg-transparent no-input-border"
             :class="{ 'no-input-border': true }"
             @keyup.enter="handleSearch"
@@ -60,7 +60,7 @@
             </template>
           </el-input>
           <el-button type="primary" size="large" round class="ml-3 bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold shadow-lg hover:shadow-[0_0_20px_rgba(0,245,255,0.5)]" @click="handleSearch">
-            开始搜索
+            LAUNCH
           </el-button>
         </div>
       </div>
