@@ -7,11 +7,17 @@
 }
 
 * {
-  @apply transition-colors duration-300;
+  transition: color 0.3s ease;
 }
 
 body {
-  @apply bg-white dark:bg-dark-bg text-gray-900 dark:text-dark-text;
+  background-color: #ffffff;
+  color: #111827;
+}
+
+.dark body {
+  background-color: #0f172a;
+  color: #f8fafc;
 }
 
 .gradient-bg {
@@ -19,6 +25,34 @@ body {
   background-size: 400% 400%;
 }
 
+@keyframes gradient-x {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+.animate-gradient-x {
+  animation: gradient-x 15s ease infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
 .code-block {
-  @apply font-mono text-sm bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-x-auto;
+  font-family: monospace;
+  font-size: 0.875rem;
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.dark .code-block {
+  background-color: #1f2937;
 }

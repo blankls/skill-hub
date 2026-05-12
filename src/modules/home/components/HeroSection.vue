@@ -1,58 +1,71 @@
 <template>
-  <section class="relative overflow-hidden py-20">
-    <div class="absolute inset-0 gradient-bg animate-gradient-x opacity-10"></div>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-      <div class="text-center">
-        <h1 class="text-5xl md:text-6xl font-bold mb-6">
-          <span class="bg-clip-text text-transparent bg-gradient-to-r from-primary-600 via-purple-600 to-teal-500">
-            发现和管理 AI Skills
-          </span>
-        </h1>
-        <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-          一个集中展示与管理个人/团队 AI Skills 的可视化平台，
-          快速浏览、搜索和使用你需要的技能。
-        </p>
-        <div class="flex items-center justify-center gap-4">
-          <el-button type="primary" size="large" @click="goToSkills">
-            浏览技能库
-          </el-button>
-          <el-button size="large" @click="scrollToFeatures">
-            了解更多
+  <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <div class="absolute inset-0 gradient-bg animate-gradient-x"></div>
+    
+    <div class="absolute inset-0 overflow-hidden">
+      <div v-for="i in 20" :key="i" class="absolute rounded-full bg-white/10"
+           :style="{
+             width: Math.random() * 300 + 50 + 'px',
+             height: Math.random() * 300 + 50 + 'px',
+             left: Math.random() * 100 + '%',
+             top: Math.random() * 100 + '%',
+             animation: `float ${Math.random() * 10 + 5}s ease-in-out infinite`,
+             animationDelay: Math.random() * 5 + 's'
+           }"></div>
+    </div>
+
+    <div class="relative z-10 w-full max-w-3xl px-6 text-center">
+      <h1 class="text-5xl md:text-7xl font-extrabold text-white mb-6 drop-shadow-lg">
+        Skill Hub
+      </h1>
+      <p class="text-xl md:text-2xl text-white/90 mb-12">
+        发现、分享、管理你的 AI 技能
+      </p>
+
+      <div class="relative group">
+        <div class="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
+        <div class="relative flex items-center bg-white rounded-full shadow-2xl p-2">
+          <el-input
+            v-model="searchQuery"
+            size="large"
+            placeholder="搜索技能，例如：代码生成、翻译、写作..."
+            class="flex-1"
+            @keyup.enter="handleSearch"
+          >
+            <template #prefix>
+              <el-icon class="text-gray-400"><Search /></el-icon>
+            </template>
+          </el-input>
+          <el-button type="primary" size="large" round class="ml-2" @click="handleSearch">
+            搜索
           </el-button>
         </div>
       </div>
-      <div class="mt-16 flex justify-center">
-        <div class="relative w-full max-w-4xl animate-float">
-          <div class="bg-white dark:bg-dark-card rounded-2xl shadow-2xl border border-gray-200 dark:border-dark-border overflow-hidden">
-            <div class="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-dark-border">
-              <div class="w-3 h-3 rounded-full bg-red-500"></div>
-              <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <div class="w-3 h-3 rounded-full bg-green-500"></div>
-            </div>
-            <div class="p-6">
-              <div class="grid grid-cols-3 gap-4">
-                <div class="h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl"></div>
-                <div class="h-32 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl"></div>
-                <div class="h-32 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+
+      <div class="mt-10 flex flex-wrap justify-center gap-3">
+        <router-link v-for="tag in popularTags" :key="tag" :to="`/skills?tag=${tag}`"
+          class="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur text-white rounded-full transition hover:scale-105">
+          #{{ tag }}
+        </router-link>
       </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { Search } from '@element-plus/icons-vue'
 
 const router = useRouter()
+const searchQuery = ref('')
+const popularTags = ['代码生成', '翻译', '写作', '数据分析', '创意', '编程', '学习']
 
-const goToSkills = () => {
-  router.push('/skills')
-}
-
-const scrollToFeatures = () => {
-  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
+function handleSearch() {
+  if (searchQuery.value.trim()) {
+    router.push({ path: '/skills', query: { q: searchQuery.value } })
+  } else {
+    router.push('/skills')
+  }
 }
 </script>
