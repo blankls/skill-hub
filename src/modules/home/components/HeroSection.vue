@@ -1,5 +1,5 @@
 <template>
-  <section class="snap-start h-screen flex items-center justify-center relative overflow-hidden">
+  <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
     <div class="absolute inset-0 gradient-bg"></div>
     
     <!-- Animated Grid Lines -->
@@ -33,14 +33,14 @@
     <div class="relative z-10 w-full max-w-3xl px-6 text-center">
       <!-- Logo Text -->
       <h1 class="text-6xl md:text-8xl font-black mb-6 tracking-tight glitch-effect neon-text" style="font-family: 'Courier New', monospace;">
-        SKILL HUB
+        技能中心
         <span class="block text-lg md:text-2xl text-[var(--neon-yellow)] mt-2 font-normal">
-          // AI Skills Manager v2.0
+          // AI 技能管理器 v2.0
         </span>
       </h1>
       
       <p class="text-xl md:text-2xl text-[var(--text-muted)] mb-10 max-w-2xl mx-auto leading-relaxed">
-        Discover · Share · Manage your AI Skills
+        发现 · 分享 · 管理你的 AI 技能
       </p>
 
       <!-- Search Area -->
@@ -50,7 +50,7 @@
           <el-input
             v-model="searchQuery"
             size="large"
-            placeholder="> Search skills... (e.g. 代码生成)"
+            placeholder="> 搜索技能... (例如：代码生成)"
             class="flex-1 bg-transparent no-input-border"
             :class="{ 'no-input-border': true }"
             @keyup.enter="handleSearch"
@@ -60,7 +60,7 @@
             </template>
           </el-input>
           <el-button type="primary" size="large" round class="ml-3 bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold shadow-lg hover:shadow-[0_0_20px_rgba(0,245,255,0.5)]" @click="handleSearch">
-            LAUNCH
+            开始搜索
           </el-button>
         </div>
       </div>
@@ -73,21 +73,13 @@
         </router-link>
       </div>
     </div>
-
-    <!-- Scroll Indicator -->
-    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-      <div class="flex flex-col items-center gap-2">
-        <span class="text-[var(--text-muted)] text-sm font-mono">SCROLL</span>
-        <el-icon class="text-2xl text-[var(--neon-cyan)]"><ArrowDown /></el-icon>
-      </div>
-    </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, ArrowDown } from '@element-plus/icons-vue'
+import { Search } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const searchQuery = ref('')
