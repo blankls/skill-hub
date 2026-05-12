@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent double scrollbars */
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+}
+
 /* Light Theme (Default) */
 :root {
   color-scheme: light dark;
@@ -39,8 +47,6 @@ body {
   background-color: var(--dark-bg);
   color: var(--text-light);
   font-family: 'Courier New', monospace, system-ui;
-  margin: 0;
-  padding: 0;
 }
 
 .gradient-bg {

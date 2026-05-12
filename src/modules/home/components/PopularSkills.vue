@@ -1,14 +1,10 @@
 <template>
-  <section class="w-full h-full py-16 flex items-center bg-[var(--dark-bg)]">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <section class="snap-start h-screen flex items-center">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
       <div class="flex items-center justify-between mb-12">
         <div>
-          <h2 class="text-4xl font-bold mb-2 text-[var(--text-light)] font-mono">
-            POPULAR SKILLS
-          </h2>
-          <p class="text-[var(--text-muted)]">
-            Most Popular AI Skills
-          </p>
+          <h2 class="text-4xl font-bold mb-2 text-[var(--text-light)] font-mono">POPULAR SKILLS</h2>
+          <p class="text-[var(--text-muted)]">Most Popular AI Skills</p>
         </div>
         <router-link to="/skills">
           <el-button type="primary" class="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold font-mono">
@@ -32,12 +28,11 @@ const skillStore = useSkillStore()
 
 const popularSkills = computed(() => {
   return [...skillStore.skills]
+    .sort((a, b) => b.downloadCount - a.downloadCount)
     .slice(0, 4)
 })
 
 onMounted(() => {
-  if (skillStore.skills.length === 0) {
-    skillStore.loadSkills()
-  }
+  skillStore.loadSkills()
 })
 </script>

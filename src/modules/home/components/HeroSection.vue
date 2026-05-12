@@ -1,5 +1,5 @@
 <template>
-  <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+  <section class="snap-start h-screen flex items-center justify-center relative overflow-hidden">
     <div class="absolute inset-0 gradient-bg"></div>
     
     <!-- Animated Grid Lines -->
@@ -73,13 +73,21 @@
         </router-link>
       </div>
     </div>
+
+    <!-- Scroll Indicator -->
+    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+      <div class="flex flex-col items-center gap-2">
+        <span class="text-[var(--text-muted)] text-sm font-mono">SCROLL</span>
+        <el-icon class="text-2xl text-[var(--neon-cyan)]"><ArrowDown /></el-icon>
+      </div>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search } from '@element-plus/icons-vue'
+import { Search, ArrowDown } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const searchQuery = ref('')
