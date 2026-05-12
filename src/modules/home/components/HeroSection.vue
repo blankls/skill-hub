@@ -3,7 +3,8 @@
     <div class="absolute inset-0 gradient-bg animate-gradient-x"></div>
     
     <div class="absolute inset-0 overflow-hidden">
-      <div v-for="i in 20" :key="i" class="absolute rounded-full bg-white/10"
+      <div v-for="i in 20" :key="i" class="absolute rounded-full"
+           :class="themeStore.isDark ? 'bg-white/5' : 'bg-black/5'"
            :style="{
              width: Math.random() * 300 + 50 + 'px',
              height: Math.random() * 300 + 50 + 'px',
@@ -56,7 +57,9 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search } from '@element-plus/icons-vue'
+import { useThemeStore } from '@/stores/themeStore'
 
+const themeStore = useThemeStore()
 const router = useRouter()
 const searchQuery = ref('')
 const popularTags = ['代码生成', '翻译', '写作', '数据分析', '创意', '编程', '学习']

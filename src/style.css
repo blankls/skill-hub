@@ -21,8 +21,7 @@ body {
 }
 
 .gradient-bg {
-  background: linear-gradient(-45deg, #0ea5e9, #8b5cf6, #06b6d4, #10b981);
-  background-size: 400% 400%;
+  background: linear-gradient(135deg, var(--gradient-start, #667eea) 0%, var(--gradient-end, #764ba2) 100%);
 }
 
 @keyframes gradient-x {
