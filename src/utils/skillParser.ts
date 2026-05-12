@@ -80,16 +80,37 @@ export async function parseSkillFromMarkdown(content: string, fileName: string =
   const lines = content.split('\n')
   let name = '未命名技能'
   let description = ''
-  let inDescription = false
-
+  let version = '1.0.0'
+  let author = '匿名'
+  let tags: string[] = []
+  
+  let currentSection = ''
+  
   for (const line of lines) {
     if (line.startsWith('# ')) {
       name = line.substring(2).trim()
-      inDescription = true
-    } else if (inDescription && line.trim() && !line.startsWith('## ')) {
-      description += line + '\n'
     } else if (line.startsWith('## ')) {
-      inDescription = false
+      currentSection = line.substring(3).trim().toLowerCase()
+    } else if (currentSection) {
+      const trimmedLine = line.trim()
+      if (trimmedLine) {
+        if (currentSection.includes('描述') || currentSection.includes('description')) {
+          description += line + '\n'
+        } else if (currentSection.includes('版本') || currentSection.includes('version')) {
+          const match = trimmedLine.match(/(\d+\.\d+\.\d+)/)
+          if (match) version = match[1]
+        } else if (currentSection.includes('作者') || currentSection.includes('author')) {
+          author = trimmedLine
+        } else if (currentSection.includes('标签') || currentSection.includes('tags')) {
+          if (trimmedLine.startsWith('- ')) {
+            tags.push(trimmedLine.substring(2).trim())
+          } else if (trimmedLine.includes(',')) {
+            tags.push(...trimmedLine.split(',').map(t => t.trim()))
+          }
+        }
+      }
+    } else if (description === '' && trimmedLine) {
+      description += line + '\n'
     }
   }
 
@@ -97,9 +118,9 @@ export async function parseSkillFromMarkdown(content: string, fileName: string =
     id: uuidv4(),
     name,
     description: description.trim(),
-    version: '1.0.0',
-    author: '匿名',
-    tags: [],
+    version,
+    author,
+    tags: tags.length > 0 ? tags : [],
     source: { type: 'skillmd', origin: fileName },
     files: [{
       path: fileName,
