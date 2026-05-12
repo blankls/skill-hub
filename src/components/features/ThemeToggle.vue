@@ -1,26 +1,25 @@
 <template>
   <button
-    class="relative w-16 h-8 rounded-full cursor-pointer transition-all duration-300 overflow-hidden"
-    :class="themeStore.isDark ? 'bg-gray-800 shadow-inner' : 'bg-gray-200 shadow-lg'"
+    class="relative w-20 h-10 rounded-full cursor-pointer transition-all duration-300 overflow-hidden shadow-lg"
+    :class="themeStore.isDark ? 'bg-[#141b3a] border border-[var(--neon-cyan)]' : 'bg-white border border-gray-200'"
     @click="themeStore.toggleTheme()"
   >
-    <!-- Background icons -->
-    <div class="absolute inset-0 flex items-center justify-between px-1">
-      <span class="text-sm" :class="themeStore.isDark ? 'opacity-0' : 'opacity-100'">☀️</span>
-      <span class="text-sm" :class="themeStore.isDark ? 'opacity-100' : 'opacity-0'">🌙</span>
+    <!-- Background labels -->
+    <div class="absolute inset-0 flex items-center justify-between px-2 font-mono text-xs font-bold">
+      <span :class="themeStore.isDark ? 'text-gray-500' : 'text-[var(--neon-purple)]'">LIGHT</span>
+      <span :class="themeStore.isDark ? 'text-[var(--neon-cyan)]' : 'text-gray-300'">DARK</span>
     </div>
     <!-- Knob -->
     <div
-      class="absolute top-1 left-1 w-6 h-6 rounded-full transition-all duration-300 flex items-center justify-center"
+      class="absolute top-1 left-1 w-8 h-8 rounded-full transition-all duration-300 flex items-center justify-center shadow-md"
       :style="{
-        transform: themeStore.isDark ? 'translateX(8px)' : 'translateX(0)',
-        backgroundColor: themeStore.isDark ? '#374151' : '#fff',
-        boxShadow: themeStore.isDark
-          ? '0 0 0 1px rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.3)'
-          : '0 0 0 1px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.15)'
+        transform: themeStore.isDark ? 'translateX(40px)' : 'translateX(0)',
+        background: themeStore.isDark
+          ? 'linear-gradient(135deg, #00f5ff, #8338ec)'
+          : 'linear-gradient(135deg, #ffbe0b, #ff006e)'
       }"
     >
-      <span class="text-xs">
+      <span class="text-lg">
         {{ themeStore.isDark ? '🌙' : '☀️' }}
       </span>
     </div>

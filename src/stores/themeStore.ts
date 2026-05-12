@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 
 export const useThemeStore = defineStore('theme', () => {
   const isDark = ref(false)
@@ -23,12 +23,8 @@ export const useThemeStore = defineStore('theme', () => {
     const root = document.documentElement
     if (isDark.value) {
       root.classList.add('dark')
-      root.style.setProperty('--gradient-start', '#0f172a')
-      root.style.setProperty('--gradient-end', '#1e293b')
     } else {
       root.classList.remove('dark')
-      root.style.setProperty('--gradient-start', '#f8fafc')
-      root.style.setProperty('--gradient-end', '#e2e8f0')
     }
     localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
   }

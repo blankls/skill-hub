@@ -2,8 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light Theme (Default) */
 :root {
   color-scheme: light dark;
+  --neon-pink: #ff006e;
+  --neon-cyan: #0ea5e9;
+  --neon-purple: #8b5cf6;
+  --neon-yellow: #ffbe0b;
+  --dark-bg: #f8fafc;
+  --dark-card: #ffffff;
+  --text-light: #0f172a;
+  --text-muted: #64748b;
+  --gradient-start: #f8fafc;
+  --gradient-end: #e2e8f0;
+}
+
+/* Dark Theme */
+.dark {
   --neon-pink: #ff006e;
   --neon-cyan: #00f5ff;
   --neon-purple: #8338ec;
@@ -12,8 +27,8 @@
   --dark-card: #141b3a;
   --text-light: #f0f4ff;
   --text-muted: #94a3b8;
-  --gradient-start: #121826;
-  --gradient-end: #0a0e27;
+  --gradient-start: #0f172a;
+  --gradient-end: #1e293b;
 }
 
 * {
@@ -79,8 +94,8 @@ body {
 }
 
 .skill-card {
-  background: linear-gradient(135deg, rgba(20, 27, 58, 0.9) 0%, rgba(10, 14, 39, 0.9) 100%);
-  border: 1px solid rgba(0, 245, 255, 0.2);
+  background: var(--dark-card);
+  border: 1px solid rgba(0, 245, 255, 0.3);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 }
