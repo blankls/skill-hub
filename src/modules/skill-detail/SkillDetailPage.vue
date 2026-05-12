@@ -10,7 +10,7 @@
         <div class="flex items-center justify-between mb-8">
           <div class="flex items-center gap-4">
             <el-button
-              @click="router.back()"
+              @click="handleBack"
               class="flex items-center gap-2 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 text-[var(--text-light)] rounded-xl font-mono"
             >
               <el-icon><ArrowLeft /></el-icon>
@@ -81,6 +81,14 @@ const showEditor = ref(false)
 const skill = computed(() => {
   return skillStore.skills.find(s => s.id === route.params.id) || null
 })
+
+function handleBack() {
+  try {
+    router.back()
+  } catch (e) {
+    router.push('/skills')
+  }
+}
 
 async function handleSave(updatedSkill: any) {
   await skillStore.updateSkill(updatedSkill)
