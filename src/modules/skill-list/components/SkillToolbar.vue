@@ -16,7 +16,7 @@
       </div>
 
       <div class="flex items-center gap-3">
-        <el-radio-group v-model="viewMode" size="small">
+        <el-radio-group v-model="viewMode" size="small" @change="handleViewModeChange">
           <el-radio-button value="grid">
             <el-icon><Grid /></el-icon>
           </el-radio-button>
@@ -67,6 +67,12 @@ function handleSearch() {
   emit('update:modelValue', searchQuery.value)
   skillStore.setSearchQuery(searchQuery.value)
 }
+
+function handleViewModeChange(mode: 'grid' | 'list') {
+  emit('update:viewMode', mode)
+  skillStore.setViewMode(mode)
+}
+
 function handleImported() {
   skillStore.loadSkills()
 }
