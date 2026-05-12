@@ -1,21 +1,28 @@
+export interface SkillFile {
+  path: string
+  name: string
+  content: string
+  language?: string
+}
+
+export interface SkillSource {
+  type: 'local' | 'zip' | 'github' | 'skillmd'
+  origin?: string // 文件路径或 GitHub URL
+  lastSync?: Date
+}
+
 export interface Skill {
   id: string
   name: string
   description: string
   version: string
   author: string
-  license?: string
-  githubUrl?: string
-  sourceType: 'local' | 'github'
   tags: string[]
-  downloadCount: number
-  rating: number
-  lastUpdated: string
-  tools: Tool[]
-  filePath?: string
-  repository?: string
-  readme?: string
-  files?: FileNode[]
+  source: SkillSource
+  files: SkillFile[]
+  tools?: Tool[]
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface Tool {
