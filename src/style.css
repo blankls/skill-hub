@@ -2,14 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Prevent double scrollbars */
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  height: 100%;
-}
-
 /* Light Theme (Default) */
 :root {
   color-scheme: light dark;

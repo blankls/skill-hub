@@ -1,19 +1,19 @@
 <template>
-  <section id="features" class="snap-start h-screen flex items-center bg-[var(--dark-card)]">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+  <section id="features" class="py-20 bg-gray-50 dark:bg-gray-900/50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-16">
-        <h2 class="text-4xl font-bold mb-4 text-[var(--text-light)] font-mono">PLATFORM FEATURES</h2>
-        <p class="text-[var(--text-muted)] max-w-2xl mx-auto">
-          Powerful Features to Manage Your AI Skills Efficiently
+        <h2 class="text-3xl font-bold mb-4">平台特性</h2>
+        <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          强大的功能，助你高效管理 AI Skills
         </p>
       </div>
       <div class="grid md:grid-cols-3 gap-8">
-        <div v-for="feature in features" :key="feature.title" class="skill-card p-8 rounded-2xl">
-          <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-2xl mb-6 shadow-lg">
+        <div v-for="feature in features" :key="feature.title" class="bg-white dark:bg-dark-card p-8 rounded-2xl border border-gray-200 dark:border-dark-border hover:shadow-lg transition-shadow">
+          <div class="w-14 h-14 rounded-xl gradient-bg flex items-center justify-center text-white text-2xl mb-6">
             <el-icon><component :is="feature.icon" /></el-icon>
           </div>
-          <h3 class="text-xl font-semibold mb-3 text-[var(--text-light)] font-mono">{{ feature.title }}</h3>
-          <p class="text-[var(--text-muted)]">{{ feature.description }}</p>
+          <h3 class="text-xl font-semibold mb-3">{{ feature.title }}</h3>
+          <p class="text-gray-600 dark:text-gray-400">{{ feature.description }}</p>
         </div>
       </div>
     </div>
@@ -27,33 +27,33 @@ import { Search, Folder, Download, Link, MagicStick, Monitor } from '@element-pl
 const features = ref([
   {
     icon: Search,
-    title: 'Smart Search',
-    description: 'Quickly find the skills you need with keyword and tag filtering'
+    title: '智能搜索',
+    description: '快速找到你需要的 Skill，支持关键词、标签筛选'
   },
   {
     icon: Folder,
-    title: 'Dual Sources',
-    description: 'Support both local skills and popular GitHub skills'
+    title: '双重来源',
+    description: '支持本地 Skill 和 GitHub 热门 Skill 两种来源'
   },
   {
     icon: Download,
-    title: 'One-Click Export',
-    description: 'Export in ZIP format for easy sharing and migration'
+    title: '一键导出',
+    description: '支持 ZIP 格式导出，方便分享和迁移'
   },
   {
     icon: Link,
-    title: 'GitHub Integration',
-    description: 'Direct links to original repositories for full source code'
+    title: 'GitHub 集成',
+    description: '直接跳转原始仓库，查看完整源代码'
   },
   {
     icon: MagicStick,
-    title: 'Tool Details',
-    description: 'Detailed display of each tool\'s parameters, examples, and usage'
+    title: '工具详情',
+    description: '详细展示每个工具的参数、示例和使用方法'
   },
   {
     icon: Monitor,
-    title: 'Theme Toggle',
-    description: 'Dark and light theme support to protect your eyes'
+    title: '主题切换',
+    description: '支持深色/浅色主题，保护你的眼睛'
   }
 ])
 </script>

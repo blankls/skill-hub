@@ -1,30 +1,26 @@
 <template>
   <div class="space-y-6">
-    <div class="bg-[var(--dark-card)] rounded-2xl p-6 border border-[var(--neon-cyan)]/20">
-      <h2 class="text-xl font-semibold mb-4 text-[var(--neon-cyan)] font-mono uppercase">About</h2>
-      <p class="text-[var(--text-muted)]">{{ skill.description }}</p>
+    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
+      <h2 class="text-xl font-semibold mb-4">关于</h2>
+      <p class="text-gray-600 dark:text-gray-400">{{ skill.description }}</p>
       <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
-        <div class="flex items-center gap-2">
-          <span class="text-[var(--neon-yellow)] font-mono uppercase">version:</span>
-          <span class="text-[var(--text-light)]">v{{ skill.version }}</span>
+        <div>
+          <span class="text-gray-500">版本:</span> v{{ skill.version }}
         </div>
-        <div class="flex items-center gap-2">
-          <span class="text-[var(--neon-yellow)] font-mono uppercase">author:</span>
-          <span class="text-[var(--text-light)]">{{ skill.author }}</span>
+        <div>
+          <span class="text-gray-500">作者:</span> {{ skill.author }}
         </div>
-        <div class="flex items-center gap-2">
-          <span class="text-[var(--neon-yellow)] font-mono uppercase">source:</span>
-          <span class="text-[var(--text-light)]">{{ getSourceLabel(skill.source.type) }}</span>
+        <div>
+          <span class="text-gray-500">来源:</span> {{ getSourceLabel(skill.source.type) }}
         </div>
-        <div class="flex items-center gap-2">
-          <span class="text-[var(--neon-yellow)] font-mono uppercase">updated:</span>
-          <span class="text-[var(--text-light)]">{{ formatDate(skill.updatedAt) }}</span>
+        <div>
+          <span class="text-gray-500">更新时间:</span> {{ formatDate(skill.updatedAt) }}
         </div>
       </div>
     </div>
-    <div v-if="markdownFile" class="bg-[var(--dark-card)] rounded-2xl p-6 border border-[var(--neon-purple)]/20">
-      <h2 class="text-xl font-semibold mb-4 text-[var(--neon-purple)] font-mono uppercase">{{ markdownFile.name }}</h2>
-      <div class="markdown-content" v-html="renderedReadme"></div>
+    <div v-if="markdownFile" class="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
+      <h2 class="text-xl font-semibold mb-4">{{ markdownFile.name }}</h2>
+      <div class="prose dark:prose-invert max-w-none" v-html="renderedReadme"></div>
     </div>
   </div>
 </template>
@@ -59,46 +55,23 @@ const renderedReadme = computed(() => {
 
 const getSourceLabel = (type: string) => {
   const labels: Record<string, string> = {
-    local: 'LOCAL',
+    local: '本地',
     zip: 'ZIP',
-    github: 'GITHUB',
-    skillmd: 'MARKDOWN'
+    github: 'GitHub',
+    skillmd: 'Markdown'
   }
-  return labels[type] || 'LOCAL'
+  return labels[type] || '本地'
 }
 
 const formatDate = (date: Date | string) => {
   const d = new Date(date)
-  return d.toLocaleDateString('en-US')
+  return d.toLocaleDateString('zh-CN')
 }
 </script>
 
-<style scoped>
-.markdown-content :deep(h1), 
-.markdown-content :deep(h2), 
-.markdown-content :deep(h3) { 
-  margin-top: 1em; 
-  margin-bottom: 0.5em; 
-  font-weight: 600;
-  color: var(--neon-cyan);
-  font-family: 'Courier New', monospace;
-}
-
-.markdown-content :deep(p) { 
-  margin-bottom: 1em;
-  color: var(--text-light);
-}
-
-.markdown-content :deep(code) { 
-  background: var(--dark-bg); 
-  padding: 2px 6px; 
-  border-radius: 4px;
-  border: 1px solid rgba(0, 245, 255, 0.2);
-  color: var(--neon-pink);
-}
-
-.markdown-content :deep(ul),
-.markdown-content :deep(ol) {
-  color: var(--text-light);
-}
+<style>
+.prose h1, .prose h2, .prose h3 { margin-top: 1em; margin-bottom: 0.5em; font-weight: 600; }
+.prose p { margin-bottom: 1em; }
+.prose code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
+.dark .prose code { background: #374151; }
 </style>
