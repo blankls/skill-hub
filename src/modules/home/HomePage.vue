@@ -1,25 +1,25 @@
 <template>
-  <div class="snap-y snap-mandatory overflow-y-scroll h-screen scroll-smooth">
+  <div class="w-full">
     <!-- Page 1: Hero -->
-    <section class="snap-start h-screen w-full relative">
+    <section class="min-h-screen w-full flex items-center relative">
       <HeroSection />
-      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[var(--text-muted)] cursor-pointer animate-bounce" @click="scrollToPage(1)">
+      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[var(--text-muted)] cursor-pointer animate-bounce" @click="scrollToSection('features')">
         <span class="font-mono text-sm">SCROLL</span>
         <el-icon class="text-2xl"><ArrowDown /></el-icon>
       </div>
     </section>
 
     <!-- Page 2: Features -->
-    <section class="snap-start h-screen w-full flex items-center" id="features">
+    <section class="min-h-screen w-full flex items-center relative" id="features">
       <FeaturesSection />
-      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[var(--text-muted)] cursor-pointer animate-bounce" @click="scrollToPage(2)">
+      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[var(--text-muted)] cursor-pointer animate-bounce" @click="scrollToSection('skills')">
         <span class="font-mono text-sm">SCROLL</span>
         <el-icon class="text-2xl"><ArrowDown /></el-icon>
       </div>
     </section>
 
     <!-- Page 3: Popular Skills -->
-    <section class="snap-start h-screen w-full flex items-center" id="skills">
+    <section class="min-h-screen w-full flex items-center relative" id="skills">
       <PopularSkills />
       <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[var(--text-muted)] cursor-pointer animate-bounce" @click="scrollToTop">
         <span class="font-mono text-sm">BACK TO TOP</span>
@@ -35,12 +35,11 @@ import FeaturesSection from './components/FeaturesSection.vue'
 import PopularSkills from './components/PopularSkills.vue'
 import { ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 
-const scrollToPage = (pageIndex: number) => {
-  const sectionHeight = window.innerHeight
-  window.scrollTo({
-    top: sectionHeight * (pageIndex + 1),
-    behavior: 'smooth'
-  })
+const scrollToSection = (sectionId: string) => {
+  const el = document.getElementById(sectionId)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' })
+  }
 }
 
 const scrollToTop = () => {
