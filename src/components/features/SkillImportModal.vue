@@ -1,69 +1,140 @@
 <template>
-  <el-dialog v-model="visible" title="导入技能" width="800px" @close="reset">
-    <el-tabs v-model="activeTab">
-      <el-tab-pane label="ZIP 文件" name="zip">
-        <el-upload
-          drag
-          accept=".zip"
-          :auto-upload="false"
-          :on-change="handleZipChange"
-          :show-file-list="false"
-        >
-          <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
-          <div class="el-upload__text">拖拽 ZIP 文件到这里，或 <em>点击选择</em></div>
-        </el-upload>
-
-        <div v-if="zipPreview" class="mt-4 space-y-4">
-          <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded">
-            <h4 class="font-semibold text-lg">{{ zipPreview.name }}</h4>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ zipPreview.description }}</p>
-            <div class="mt-2 flex gap-2">
-              <el-tag v-for="tag in zipPreview.tags" :key="tag">{{ tag }}</el-tag>
+  <el-dialog
+    v-model="visible"
+    :title="title"
+    width="900px"
+    @close="reset"
+    class="skill-import-dialog"
+    :close-on-click-modal="false"
+  >
+    <el-tabs v-model="activeTab" class="cyber-tabs">
+      <!-- ZIP File Import -->
+      <el-tab-pane label="[ZIP FILE]" name="zip">
+        <div class="p-4">
+          <el-upload
+            drag
+            accept=".zip"
+            :auto-upload="false"
+            :on-change="handleZipChange"
+            :show-file-list="false"
+            class="cyber-uploader"
+          >
+            <div class="flex flex-col items-center py-8">
+              <el-icon class="text-6xl mb-4 text-[var(--neon-cyan)] animate-pulse">
+                <UploadFilled />
+              </el-icon>
+              <div class="text-lg font-mono text-[var(--text-light)]">
+                > DROP YOUR ZIP FILE HERE
+              </div>
+              <div class="text-sm text-[var(--text-muted)] mt-2 font-mono">
+                OR CLICK TO SELECT
+              </div>
             </div>
-          </div>
+          </el-upload>
 
-          <div class="p-4 border rounded">
-            <h5 class="font-semibold mb-2">文件列表</h5>
-            <div class="max-h-40 overflow-y-auto">
-              <div v-for="file in zipPreview.files" :key="file.path" class="text-sm py-1 flex items-center gap-2">
-                <span class="text-gray-400">📄</span>
-                <span>{{ file.path }}</span>
+          <!-- ZIP Preview -->
+          <div v-if="zipPreview" class="mt-6 space-y-4">
+            <div class="p-6 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 rounded-xl">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">📦</span>
+                <h4 class="font-bold text-xl text-[var(--text-light)] font-mono">{{ zipPreview.name }}</h4>
+              </div>
+              <p class="text-[var(--text-muted)] mb-4">{{ zipPreview.description }}</p>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  v-for="tag in zipPreview.tags"
+                  :key="tag"
+                  class="px-3 py-1 bg-[var(--neon-purple)]/20 border border-[var(--neon-purple)]/30 text-[var(--neon-purple)] rounded-full text-xs font-mono"
+                >
+                  #{{ tag }}
+                </span>
+              </div>
+            </div>
+
+            <!-- File List -->
+            <div class="p-4 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/20 rounded-xl">
+              <h5 class="font-bold mb-4 text-[var(--text-light)] font-mono flex items-center gap-2">
+                <span>📋</span> FILE LIST: {{ zipPreview.files.length }} files
+              </h5>
+              <div class="max-h-48 overflow-y-auto space-y-1">
+                <div
+                  v-for="file in zipPreview.files"
+                  :key="file.path"
+                  class="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--neon-cyan)]/10"
+                >
+                  <span class="text-[var(--neon-yellow)]">📄</span>
+                  <span class="font-mono text-sm text-[var(--text-muted)]">{{ file.path }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="编写 SKILL.md" name="md">
-        <div class="space-y-2">
-          <div class="flex gap-2">
-            <el-button size="small" @click="insertTemplate">插入模板</el-button>
+      <!-- SKILL.md Editor -->
+      <el-tab-pane label="[EDIT SKILL.md]" name="md">
+        <div class="p-4">
+          <div class="flex justify-between items-center mb-4">
+            <span class="text-[var(--text-muted)] font-mono text-sm">> CREATE SKILL FROM MARKDOWN</span>
+            <el-button
+              size="small"
+              @click="insertTemplate"
+              class="bg-[var(--dark-card)] border border-[var(--neon-yellow)]/50 hover:border-[var(--neon-yellow)] text-[var(--text-light)] font-mono"
+            >
+              INSERT TEMPLATE
+            </el-button>
           </div>
-          <div class="border rounded overflow-hidden">
+          <div class="border border-[var(--neon-cyan)]/30 rounded-xl overflow-hidden bg-[var(--dark-bg)]">
             <textarea
               v-model="mdContent"
-              class="w-full h-80 p-4 font-mono text-sm"
-              placeholder="# 技能名称...
-
-## 描述
-..."
+              class="w-full h-96 p-4 font-mono text-sm resize-none bg-transparent outline-none text-[var(--text-light)] placeholder-[var(--text-muted)]"
+              :placeholder="templatePlaceholder"
             ></textarea>
           </div>
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="GitHub 仓库" name="github">
-        <div class="space-y-3">
-          <el-input v-model="githubUrl" placeholder="粘贴 GitHub 仓库链接，例如 https://github.com/user/repo" />
-          <el-button :loading="githubLoading" @click="fetchGitHub">获取仓库信息</el-button>
+      <!-- GitHub Import -->
+      <el-tab-pane label="[GITHUB REPO]" name="github">
+        <div class="p-4">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-[var(--text-muted)] font-mono text-sm mb-2">> REPOSITORY URL</label>
+              <el-input
+                v-model="githubUrl"
+                placeholder="https://github.com/username/repository"
+                class="font-mono"
+              />
+            </div>
+            <el-button
+              :loading="githubLoading"
+              @click="fetchGitHub"
+              class="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold font-mono"
+            >
+              FETCH REPO
+            </el-button>
 
-          <div v-if="githubMeta" class="p-4 border rounded">
-            <h4 class="font-semibold text-lg">{{ githubMeta.full_name }}</h4>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ githubMeta.description }}</p>
-            <div class="mt-2 flex gap-4 text-sm text-gray-500">
-              <span>⭐ {{ githubMeta.stargazers_count }}</span>
-              <span>🍴 {{ githubMeta.forks_count }}</span>
-              <span>👁️ {{ githubMeta.subscribers_count }}</span>
+            <!-- GitHub Preview -->
+            <div v-if="githubMeta" class="p-6 bg-[var(--dark-card)] border border-[var(--neon-purple)]/30 rounded-xl">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">🚀</span>
+                <h4 class="font-bold text-xl text-[var(--text-light)] font-mono">{{ githubMeta.full_name }}</h4>
+              </div>
+              <p class="text-[var(--text-muted)] mb-4">{{ githubMeta.description }}</p>
+              <div class="flex items-center gap-6 text-sm text-[var(--text-muted)]">
+                <span class="flex items-center gap-2">
+                  <span class="text-yellow-400">⭐</span>
+                  <span class="font-mono">{{ githubMeta.stargazers_count }}</span>
+                </span>
+                <span class="flex items-center gap-2">
+                  <span class="text-green-400">🍴</span>
+                  <span class="font-mono">{{ githubMeta.forks_count }}</span>
+                </span>
+                <span class="flex items-center gap-2">
+                  <span class="text-blue-400">👁️</span>
+                  <span class="font-mono">{{ githubMeta.subscribers_count }}</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -71,10 +142,20 @@
     </el-tabs>
 
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" :loading="importing" :disabled="!canImport" @click="doImport">
-        导入
-      </el-button>
+      <div class="flex justify-end gap-3">
+        <el-button @click="visible = false" class="bg-[var(--dark-card)] border border-gray-600 text-[var(--text-light)] font-mono">
+          CANCEL
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="importing"
+          :disabled="!canImport"
+          class="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold font-mono"
+          @click="doImport"
+        >
+          IMPORT SKILL
+        </el-button>
+      </div>
     </template>
   </el-dialog>
 </template>
@@ -99,6 +180,21 @@ const visible = computed({
   set: (v) => emit('update:modelValue', v)
 })
 
+const title = computed(() => '> IMPORT NEW SKILL')
+
+const templatePlaceholder = `# SKILL NAME
+## DESCRIPTION
+Describe your skill here...
+## VERSION
+1.0.0
+## AUTHOR
+Your Name
+## TAGS
+- tag1
+- tag2
+## FILES
+File description...`
+
 const activeTab = ref('zip')
 const zipPreview = ref<Skill | null>(null)
 const mdContent = ref('')
@@ -114,28 +210,28 @@ const canImport = computed(() => {
   return false
 })
 
-const TEMPLATE = `# 技能名称
+const TEMPLATE = `# SKILL NAME
 
-## 描述
+## DESCRIPTION
 
-简要描述这个技能的功能。
+Brief description of your skill's functionality.
 
-## 版本
+## VERSION
 
 1.0.0
 
-## 作者
+## AUTHOR
 
-你的名字
+Your Name
 
-## 标签
+## TAGS
 
-- 标签1
-- 标签2
+- productivity
+- automation
 
-## 文件
+## FILES
 
-在此列出相关文件或描述功能。
+List relevant files or describe features here.
 `
 
 function insertTemplate() {
@@ -146,8 +242,8 @@ async function handleZipChange(file: any) {
   try {
     zipPreview.value = await parseSkillFromZip(file.raw)
   } catch (e) {
-    console.error('解析 ZIP 失败:', e)
-    alert('解析 ZIP 文件失败，请检查格式')
+    console.error('ZIP Parsing Error:', e)
+    alert('Failed to parse ZIP file, please check format')
   }
 }
 
@@ -157,7 +253,7 @@ async function fetchGitHub() {
   try {
     githubMeta.value = await fetchGitHubRepo(githubUrl.value)
   } catch (e) {
-    alert('获取仓库信息失败，请检查链接')
+    alert('Failed to fetch repository info, please check URL')
   } finally {
     githubLoading.value = false
   }
@@ -175,7 +271,7 @@ async function doImport() {
       skill = {
         id: crypto.randomUUID(),
         name: githubMeta.value.name,
-        description: githubMeta.value.description || 'GitHub 仓库技能',
+        description: githubMeta.value.description || 'GitHub Repository Skill',
         version: '1.0.0',
         author: githubMeta.value.full_name.split('/')[0],
         tags: ['github', 'imported'],
@@ -214,3 +310,69 @@ function reset() {
   githubMeta.value = null
 }
 </script>
+
+<style scoped>
+/* Dialog Override */
+.skill-import-dialog :deep(.el-dialog) {
+  background-color: var(--dark-bg) !important;
+  border: 1px solid rgba(0, 245, 255, 0.2) !important;
+}
+
+.skill-import-dialog :deep(.el-dialog__header) {
+  border-bottom: 1px solid rgba(0, 245, 255, 0.2) !important;
+}
+
+.skill-import-dialog :deep(.el-dialog__title) {
+  color: var(--neon-cyan) !important;
+  font-family: 'Courier New', monospace !important;
+  font-weight: bold !important;
+}
+
+.skill-import-dialog :deep(.el-dialog__footer) {
+  border-top: 1px solid rgba(0, 245, 255, 0.2) !important;
+}
+
+/* Tabs Override */
+.cyber-tabs :deep(.el-tabs__header) {
+  border-color: rgba(0, 245, 255, 0.2) !important;
+  margin: 0 !important;
+}
+
+.cyber-tabs :deep(.el-tabs__item) {
+  color: var(--text-muted) !important;
+  font-family: 'Courier New', monospace !important;
+  font-size: 14px !important;
+}
+
+.cyber-tabs :deep(.el-tabs__item.is-active) {
+  color: var(--neon-cyan) !important;
+}
+
+.cyber-tabs :deep(.el-tabs__active-bar) {
+  background-color: var(--neon-cyan) !important;
+}
+
+/* Uploader Override */
+.cyber-uploader :deep(.el-upload-dragger) {
+  background-color: var(--dark-card) !important;
+  border: 2px dashed rgba(0, 245, 255, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.cyber-uploader :deep(.el-upload-dragger:hover) {
+  border-color: var(--neon-cyan) !important;
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.2) !important;
+}
+
+/* Input Override */
+.cyber-tabs :deep(.el-input__wrapper) {
+  background-color: var(--dark-card) !important;
+  border-color: rgba(0, 245, 255, 0.3) !important;
+  box-shadow: none !important;
+}
+
+.cyber-tabs :deep(.el-input__inner) {
+  color: var(--text-light) !important;
+  font-family: 'Courier New', monospace !important;
+}
+</style>
