@@ -181,7 +181,25 @@
                 </div>
               </div>
               
-              <div class="flex items-center gap-6 text-sm text-[var(--text-muted)]">
+              <!-- 当前路径 -->
+              <div v-if="githubSelectedPath || githubFolders.length > 0" class="mb-4">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="text-[var(--text-muted)] font-mono text-sm">> 当前路径: </span>
+                  <span class="text-[var(--neon-cyan)] font-mono text-sm">
+                    {{ githubSelectedPath ? '/' + githubSelectedPath : '/' }}
+                  </span>
+                  <el-button 
+                    v-if="githubSelectedPath" 
+                    size="small" 
+                    @click="goBack"
+                    class="text-xs bg-[var(--dark-bg)] border border-[var(--neon-cyan)]/30"
+                  >
+                    返回上级
+                  </el-button>
+                </div>
+              </div>
+              
+              <div class="flex items-center gap-6 text-sm text-[var(--text-muted)] mb-4">
                 <span class="flex items-center gap-2">
                   <span class="text-yellow-400">⭐</span>
                   <span class="font-mono">{{ githubMeta.stargazers_count }}</span>
@@ -196,17 +214,42 @@
                 </span>
               </div>
               
-              <!-- 文件列表预览 -->
-              <div v-if="githubFiles.length > 0" class="mt-4">
+              <!-- 文件夹列表 -->
+              <div v-if="githubFolders.length > 0" class="mb-4">
                 <h5 class="font-bold mb-3 text-[var(--text-light)] font-mono flex items-center gap-2">
-                  <span>📁</span> 文件列表 (最多导入10个)
+                  <span>📂</span> 文件夹
                 </h5>
-                <div class="max-h-40 overflow-y-auto space-y-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div 
+                    v-for="folder in githubFolders" 
+                    :key="folder.path"
+                    @click="navigateToFolder(folder.path)"
+                    class="px-3 py-2 bg-[var(--dark-bg)] border border-[var(--neon-yellow)]/30 hover:border-[var(--neon-yellow)] hover:bg-[var(--neon-yellow)]/10 rounded-lg text-sm text-[var(--text-light)] font-mono flex items-center gap-2 cursor-pointer transition-all"
+                  >
+                    <span>📁</span>
+                    <span class="truncate flex-1">{{ folder.name }}</span>
+                    <span class="text-xs text-[var(--neon-yellow)]">→</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 文件列表预览 -->
+              <div class="mt-4">
+                <h5 class="font-bold mb-3 text-[var(--text-light)] font-mono flex items-center gap-2">
+                  <span>📄</span> 文件列表
+                </h5>
+                <div v-if="githubFiles.length > 0" class="max-h-40 overflow-y-auto space-y-2">
                   <div v-for="file in githubFiles" :key="file.path" class="px-3 py-2 bg-[var(--dark-bg)] border border-[var(--neon-cyan)]/20 rounded-lg text-sm text-[var(--text-light)] font-mono flex items-center gap-2">
                     <span>📄</span>
                     <span class="truncate flex-1">{{ file.name }}</span>
                   </div>
                 </div>
+                <p v-else class="text-sm text-[var(--text-muted)]">该目录下没有文件</p>
+              </div>
+              
+              <!-- 选择提示 -->
+              <div class="mt-4 text-sm text-[var(--text-muted)] border-t border-[var(--neon-purple)]/30 pt-3">
+                <span class="text-[var(--neon-cyan)] font-mono">提示</span>: 点击文件夹可进入，导入时会导入当前目录下的所有文件
               </div>
             </div>
           </div>
@@ -288,6 +331,8 @@ const mdContent = ref('')
 const githubUrl = ref('')
 const githubMeta = ref<any>(null)
 const githubFiles = ref<any[]>([])
+const githubFolders = ref<any[]>([])
+const githubSelectedPath = ref('')
 const githubSelectedBranch = ref('')
 const githubLoading = ref(false)
 const githubFilesLoading = ref(false)
@@ -401,15 +446,17 @@ async function fetchGitHub() {
   }
 }
 
-async function loadGitHubFiles() {
+async function loadGitHubFiles(path: string = '') {
   if (!githubMeta.value || !githubUrl.value) return
   githubFilesLoading.value = true
   try {
-    const files = await fetchGitHubRepoFiles(githubUrl.value, '', githubSelectedBranch.value)
-    // 只保留文件，过滤目录，只取前20个文件
-    githubFiles.value = files
+    const allFiles = await fetchGitHubRepoFiles(githubUrl.value, path, githubSelectedBranch.value)
+    // 分离文件和文件夹
+    githubFiles.value = allFiles
       .filter((f: any) => f.type === 'file')
       .slice(0, 20)
+    githubFolders.value = allFiles
+      .filter((f: any) => f.type === 'dir')
   } catch (e) {
     console.error('Failed to fetch GitHub files:', e)
   } finally {
@@ -417,35 +464,82 @@ async function loadGitHubFiles() {
   }
 }
 
+// 导航到子文件夹
+async function navigateToFolder(path: string) {
+  githubSelectedPath.value = path
+  await loadGitHubFiles(path)
+}
+
+// 返回上级目录
+function goBack() {
+  if (!githubSelectedPath.value) return
+  const parts = githubSelectedPath.value.split('/')
+  parts.pop() // 移除最后一部分
+  const newPath = parts.join('/')
+  githubSelectedPath.value = newPath
+  loadGitHubFiles(newPath)
+}
+
 async function doImport() {
   importing.value = true
   try {
+    console.log('开始导入，当前标签:', activeTab.value)
     let skill: Skill
     if (activeTab.value === 'zip' && zipPreview.value) {
+      console.log('ZIP导入:', zipPreview.value)
       skill = zipPreview.value
     } else if (activeTab.value === 'md') {
+      console.log('Markdown导入')
       skill = await parseSkillFromMarkdown(mdContent.value)
     } else if (activeTab.value === 'github' && githubMeta.value) {
       // 拉取真正的文件内容
+      console.log('GitHub导入，选择的路径:', githubSelectedPath)
       const files: SkillFile[] = []
       
-      for (const file of githubFiles.value.slice(0, 10)) {
-        try {
-          const content = await fetchGitHubFileContent(githubUrl.value, file.path, githubSelectedBranch.value)
-          files.push({
-            path: file.path,
-            name: file.name,
-            content,
-            language: getLanguageFromFilename(file.name)
-          })
-        } catch (e) {
-          console.error(`Failed to fetch ${file.path}:`, e)
+      // 加载选择的文件夹/文件
+      if (githubSelectedPath !== '') {
+        const selectedFiles = await fetchGitHubRepoFiles(githubUrl.value, githubSelectedPath, githubSelectedBranch.value)
+        const targetFiles = selectedFiles
+          .filter((f: any) => f.type === 'file')
+          .slice(0, 15)
+        
+        for (const file of targetFiles) {
+          try {
+            const content = await fetchGitHubFileContent(githubUrl.value, file.path, githubSelectedBranch.value)
+            files.push({
+              path: file.path,
+              name: file.name,
+              content,
+              language: getLanguageFromFilename(file.name)
+            })
+          } catch (e) {
+            console.error(`Failed to fetch ${file.path}:`, e)
+          }
+        }
+      } else {
+        // 导入根目录
+        for (const file of githubFiles.value.slice(0, 10)) {
+          try {
+            const content = await fetchGitHubFileContent(githubUrl.value, file.path, githubSelectedBranch.value)
+            files.push({
+              path: file.path,
+              name: file.name,
+              content,
+              language: getLanguageFromFilename(file.name)
+            })
+          } catch (e) {
+            console.error(`Failed to fetch ${file.path}:`, e)
+          }
         }
       }
       
+      const skillName = githubSelectedPath ? 
+        githubSelectedPath.split('/').pop() || githubMeta.value.name : 
+        githubMeta.value.name
+      
       skill = {
         id: crypto.randomUUID(),
-        name: githubMeta.value.name,
+        name: skillName,
         description: githubMeta.value.description || 'GitHub Repository Skill',
         version: '1.0.0',
         author: githubMeta.value.full_name.split('/')[0],
@@ -462,9 +556,14 @@ async function doImport() {
     } else {
       throw new Error('No valid input')
     }
+    console.log('准备保存技能:', skill)
     await skillStore.addSkill(skill)
+    console.log('技能保存成功！')
     emit('imported')
     visible.value = false
+  } catch (e) {
+    console.error('导入失败:', e)
+    alert(`导入失败: ${e instanceof Error ? e.message : '未知错误'}`)
   } finally {
     importing.value = false
   }
@@ -502,6 +601,8 @@ function reset() {
   githubUrl.value = ''
   githubMeta.value = null
   githubFiles.value = []
+  githubFolders.value = []
+  githubSelectedPath.value = ''
   githubSelectedBranch.value = ''
 }
 </script>
