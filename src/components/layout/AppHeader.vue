@@ -21,7 +21,6 @@
           </nav>
         </div>
         <div class="flex items-center gap-4">
-          <SearchBox />
           <ThemeToggle />
         </div>
       </div>
@@ -30,6 +29,5 @@
 </template>
 
 <script setup lang="ts">
-import SearchBox from '@/components/features/SearchBox.vue'
 import ThemeToggle from '@/components/features/ThemeToggle.vue'
 </script>
