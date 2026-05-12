@@ -51,7 +51,8 @@
             v-model="searchQuery"
             size="large"
             placeholder="> Search skills... (e.g. 代码生成)"
-            class="flex-1 bg-transparent"
+            class="flex-1 bg-transparent no-input-border"
+            :class="{ 'no-input-border': true }"
             @keyup.enter="handleSearch"
           >
             <template #prefix>
@@ -92,3 +93,20 @@ function handleSearch() {
   }
 }
 </script>
+
+<style scoped>
+.no-input-border :deep(.el-input__wrapper) {
+  box-shadow: none !important;
+  border: none !important;
+  background-color: transparent !important;
+}
+
+.no-input-border :deep(.el-input__inner) {
+  background-color: transparent !important;
+}
+
+.no-input-border :deep(.el-input__wrapper:hover),
+.no-input-border :deep(.el-input__wrapper.is-focus) {
+  box-shadow: none !important;
+}
+</style>
