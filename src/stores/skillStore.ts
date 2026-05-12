@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Skill } from '@/types'
+import { db } from '@/utils/db'
 import { mockSkills } from '@/utils/mockData'
 
 export const useSkillStore = defineStore('skill', () => {
@@ -20,38 +21,68 @@ export const useSkillStore = defineStore('skill', () => {
     )
   })
 
-  const loadSkills = async () => {
+  async function loadSkills() {
     loading.value = true
     try {
-      await new Promise(resolve => setTimeout(resolve, 300))
-      skills.value = mockSkills
+      const stored = await db.getAll()
+      if (stored.length === 0) {
+        for (const skill of mockSkills) {
+          await db.put({ ...skill, source: { type: 'local' } })
+        }
+        skills.value = await db.getAll()
+      } else {
+        skills.value = stored
+      }
     } finally {
       loading.value = false
     }
   }
 
-  const selectSkill = (skill: Skill) => {
+  async function addSkill(skill: Skill) {
+    await db.put(skill)
+    skills.value.unshift(skill)
+  }
+
+  async function updateSkill(skill: Skill) {
+    skill.updatedAt = new Date()
+    await db.put(skill)
+    const index = skills.value.findIndex(s => s.id === skill.id)
+    if (index !== -1) skills.value[index] = skill
+  }
+
+  async function deleteSkill(id: string) {
+    await db.delete(id)
+    skills.value = skills.value.filter(s => s.id !== id)
+    if (selectedSkill.value?.id === id) {
+      selectedSkill.value = null
+    }
+  }
+
+  function selectSkill(skill: Skill) {
     selectedSkill.value = skill
   }
 
-  const setSearchQuery = (query: string) => {
+  function setSearchQuery(query: string) {
     searchQuery.value = query
   }
 
-  const toggleViewMode = () => {
-    viewMode.value = viewMode.value === 'grid' ? 'list' : 'grid'
+  function setViewMode(mode: 'grid' | 'list') {
+    viewMode.value = mode
   }
 
   return {
     skills,
-    selectedSkill,
     filteredSkills,
+    selectedSkill,
     searchQuery,
     loading,
     viewMode,
     loadSkills,
+    addSkill,
+    updateSkill,
+    deleteSkill,
     selectSkill,
     setSearchQuery,
-    toggleViewMode
+    setViewMode
   }
 })

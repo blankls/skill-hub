@@ -10,11 +10,14 @@
 import MainLayout from '@/components/layout/MainLayout.vue'
 import { onMounted } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
+import { useSkillStore } from '@/stores/skillStore'
 
 const themeStore = useThemeStore()
+const skillStore = useSkillStore()
 
 onMounted(() => {
   themeStore.initTheme()
+  skillStore.loadSkills()
 })
 </script>
 
