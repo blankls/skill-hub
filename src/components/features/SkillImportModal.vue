@@ -240,10 +240,10 @@ function insertTemplate() {
 
 async function handleZipChange(file: any) {
   try {
-    zipPreview.value = await parseSkillFromZip(file.raw)
+    zipPreview.value = await parseSkillFromZip(file.raw, file.name)
   } catch (e) {
     console.error('ZIP Parsing Error:', e)
-    alert('解析ZIP文件失败，请检查格式')
+    alert('解析ZIP文件失败！\n\n支持的格式：\n- 包含 skill.json\n- 包含 SKILL.md\n- 或包含任意文件（将从文件名推断技能名）\n\n请检查文件格式后重试。')
   }
 }
 
