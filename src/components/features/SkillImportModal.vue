@@ -9,7 +9,7 @@
   >
     <el-tabs v-model="activeTab" class="cyber-tabs">
       <!-- ZIP File Import -->
-      <el-tab-pane label="[ZIP FILE]" name="zip">
+      <el-tab-pane label="[ZIP文件]" name="zip">
         <div class="p-4">
           <el-upload
             drag
@@ -24,10 +24,10 @@
                 <UploadFilled />
               </el-icon>
               <div class="text-lg font-mono text-[var(--text-light)]">
-                > DROP YOUR ZIP FILE HERE
+                > 拖拽ZIP文件到这里
               </div>
               <div class="text-sm text-[var(--text-muted)] mt-2 font-mono">
-                OR CLICK TO SELECT
+                或者点击选择
               </div>
             </div>
           </el-upload>
@@ -54,7 +54,7 @@
             <!-- File List -->
             <div class="p-4 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/20 rounded-xl">
               <h5 class="font-bold mb-4 text-[var(--text-light)] font-mono flex items-center gap-2">
-                <span>📋</span> FILE LIST: {{ zipPreview.files.length }} files
+                <span>📋</span> 文件列表: {{ zipPreview.files.length }} 个文件
               </h5>
               <div class="max-h-48 overflow-y-auto space-y-1">
                 <div
@@ -72,16 +72,16 @@
       </el-tab-pane>
 
       <!-- SKILL.md Editor -->
-      <el-tab-pane label="[EDIT SKILL.md]" name="md">
+      <el-tab-pane label="[编辑SKILL.md]" name="md">
         <div class="p-4">
           <div class="flex justify-between items-center mb-4">
-            <span class="text-[var(--text-muted)] font-mono text-sm">> CREATE SKILL FROM MARKDOWN</span>
+            <span class="text-[var(--text-muted)] font-mono text-sm">> 使用Markdown创建技能</span>
             <el-button
               size="small"
               @click="insertTemplate"
               class="bg-[var(--dark-card)] border border-[var(--neon-yellow)]/50 hover:border-[var(--neon-yellow)] text-[var(--text-light)] font-mono"
             >
-              INSERT TEMPLATE
+              插入模板
             </el-button>
           </div>
           <div class="border border-[var(--neon-cyan)]/30 rounded-xl overflow-hidden bg-[var(--dark-bg)]">
@@ -95,11 +95,11 @@
       </el-tab-pane>
 
       <!-- GitHub Import -->
-      <el-tab-pane label="[GITHUB REPO]" name="github">
+      <el-tab-pane label="[GitHub仓库]" name="github">
         <div class="p-4">
           <div class="space-y-4">
             <div>
-              <label class="block text-[var(--text-muted)] font-mono text-sm mb-2">> REPOSITORY URL</label>
+              <label class="block text-[var(--text-muted)] font-mono text-sm mb-2">> 仓库地址</label>
               <el-input
                 v-model="githubUrl"
                 placeholder="https://github.com/username/repository"
@@ -111,7 +111,7 @@
               @click="fetchGitHub"
               class="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold font-mono"
             >
-              FETCH REPO
+              获取仓库
             </el-button>
 
             <!-- GitHub Preview -->
@@ -144,7 +144,7 @@
     <template #footer>
       <div class="flex justify-end gap-3">
         <el-button @click="visible = false" class="bg-[var(--dark-card)] border border-gray-600 text-[var(--text-light)] font-mono">
-          CANCEL
+          取消
         </el-button>
         <el-button
           type="primary"
@@ -153,7 +153,7 @@
           class="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold font-mono"
           @click="doImport"
         >
-          IMPORT SKILL
+          导入技能
         </el-button>
       </div>
     </template>
@@ -180,20 +180,20 @@ const visible = computed({
   set: (v) => emit('update:modelValue', v)
 })
 
-const title = computed(() => '> IMPORT NEW SKILL')
+const title = computed(() => '> 导入新技能')
 
-const templatePlaceholder = `# SKILL NAME
-## DESCRIPTION
-Describe your skill here...
-## VERSION
+const templatePlaceholder = `# 技能名称
+## 描述
+在此描述你的技能...
+## 版本
 1.0.0
-## AUTHOR
-Your Name
-## TAGS
-- tag1
-- tag2
-## FILES
-File description...`
+## 作者
+你的名字
+## 标签
+- 标签1
+- 标签2
+## 文件
+文件描述...`
 
 const activeTab = ref('zip')
 const zipPreview = ref<Skill | null>(null)
@@ -210,28 +210,28 @@ const canImport = computed(() => {
   return false
 })
 
-const TEMPLATE = `# SKILL NAME
+const TEMPLATE = `# 技能名称
 
-## DESCRIPTION
+## 描述
 
-Brief description of your skill's functionality.
+简要描述你的技能功能。
 
-## VERSION
+## 版本
 
 1.0.0
 
-## AUTHOR
+## 作者
 
-Your Name
+你的名字
 
-## TAGS
+## 标签
 
-- productivity
-- automation
+- 效率
+- 自动化
 
-## FILES
+## 文件
 
-List relevant files or describe features here.
+在此列出相关文件或描述功能。
 `
 
 function insertTemplate() {
@@ -243,7 +243,7 @@ async function handleZipChange(file: any) {
     zipPreview.value = await parseSkillFromZip(file.raw)
   } catch (e) {
     console.error('ZIP Parsing Error:', e)
-    alert('Failed to parse ZIP file, please check format')
+    alert('解析ZIP文件失败，请检查格式')
   }
 }
 
@@ -253,7 +253,7 @@ async function fetchGitHub() {
   try {
     githubMeta.value = await fetchGitHubRepo(githubUrl.value)
   } catch (e) {
-    alert('Failed to fetch repository info, please check URL')
+    alert('获取仓库信息失败，请检查URL')
   } finally {
     githubLoading.value = false
   }

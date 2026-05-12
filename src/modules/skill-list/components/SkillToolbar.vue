@@ -4,14 +4,14 @@
       <div class="flex items-center gap-4 flex-1">
         <el-input
           v-model="searchQuery"
-          placeholder="> Search skills..."
+          placeholder="> 搜索技能..."
           :prefix-icon="Search"
           clearable
           class="w-80"
           @input="handleSearch"
           style="--el-input-bg-color: var(--dark-bg); --el-input-border-color: rgba(0, 245, 255, 0.3); --el-input-text-color: var(--text-light); --el-input-placeholder-color: var(--text-muted);"
         />
-        <el-select v-model="selectedTag" placeholder="#Filter" clearable class="w-40" style="--el-select-bg-color: var(--dark-bg); --el-select-border-color: rgba(0, 245, 255, 0.3);">
+        <el-select v-model="selectedTag" placeholder="#筛选标签" clearable class="w-40" style="--el-select-bg-color: var(--dark-bg); --el-select-border-color: rgba(0, 245, 255, 0.3);">
           <el-option v-for="tag in allTags" :key="tag" :label="tag" :value="tag" />
         </el-select>
       </div>
@@ -26,7 +26,7 @@
           </el-radio-button>
         </el-radio-group>
         <el-button type="primary" :icon="Upload" @click="showImport = true" class="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold shadow-lg hover:shadow-[0_0_20px_rgba(0,245,255,0.5)]">
-          [Import Skill]
+          [导入技能]
         </el-button>
       </div>
     </div>

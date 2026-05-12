@@ -57,12 +57,12 @@ const handleClick = () => {
 
 const getSourceLabel = (type: string) => {
   const labels: Record<string, string> = {
-    local: 'LOCAL',
+    local: '本地',
     zip: 'ZIP',
-    github: 'GITHUB',
+    github: 'GitHub',
     skillmd: 'MD'
   }
-  return labels[type] || 'LOCAL'
+  return labels[type] || '本地'
 }
 
 const formatDate = (date: Date | string) => {
