@@ -8,16 +8,16 @@
               <span class="text-white font-black text-2xl font-mono">S</span>
             </div>
             <div class="leading-tight">
-              <span class="text-xl font-black text-[var(--text-light)] font-mono">SKILL</span>
+              <span class="text-xl font-black text-[var(--text-light)]">SKILL</span>
               <span class="text-[var(--neon-cyan)]">HUB</span>
             </div>
           </router-link>
-          <nav class="hidden md:flex gap-6 font-mono">
+          <nav class="hidden md:flex gap-6">
             <router-link to="/" class="text-[var(--text-muted)] hover:text-[var(--neon-cyan)] font-medium hover:border-b-2 hover:border-[var(--neon-cyan)] pb-1 transition-all">
-              [Home]
+              Home
             </router-link>
             <router-link to="/skills" class="text-[var(--text-muted)] hover:text-[var(--neon-cyan)] font-medium hover:border-b-2 hover:border-[var(--neon-cyan)] pb-1 transition-all">
-              [Skills]
+              Skills
             </router-link>
           </nav>
         </div>
