@@ -1,13 +1,13 @@
 <template>
-  <section class="py-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <section class="py-20 bg-[var(--dark-bg)]">
+    <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between mb-12">
         <div>
-          <h2 class="text-3xl font-bold mb-2">热门技能</h2>
-          <p class="text-gray-600 dark:text-gray-400">最受欢迎的 AI Skills</p>
+          <h2 class="text-4xl font-bold mb-2 text-[var(--text-light)] font-mono">热门技能</h2>
+          <p class="text-lg text-[var(--text-muted)]">最受欢迎的 AI Skills</p>
         </div>
         <router-link to="/skills">
-          <el-button type="primary">查看全部</el-button>
+          <el-button class="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold font-mono">查看全部</el-button>
         </router-link>
       </div>
       <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -26,7 +26,7 @@ const skillStore = useSkillStore()
 
 const popularSkills = computed(() => {
   return [...skillStore.skills]
-    .sort((a, b) => b.downloadCount - a.downloadCount)
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 4)
 })
 

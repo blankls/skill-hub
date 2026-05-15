@@ -1,19 +1,19 @@
 <template>
-  <section id="features" class="py-20 bg-gray-50 dark:bg-gray-900/50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <section id="features" class="py-20 bg-[var(--dark-bg)]">
+    <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-16">
-        <h2 class="text-3xl font-bold mb-4">平台特性</h2>
-        <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+        <h2 class="text-4xl font-bold mb-4 text-[var(--text-light)] font-mono">平台特性</h2>
+        <p class="text-lg text-[var(--text-muted)] max-w-2xl mx-auto">
           强大的功能，助你高效管理 AI Skills
         </p>
       </div>
       <div class="grid md:grid-cols-3 gap-8">
-        <div v-for="feature in features" :key="feature.title" class="bg-white dark:bg-dark-card p-8 rounded-2xl border border-gray-200 dark:border-dark-border hover:shadow-lg transition-shadow">
-          <div class="w-14 h-14 rounded-xl gradient-bg flex items-center justify-center text-white text-2xl mb-6">
+        <div v-for="feature in features" :key="feature.title" class="skill-card p-8 rounded-2xl">
+          <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-3xl mb-6">
             <el-icon><component :is="feature.icon" /></el-icon>
           </div>
-          <h3 class="text-xl font-semibold mb-3">{{ feature.title }}</h3>
-          <p class="text-gray-600 dark:text-gray-400">{{ feature.description }}</p>
+          <h3 class="text-2xl font-semibold mb-3 text-[var(--text-light)]">{{ feature.title }}</h3>
+          <p class="text-[var(--text-muted)]">{{ feature.description }}</p>
         </div>
       </div>
     </div>

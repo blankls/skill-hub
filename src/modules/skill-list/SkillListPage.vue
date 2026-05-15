@@ -7,16 +7,23 @@
       @update:viewMode="skillStore.setViewMode"
     />
 
-    <div class="max-w-7xl mx-auto p-6">
+    <div class="max-w-[95rem] mx-auto p-6">
       <div v-if="skillStore.loading" class="text-center py-20">
-        <el-icon class="text-4xl text-[var(--neon-cyan)] animate-spin"><Loading /></el-icon>
-        <p class="mt-4 text-[var(--text-muted)] font-mono">> 加载技能中...</p>
+        <el-icon class="text-5xl text-[var(--neon-cyan)] animate-spin"><Loading /></el-icon>
+        <p class="mt-6 text-[var(--text-muted)] font-mono text-lg">> 加载技能中...</p>
       </div>
-      <div v-else-if="skillStore.filteredSkills.length === 0" class="text-center py-20">
-        <p class="text-[var(--text-muted)] font-mono text-xl">> 未找到技能</p>
-        <el-button type="primary" class="mt-4 bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold" @click="showImport = true">
-          [导入第一个技能]
-        </el-button>
+      <div v-else-if="skillStore.filteredSkills.length === 0">
+        <EmptyState 
+          title="> 技能仓库为空"
+          description="开始导入你的第一个 AI 技能，建立你的专属技能库"
+          action-text="导入技能"
+          :show-default-action="true"
+          @action="showImport = true"
+        >
+          <template #icon>
+            <span class="text-7xl">💻</span>
+          </template>
+        </EmptyState>
       </div>
       <div v-else>
         <SkillGridView v-if="skillStore.viewMode === 'grid'" :skills="skillStore.filteredSkills" />
@@ -34,6 +41,7 @@ import { Loading } from '@element-plus/icons-vue'
 import SkillToolbar from './components/SkillToolbar.vue'
 import SkillGridView from './components/SkillGridView.vue'
 import SkillListView from './components/SkillListView.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 
 const route = useRoute()
 const skillStore = useSkillStore()

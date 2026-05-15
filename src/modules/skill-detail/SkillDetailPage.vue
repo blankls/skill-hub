@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-[var(--dark-bg)]">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div v-if="loading" class="flex items-center justify-center py-20">
         <el-icon class="text-4xl text-[var(--neon-cyan)] animate-spin"><Loading /></el-icon>
         <p class="ml-4 text-[var(--text-muted)] font-mono">> 加载技能中...</p>

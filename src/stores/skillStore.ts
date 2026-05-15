@@ -8,17 +8,31 @@ export const useSkillStore = defineStore('skill', () => {
   const skills = ref<Skill[]>([])
   const selectedSkill = ref<Skill | null>(null)
   const searchQuery = ref('')
+  const selectedTag = ref('')
   const loading = ref(false)
   const viewMode = ref<'grid' | 'list'>('grid')
 
   const filteredSkills = computed(() => {
-    if (!searchQuery.value) return skills.value
-    const q = searchQuery.value.toLowerCase()
-    return skills.value.filter(skill => 
-      skill.name.toLowerCase().includes(q) ||
-      skill.description.toLowerCase().includes(q) ||
-      skill.tags.some(tag => tag.toLowerCase().includes(q))
-    )
+    let result = skills.value
+    
+    // 标签筛选
+    if (selectedTag.value) {
+      result = result.filter(skill => 
+        skill.tags.includes(selectedTag.value)
+      )
+    }
+    
+    // 关键词搜索
+    if (searchQuery.value) {
+      const q = searchQuery.value.toLowerCase()
+      result = result.filter(skill => 
+        skill.name.toLowerCase().includes(q) ||
+        skill.description.toLowerCase().includes(q) ||
+        skill.tags.some(tag => tag.toLowerCase().includes(q))
+      )
+    }
+    
+    return result
   })
 
   async function loadSkills() {
@@ -66,6 +80,10 @@ export const useSkillStore = defineStore('skill', () => {
     searchQuery.value = query
   }
 
+  function setSelectedTag(tag: string) {
+    selectedTag.value = tag
+  }
+
   function setViewMode(mode: 'grid' | 'list') {
     viewMode.value = mode
   }
@@ -75,6 +93,7 @@ export const useSkillStore = defineStore('skill', () => {
     filteredSkills,
     selectedSkill,
     searchQuery,
+    selectedTag,
     loading,
     viewMode,
     loadSkills,
@@ -83,6 +102,7 @@ export const useSkillStore = defineStore('skill', () => {
     deleteSkill,
     selectSkill,
     setSearchQuery,
+    setSelectedTag,
     setViewMode
   }
 })

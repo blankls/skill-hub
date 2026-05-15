@@ -30,7 +30,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="relative z-10 w-full max-w-3xl px-6 text-center">
+    <div class="relative z-10 w-full max-w-[95rem] px-6 text-center">
       <!-- Logo Text -->
       <h1 class="text-6xl md:text-8xl font-black mb-6 tracking-tight glitch-effect neon-text" style="font-family: 'Courier New', monospace;">
         SKILL HUB
