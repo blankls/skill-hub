@@ -50,7 +50,7 @@
         </div>
       </div>
       
-      <h3 class="text-xl font-bold mb-3 text-[var(--text-light)] group-hover:text-[var(--neon-cyan)] transition-colors font-mono">
+      <h3 class="text-xl font-bold mb-3 text-[var(--text-light)] group-hover:text-[var(--neon-cyan)] transition-colors">
         {{ skill.name }}
       </h3>
       
@@ -185,8 +185,8 @@ const formatDate = (date: Date | string) => {
 <style scoped>
 .skill-card {
   background-color: var(--dark-card);
-  border: 1px solid rgba(0, 245, 255, 0.1);
-  transition: all 0.3s ease;
+  border: 1px solid rgba(14, 165, 233, 0.1);
+  transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
 }
@@ -197,16 +197,16 @@ const formatDate = (date: Date | string) => {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 2px;
   background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple), var(--neon-yellow));
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
 }
 
 .skill-card:hover {
-  border-color: rgba(0, 245, 255, 0.3);
-  box-shadow: 0 0 20px rgba(0, 245, 255, 0.15), 0 10px 30px rgba(0, 0, 0, 0.3);
-  transform: translateY(-3px);
+  border-color: rgba(14, 165, 233, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
 .skill-card:hover::before {

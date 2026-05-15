@@ -2,7 +2,7 @@
   <section id="features" class="py-20 bg-[var(--dark-bg)]">
     <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-16">
-        <h2 class="text-4xl font-bold mb-4 text-[var(--text-light)] font-mono">平台特性</h2>
+        <h2 class="text-4xl font-bold mb-4 text-[var(--text-light)]">平台特性</h2>
         <p class="text-lg text-[var(--text-muted)] max-w-2xl mx-auto">
           强大的功能，助你高效管理 AI Skills
         </p>
