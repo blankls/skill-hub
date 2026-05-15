@@ -10,7 +10,7 @@
               <el-icon class="text-[var(--neon-cyan)] text-xl flex-shrink-0"><Search /></el-icon>
               <el-input
                 v-model="searchQuery"
-                placeholder="> 搜索技能..."
+                placeholder="搜索技能..."
                 class="flex-1 bg-transparent no-input-border"
                 :class="{ 'no-input-border': true }"
                 clearable
@@ -51,10 +51,10 @@
           <!-- 导入按钮 -->
           <button
             @click="showImport = true"
-            class="px-6 py-2.5 bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white font-bold rounded-lg font-mono transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,245,255,0.5)] flex items-center gap-2"
+            class="px-6 py-2.5 bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white font-bold rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,245,255,0.5)] flex items-center gap-2"
           >
             <el-icon><Upload /></el-icon>
-            [导入技能]
+            导入技能
           </button>
         </div>
       </div>
@@ -63,7 +63,7 @@
     <!-- 标签云 -->
     <div v-if="allTags.length > 0" class="toolbar-bottom">
       <div class="max-w-[95rem] mx-auto flex flex-wrap items-center gap-2 py-3">
-        <span class="text-[var(--text-muted)] font-mono text-sm mr-2 py-1">> 筛选标签:</span>
+        <span class="text-[var(--text-muted)] text-sm mr-2 py-1">筛选标签:</span>
         <button
           v-for="tagData in sortedTags"
           :key="tagData.tag"
@@ -86,7 +86,7 @@
         <button
           v-if="selectedTag"
           @click="clearTag"
-          class="px-4 py-1.5 rounded-full text-sm font-mono bg-[var(--neon-yellow)]/20 text-[var(--neon-yellow)] border border-[var(--neon-yellow)]/30 hover:bg-[var(--neon-yellow)]/30 transition-all duration-300 flex items-center gap-1"
+          class="px-4 py-1.5 rounded-full text-sm bg-[var(--neon-yellow)]/20 text-[var(--neon-yellow)] border border-[var(--neon-yellow)]/30 hover:bg-[var(--neon-yellow)]/30 transition-all duration-300 flex items-center gap-1"
         >
           清除筛选
           <el-icon class="text-sm"><Close /></el-icon>
@@ -202,7 +202,6 @@ function handleImported() {
 .no-input-border :deep(.el-input__inner) {
   background-color: transparent !important;
   color: var(--text-light) !important;
-  font-family: 'Courier New', monospace !important;
 }
 
 .no-input-border :deep(.el-input__wrapper:hover),

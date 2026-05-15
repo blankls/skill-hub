@@ -10,11 +10,11 @@
     <div class="max-w-[95rem] mx-auto p-6">
       <div v-if="skillStore.loading" class="text-center py-20">
         <el-icon class="text-5xl text-[var(--neon-cyan)] animate-spin"><Loading /></el-icon>
-        <p class="mt-6 text-[var(--text-muted)] font-mono text-lg">> 加载技能中...</p>
+        <p class="mt-6 text-[var(--text-muted)] text-lg">加载技能中...</p>
       </div>
       <div v-else-if="skillStore.filteredSkills.length === 0">
         <EmptyState 
-          title="> 技能仓库为空"
+          title="技能仓库为空"
           description="开始导入你的第一个 AI 技能，建立你的专属技能库"
           action-text="导入技能"
           :show-default-action="true"

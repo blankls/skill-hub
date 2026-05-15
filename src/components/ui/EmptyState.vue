@@ -74,7 +74,7 @@ function handleAction() {
 }
 
 .empty-state-title {
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-sans);
   font-size: 1.5rem;
   font-weight: bold;
   color: var(--text-light);
@@ -82,7 +82,7 @@ function handleAction() {
 }
 
 .empty-state-description {
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-sans);
   color: var(--text-muted);
   font-size: 1rem;
   margin-bottom: 2rem;
@@ -102,7 +102,6 @@ function handleAction() {
   border: none;
   color: white;
   font-weight: bold;
-  font-family: 'Courier New', monospace;
   padding: 0.75rem 2rem;
   border-radius: 8px;
 }
