@@ -11,9 +11,9 @@
     </div>
     <!-- Knob -->
     <div
-      class="absolute top-1 left-1 w-10 h-10 rounded-full transition-all duration-300 flex items-center justify-center shadow-md"
+      class="absolute top-1 w-10 h-10 rounded-full transition-all duration-300 flex items-center justify-center shadow-md"
+      :class="themeStore.isDark ? 'left-auto right-1' : 'left-1'"
       :style="{
-        transform: themeStore.isDark ? 'translateX(calc(100% - 48px))' : 'translateX(0)',
         background: themeStore.isDark
           ? 'linear-gradient(135deg, #0ea5e9, #8b5cf6)'
           : 'linear-gradient(135deg, #f59e0b, #ec4899)'
