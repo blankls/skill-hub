@@ -3,38 +3,39 @@
     <div class="p-6 relative">
       <!-- 快速操作按钮 - 右侧悬浮 -->
       <div class="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 z-10">
-        <el-button 
-          circle 
-          size="small" 
-          class="bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10" 
-          @click.stop="handleEdit"
-        >
-          <el-icon class="text-[var(--neon-cyan)]"><Edit /></el-icon>
-        </el-button>
-        <el-button 
-          circle 
-          size="small" 
-          class="bg-[var(--dark-card)] border border-[var(--neon-yellow)]/30 hover:border-[var(--neon-yellow)] hover:bg-[var(--neon-yellow)]/10" 
-          @click.stop="handleDuplicate"
-        >
-          <el-icon class="text-[var(--neon-yellow)]"><DocumentCopy /></el-icon>
-        </el-button>
-        <el-button 
-          circle 
-          size="small" 
-          class="bg-[var(--dark-card)] border border-[var(--neon-purple)]/30 hover:border-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/10" 
-          @click.stop="handleExport"
-        >
-          <el-icon class="text-[var(--neon-purple)]"><Download /></el-icon>
-        </el-button>
-        <el-button 
-          circle 
-          size="small" 
-          type="danger" 
-          @click.stop="handleDelete"
-        >
-          <el-icon><Delete /></el-icon>
-        </el-button>
+        <el-tooltip content="编辑" placement="left">
+          <el-button 
+            v-if="showAdminActions"
+            circle 
+            size="small" 
+            class="action-btn edit-btn" 
+            @click.stop="handleEdit"
+          >
+            <el-icon class="text-[var(--neon-cyan)]"><Edit /></el-icon>
+          </el-button>
+        </el-tooltip>
+
+        <el-tooltip content="下载" placement="left">
+          <el-button 
+            circle 
+            size="small" 
+            class="action-btn export-btn" 
+            @click.stop="handleExport"
+          >
+            <el-icon class="text-[var(--neon-purple)]"><Download /></el-icon>
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="删除" placement="left">
+          <el-button 
+            v-if="showAdminActions"
+            circle 
+            size="small" 
+            class="action-btn delete-btn" 
+            @click.stop="handleDelete"
+          >
+            <el-icon class="text-red-400"><Delete /></el-icon>
+          </el-button>
+        </el-tooltip>
       </div>
       
       <div class="flex items-start justify-between mb-4">
@@ -89,49 +90,44 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Edit, DocumentCopy, Download, Delete, User, Document } from '@element-plus/icons-vue'
+import { Edit, Download, Delete, User, Document } from '@element-plus/icons-vue'
 import { useSkillStore } from '@/stores/skillStore'
 import type { Skill } from '@/types'
-import { exportSkillToZip } from '@/utils/zipHandler'
+import { exportSkillToZip, downloadBlob } from '@/utils/zipHandler'
 
 interface Props {
   skill: Skill
+  showAdminActions?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  showAdminActions: false
+})
+
+const emit = defineEmits<{
+  (e: 'edit', skill: Skill): void
+}>()
+
 const router = useRouter()
 const skillStore = useSkillStore()
 
 const handleClick = () => {
-  router.push(`/skills/${props.skill.id}`)
+  const path = props.showAdminActions ? `/admin/skills/${props.skill.id}` : `/skills/${props.skill.id}`
+  router.push(path)
 }
 
 const handleEdit = () => {
-  router.push(`/skills/${props.skill.id}`)
-}
-
-const handleDuplicate = async () => {
-  try {
-    const copiedSkill: Skill = {
-      ...props.skill,
-      id: crypto.randomUUID(),
-      name: `${props.skill.name} (副本)`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      source: { type: 'local' }
-    }
-    await skillStore.addSkill(copiedSkill)
-    ElMessage.success('技能复制成功！')
-  } catch (e) {
-    ElMessage.error('复制失败')
-  }
+  emit('edit', props.skill)
 }
 
 const handleExport = async () => {
   try {
-    await exportSkillToZip(props.skill)
+    const blob = await exportSkillToZip(props.skill)
+    const filename = `${props.skill.name.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}.zip`
+    downloadBlob(blob, filename)
     ElMessage.success('导出成功！')
   } catch (e) {
+    console.error('Export error:', e)
     ElMessage.error('导出失败')
   }
 }
@@ -211,5 +207,65 @@ const formatDate = (date: Date | string) => {
 
 .skill-card:hover::before {
   opacity: 1;
+}
+
+/* 操作按钮样式 */
+.action-btn {
+  background-color: var(--dark-card) !important;
+  border: 1px solid rgba(14, 165, 233, 0.15) !important;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease !important;
+  transform: scale(1);
+}
+
+.action-btn:hover {
+  transform: scale(1.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.edit-btn {
+  border-color: rgba(14, 165, 233, 0.3) !important;
+}
+
+.edit-btn:hover {
+  background-color: rgba(14, 165, 233, 0.2) !important;
+  border-color: rgba(14, 165, 233, 0.6) !important;
+}
+
+.export-btn {
+  border-color: rgba(168, 85, 247, 0.3) !important;
+}
+
+.export-btn:hover {
+  background-color: rgba(168, 85, 247, 0.2) !important;
+  border-color: rgba(168, 85, 247, 0.6) !important;
+}
+
+.delete-btn {
+  border-color: rgba(248, 113, 113, 0.3) !important;
+}
+
+.delete-btn:hover {
+  background-color: rgba(248, 113, 113, 0.2) !important;
+  border-color: rgba(248, 113, 113, 0.6) !important;
+}
+
+/* 工具提示样式 */
+.skill-card :deep(.el-tooltip__popper) {
+  background-color: var(--dark-card) !important;
+  border: 1px solid rgba(14, 165, 233, 0.3) !important;
+  border-radius: 8px !important;
+}
+
+.skill-card :deep(.el-tooltip__popper) .el-tooltip__arrow::before {
+  background-color: var(--dark-card) !important;
+  border-color: rgba(14, 165, 233, 0.3) !important;
+}
+
+.skill-card :deep(.el-tooltip__popper) .el-tooltip__content {
+  color: var(--text-light) !important;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px !important;
+  padding: 6px 12px !important;
 }
 </style>

@@ -18,7 +18,7 @@
           description="开始导入你的第一个 AI 技能，建立你的专属技能库"
           action-text="导入技能"
           :show-default-action="true"
-          @action="showImport = true"
+          @action="goToAdmin"
         >
           <template #icon>
             <span class="text-7xl">💻</span>
@@ -26,8 +26,8 @@
         </EmptyState>
       </div>
       <div v-else>
-        <SkillGridView v-if="skillStore.viewMode === 'grid'" :skills="skillStore.filteredSkills" />
-        <SkillListView v-else :skills="skillStore.filteredSkills" />
+        <SkillGridView v-if="skillStore.viewMode === 'grid'" :skills="skillStore.filteredSkills" :showAdminActions="false" />
+        <SkillListView v-else :skills="skillStore.filteredSkills" :showAdminActions="false" />
       </div>
     </div>
   </div>
@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useSkillStore } from '@/stores/skillStore'
 import { Loading } from '@element-plus/icons-vue'
 import SkillToolbar from './components/SkillToolbar.vue'
@@ -44,9 +44,9 @@ import SkillListView from './components/SkillListView.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
 const route = useRoute()
+const router = useRouter()
 const skillStore = useSkillStore()
 const searchQuery = ref('')
-const showImport = ref(false)
 
 const allTags = computed(() => {
   const tags = new Set<string>()
@@ -64,4 +64,8 @@ onMounted(() => {
     skillStore.setSearchQuery(searchQuery.value)
   }
 })
+
+function goToAdmin() {
+  router.push('/admin')
+}
 </script>

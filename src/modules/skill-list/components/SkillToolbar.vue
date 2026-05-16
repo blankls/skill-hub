@@ -20,9 +20,8 @@
           </div>
         </div>
 
-        <!-- 视图切换和导入按钮 -->
+        <!-- 视图切换 -->
         <div class="flex items-center gap-3">
-          <!-- 视图切换 -->
           <div class="flex items-center gap-1 p-1 bg-[var(--dark-bg)] border border-[var(--neon-cyan)]/20 rounded-lg">
             <button
               @click="handleViewModeChange('grid')"
@@ -47,15 +46,6 @@
               <el-icon class="text-xl"><List /></el-icon>
             </button>
           </div>
-          
-          <!-- 导入按钮 -->
-          <button
-            @click="showImport = true"
-            class="px-6 py-2.5 bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white font-bold rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,245,255,0.5)] flex items-center gap-2"
-          >
-            <el-icon><Upload /></el-icon>
-            导入技能
-          </button>
         </div>
       </div>
     </div>
@@ -95,14 +85,12 @@
     </div>
   </div>
 
-  <SkillImportModal v-model="showImport" @imported="handleImported" />
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useSkillStore } from '@/stores/skillStore'
-import { Search, Upload, Grid, List, Close } from '@element-plus/icons-vue'
-import SkillImportModal from '@/components/features/SkillImportModal.vue'
+import { Search, Grid, List, Close } from '@element-plus/icons-vue'
 
 const props = defineProps<{
   modelValue: string
@@ -119,7 +107,6 @@ const skillStore = useSkillStore()
 const searchQuery = ref(props.modelValue)
 const selectedTag = ref('')
 const viewMode = ref<'grid' | 'list'>(skillStore.viewMode)
-const showImport = ref(false)
 
 const allTags = computed(() => {
   const tags = new Set<string>()
@@ -165,10 +152,6 @@ function handleViewModeChange(mode: 'grid' | 'list') {
   viewMode.value = mode
   emit('update:viewMode', mode)
   skillStore.setViewMode(mode)
-}
-
-function handleImported() {
-  skillStore.loadSkills()
 }
 </script>
 

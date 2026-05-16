@@ -22,10 +22,10 @@
             </div>
           </div>
           <div class="flex gap-2">
-            <el-button @click="showEditor = true" class="bg-[var(--dark-card)] border border-[var(--neon-yellow)]/50 hover:border-[var(--neon-yellow)] text-[var(--text-light)]">
+            <el-button v-if="isFromAdmin" @click="showEditor = true" class="bg-[var(--dark-card)] border border-[var(--neon-yellow)]/50 hover:border-[var(--neon-yellow)] text-[var(--text-light)]">
               <el-icon><Edit /></el-icon> 编辑
             </el-button>
-            <el-button type="danger" @click="handleDelete">
+            <el-button v-if="isFromAdmin" type="danger" @click="handleDelete">
               <el-icon><Delete /></el-icon> 删除
             </el-button>
             <ZipExportBtn :skill="skill" />
@@ -63,7 +63,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Loading, Edit, Delete, ArrowLeft } from '@element-plus/icons-vue'
+import { Loading, ArrowLeft, Edit, Delete } from '@element-plus/icons-vue'
 import { useSkillStore } from '@/stores/skillStore'
 import SkillEditor from '@/components/features/SkillEditor.vue'
 import ZipExportBtn from '@/components/features/ZipExportBtn.vue'
@@ -80,6 +80,10 @@ const showEditor = ref(false)
 
 const skill = computed(() => {
   return skillStore.skills.find(s => s.id === route.params.id) || null
+})
+
+const isFromAdmin = computed(() => {
+  return route.path.startsWith('/admin')
 })
 
 async function handleSave(updatedSkill: any) {

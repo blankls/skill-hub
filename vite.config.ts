@@ -9,6 +9,9 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
+  server: {
+    host: true
+  },
   test: {
     environment: 'happy-dom',
     globals: true
