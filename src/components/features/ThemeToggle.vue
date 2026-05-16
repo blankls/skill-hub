@@ -8,12 +8,18 @@
     <div class="absolute inset-0 flex items-center justify-between px-5 text-sm font-bold">
       <span :class="themeStore.isDark ? 'text-[var(--neon-cyan)]' : 'text-gray-300'"
             class="transition-all duration-500 transform"
-            :style="{ opacity: themeStore.isDark ? 1 : 0.6, transform: themeStore.isDark ? 'scale(1.05)' : 'scale(1)' }">
+            :style="{ 
+              opacity: themeStore.isDark ? 1 : 0.6, 
+              transform: themeStore.isDark ? 'translateX(4px) scale(1.05)' : 'translateX(0) scale(1)' 
+            }">
         DARK
       </span>
       <span :class="themeStore.isDark ? 'text-gray-500' : 'text-[var(--neon-purple)]'"
             class="transition-all duration-500 transform"
-            :style="{ opacity: themeStore.isDark ? 0.6 : 1, transform: themeStore.isDark ? 'scale(1)' : 'scale(1.05)' }">
+            :style="{ 
+              opacity: themeStore.isDark ? 0.6 : 1, 
+              transform: themeStore.isDark ? 'translateX(0) scale(1)' : 'translateX(-4px) scale(1.05)' 
+            }">
         LIGHT
       </span>
     </div>
