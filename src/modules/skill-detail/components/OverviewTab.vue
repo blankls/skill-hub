@@ -1,26 +1,58 @@
 <template>
   <div class="space-y-6">
-    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
-      <h2 class="text-xl font-semibold mb-4">关于</h2>
-      <p class="text-gray-600 dark:text-gray-400">{{ skill.description }}</p>
-      <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <span class="text-gray-500">版本:</span> v{{ skill.version }}
+    <!-- Skill Info Card -->
+    <div class="skill-card bg-[var(--dark-card)] rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+      <h2 class="text-xl font-semibold mb-4 text-[var(--text-light)]">关于</h2>
+      <p class="text-[var(--text-muted)] mb-6">{{ skill.description }}</p>
+      
+      <!-- Tags -->
+      <div v-if="skill.tags && skill.tags.length > 0" class="mb-6">
+        <h3 class="text-sm font-semibold mb-3 text-[var(--text-light)]">标签</h3>
+        <div class="flex flex-wrap gap-2">
+          <span 
+            v-for="tag in skill.tags" 
+            :key="tag" 
+            class="px-3 py-1 rounded-full text-sm font-mono text-white"
+            :style="{ 
+              background: `linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))` 
+            }"
+          >
+            #{{ tag }}
+          </span>
         </div>
-        <div>
-          <span class="text-gray-500">作者:</span> {{ skill.author }}
+      </div>
+      
+      <!-- Info Grid -->
+      <div class="grid grid-cols-2 gap-4 text-sm">
+        <div class="flex items-center gap-2">
+          <span class="text-[var(--text-muted)]">版本:</span> 
+          <span class="text-[var(--text-light)] font-mono">v{{ skill.version }}</span>
         </div>
-        <div>
-          <span class="text-gray-500">来源:</span> {{ getSourceLabel(skill.source.type) }}
+        <div class="flex items-center gap-2">
+          <span class="text-[var(--text-muted)]">作者:</span> 
+          <span class="text-[var(--text-light)]">{{ skill.author }}</span>
         </div>
-        <div>
-          <span class="text-gray-500">更新时间:</span> {{ formatDate(skill.updatedAt) }}
+        <div class="flex items-center gap-2">
+          <span class="text-[var(--text-muted)]">来源:</span> 
+          <span class="text-[var(--neon-cyan)] font-mono">{{ getSourceLabel(skill.source.type) }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[var(--text-muted)]">更新时间:</span> 
+          <span class="text-[var(--text-light)]">{{ formatDate(skill.updatedAt) }}</span>
         </div>
       </div>
     </div>
-    <div v-if="markdownFile" class="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
-      <h2 class="text-xl font-semibold mb-4">{{ markdownFile.name }}</h2>
-      <div class="prose dark:prose-invert max-w-none" v-html="renderedReadme"></div>
+    
+    <!-- Markdown Content -->
+    <div v-if="markdownFile" class="skill-card bg-[var(--dark-card)] rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+      <h2 class="text-xl font-semibold mb-4 text-[var(--text-light)]">{{ markdownFile.name }}</h2>
+      <div class="prose dark:prose-invert max-w-none text-[var(--text-light)]" v-html="renderedReadme"></div>
+    </div>
+    
+    <!-- Empty State -->
+    <div v-else class="skill-card bg-[var(--dark-card)] rounded-xl p-6 border border-gray-200 dark:border-gray-700 text-center">
+      <h2 class="text-xl font-semibold mb-2 text-[var(--text-muted)]">暂无文档</h2>
+      <p class="text-[var(--text-muted)]">这个技能没有 README.md 或 SKILL.md 文档</p>
     </div>
   </div>
 </template>
@@ -69,9 +101,35 @@ const formatDate = (date: Date | string) => {
 }
 </script>
 
+<style scoped>
+.skill-card {
+  transition: all 0.3s ease;
+}
+</style>
+
 <style>
-.prose h1, .prose h2, .prose h3 { margin-top: 1em; margin-bottom: 0.5em; font-weight: 600; }
-.prose p { margin-bottom: 1em; }
-.prose code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
-.dark .prose code { background: #374151; }
+.prose h1, .prose h2, .prose h3 { 
+  margin-top: 1em; 
+  margin-bottom: 0.5em; 
+  font-weight: 600; 
+  color: var(--text-light);
+}
+.prose p { 
+  margin-bottom: 1em; 
+  color: var(--text-muted);
+}
+.prose code { 
+  background: var(--dark-card); 
+  padding: 2px 6px; 
+  border-radius: 4px; 
+  font-family: var(--font-mono);
+  color: var(--neon-cyan);
+}
+.prose a {
+  color: var(--neon-purple);
+  text-decoration: underline;
+}
+.prose ul, .prose ol {
+  color: var(--text-muted);
+}
 </style>

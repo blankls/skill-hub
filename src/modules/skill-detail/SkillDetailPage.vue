@@ -3,7 +3,7 @@
     <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div v-if="loading" class="flex items-center justify-center py-20">
         <el-icon class="text-4xl text-[var(--neon-cyan)] animate-spin"><Loading /></el-icon>
-        <p class="ml-4 text-[var(--text-muted)] font-mono">> 加载技能中...</p>
+        <p class="ml-4 text-[var(--text-muted)]">加载技能中...</p>
       </div>
       <template v-else-if="skill">
         <!-- Return Button & Header -->
@@ -11,21 +11,21 @@
           <div class="flex items-center gap-4">
             <el-button
               @click="router.back()"
-              class="flex items-center gap-2 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 text-[var(--text-light)] rounded-xl font-mono"
+              class="flex items-center gap-2 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 text-[var(--text-light)] rounded-xl transition-all"
             >
               <el-icon><ArrowLeft /></el-icon>
               <span>返回</span>
             </el-button>
             <div>
-              <h1 class="text-3xl font-bold mb-2 text-[var(--text-light)] font-mono">{{ skill.name }}</h1>
+              <h1 class="text-3xl font-bold mb-2 text-[var(--text-light)]">{{ skill.name }}</h1>
               <p class="text-[var(--text-muted)]">{{ skill.description }}</p>
             </div>
           </div>
           <div class="flex gap-2">
-            <el-button @click="showEditor = true" class="bg-[var(--dark-card)] border border-[var(--neon-yellow)]/50 hover:border-[var(--neon-yellow)] text-[var(--text-light)] font-mono">
+            <el-button @click="showEditor = true" class="bg-[var(--dark-card)] border border-[var(--neon-yellow)]/50 hover:border-[var(--neon-yellow)] text-[var(--text-light)]">
               <el-icon><Edit /></el-icon> 编辑
             </el-button>
-            <el-button type="danger" @click="handleDelete" class="font-mono">
+            <el-button type="danger" @click="handleDelete">
               <el-icon><Delete /></el-icon> 删除
             </el-button>
             <ZipExportBtn :skill="skill" />
@@ -46,9 +46,9 @@
         </div>
       </template>
       <div v-else class="text-center py-20">
-        <h2 class="text-2xl font-bold mb-4 text-[var(--text-light)] font-mono">> 未找到技能</h2>
+        <h2 class="text-2xl font-bold mb-4 text-[var(--text-light)]">未找到技能</h2>
         <router-link to="/skills">
-          <el-button type="primary" class="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold font-mono">
+          <el-button type="primary" class="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold">
             返回技能库
           </el-button>
         </router-link>
@@ -116,7 +116,6 @@ onMounted(async () => {
 
 :deep(.el-tabs__item) {
   color: var(--text-muted) !important;
-  font-family: 'Courier New', monospace !important;
 }
 
 :deep(.el-tabs__item.is-active) {
