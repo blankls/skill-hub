@@ -1,9 +1,14 @@
 import { defineStore } from 'pinia'
-import { ref, computed, toRaw } from 'vue'
+import { ref, computed, toRaw, onUnmounted } from 'vue'
 import type { Skill } from '@/types'
 import { db } from '@/utils/db'
-import { fetchFullSkillFromGitHub, fetchGitHubRepo } from '@/utils/githubClient'
+import { fetchFullSkillFromGitHub, fetchGitHubRepo, type SyncProgress } from '@/utils/githubClient'
 import { ElMessage } from 'element-plus'
+
+// 定时任务配置
+const SYNC_INTERVAL_HOURS = 24 // 每天同步一次
+const BATCH_SIZE = 3 // 每批同步 3 个技能
+const SYNC_DELAY_MS = 2000 // 每个技能之间间隔 2 秒
 
 export const useSkillStore = defineStore('skill', () => {
   const skills = ref<Skill[]>([])
@@ -12,19 +17,29 @@ export const useSkillStore = defineStore('skill', () => {
   const selectedTag = ref('')
   const loading = ref(false)
   const syncingSkillIds = ref<Set<string>>(new Set())
+  const syncProgress = ref<Map<string, SyncProgress>>(new Map())
   const viewMode = ref<'grid' | 'list'>('grid')
+  
+  // 批量同步状态
+  const batchSyncing = ref(false)
+  const batchSyncProgress = ref({
+    current: 0,
+    total: 0,
+    currentSkill: ''
+  })
+  
+  // 定时任务
+  let syncTimer: ReturnType<typeof setInterval> | null = null
 
   const filteredSkills = computed(() => {
     let result = skills.value
     
-    // 标签筛选
     if (selectedTag.value) {
       result = result.filter(skill => 
         skill.tags.includes(selectedTag.value)
       )
     }
     
-    // 关键词搜索
     if (searchQuery.value) {
       const q = searchQuery.value.toLowerCase()
       result = result.filter(skill => 
@@ -36,6 +51,10 @@ export const useSkillStore = defineStore('skill', () => {
     
     return result
   })
+
+  const gitHubSkills = computed(() => 
+    skills.value.filter(s => s.source.type === 'github')
+  )
 
   async function loadSkills() {
     loading.value = true
@@ -66,6 +85,7 @@ export const useSkillStore = defineStore('skill', () => {
     if (selectedSkill.value?.id === id) {
       selectedSkill.value = null
     }
+    syncProgress.value.delete(id)
   }
 
   function selectSkill(skill: Skill) {
@@ -88,7 +108,24 @@ export const useSkillStore = defineStore('skill', () => {
     return syncingSkillIds.value.has(skillId)
   }
 
-  async function syncGitHubSkill(skillId: string, force: boolean = false): Promise<Skill | null> {
+  function getSyncProgress(skillId: string): SyncProgress | undefined {
+    return syncProgress.value.get(skillId)
+  }
+
+  // 加载技能（不自动同步）
+  async function loadAndSelectSkill(skillId: string): Promise<Skill | null> {
+    const skill = skills.value.find(s => s.id === skillId)
+    if (!skill) return null
+    selectSkill(skill)
+    return skill
+  }
+
+  // 同步单个 GitHub 技能
+  async function syncGitHubSkill(
+    skillId: string, 
+    force: boolean = false,
+    showMessage: boolean = true
+  ): Promise<Skill | null> {
     const skill = skills.value.find(s => s.id === skillId)
     if (!skill || skill.source.type !== 'github' || !skill.source.githubMeta) {
       return null
@@ -99,6 +136,7 @@ export const useSkillStore = defineStore('skill', () => {
     }
 
     syncingSkillIds.value.add(skillId)
+    syncProgress.value.set(skillId, { stage: 'checking', current: 0, total: 0 })
     
     try {
       const meta = skill.source.githubMeta
@@ -118,53 +156,158 @@ export const useSkillStore = defineStore('skill', () => {
                 meta.repoUrl,
                 meta.branch,
                 meta.subfolderPath,
-                skill.id
+                skill.id,
+                skill.files,
+                (progress) => syncProgress.value.set(skillId, progress)
               )
               fullSkill.createdAt = skill.createdAt
               await updateSkill(fullSkill)
+              if (showMessage) ElMessage.success(`已同步 ${fullSkill.name}`)
               return fullSkill
             }
+            syncProgress.value.set(skillId, { stage: 'complete', current: 1, total: 1 })
             return skill
           }
         } catch (e) {
           console.warn('Failed to check remote update:', e)
-          // 网络错误时，如果有缓存，直接使用缓存
           if (skill.source.isContentCached) {
+            syncProgress.value.set(skillId, { stage: 'complete', current: 1, total: 1 })
             return skill
           }
         }
       }
       
-      // 获取完整内容
       const fullSkill = await fetchFullSkillFromGitHub(
         meta.repoUrl,
         meta.branch,
         meta.subfolderPath,
-        skill.id
+        skill.id,
+        skill.files,
+        (progress) => syncProgress.value.set(skillId, progress)
       )
       fullSkill.createdAt = skill.createdAt
       await updateSkill(fullSkill)
       
-      ElMessage.success(`已同步 ${fullSkill.name}`)
+      syncProgress.value.set(skillId, { stage: 'complete', current: 1, total: 1 })
+      if (showMessage) ElMessage.success(`已同步 ${fullSkill.name}`)
       return fullSkill
     } catch (e) {
       console.error('Failed to sync GitHub skill:', e)
-      ElMessage.error('同步失败，使用本地缓存')
-      // 如果同步失败，返回原技能（如果已有缓存）
+      if (showMessage) ElMessage.error('同步失败，使用本地缓存')
       return skill.source.isContentCached ? skill : null
     } finally {
       syncingSkillIds.value.delete(skillId)
     }
   }
 
+  // 批量同步所有 GitHub 技能
+  async function batchSyncAllGitHubSkills(force: boolean = false) {
+    if (batchSyncing.value) {
+      ElMessage.warning('已有同步任务进行中')
+      return
+    }
+
+    const skillsToSync = gitHubSkills.value
+    if (skillsToSync.length === 0) {
+      ElMessage.info('没有 GitHub 技能需要同步')
+      return
+    }
+
+    batchSyncing.value = true
+    batchSyncProgress.value = {
+      current: 0,
+      total: skillsToSync.length,
+      currentSkill: ''
+    }
+
+    try {
+      for (let i = 0; i < skillsToSync.length; i += BATCH_SIZE) {
+        const batch = skillsToSync.slice(i, i + BATCH_SIZE)
+        
+        for (const skill of batch) {
+          batchSyncProgress.value.currentSkill = skill.name
+          try {
+            await syncGitHubSkill(skill.id, force, false)
+          } catch (e) {
+            console.error(`Failed to sync ${skill.name}:`, e)
+          }
+          batchSyncProgress.value.current++
+          
+          if (i + BATCH_SIZE < skillsToSync.length) {
+            await new Promise(r => setTimeout(r, SYNC_DELAY_MS))
+          }
+        }
+      }
+      
+      ElMessage.success(`批量同步完成，共同步 ${skillsToSync.length} 个技能`)
+    } catch (e) {
+      console.error('Batch sync failed:', e)
+      ElMessage.error('批量同步失败')
+    } finally {
+      batchSyncing.value = false
+      batchSyncProgress.value = { current: 0, total: 0, currentSkill: '' }
+    }
+  }
+
+  // 启动定时同步任务
+  function startAutoSync() {
+    if (syncTimer) {
+      clearInterval(syncTimer)
+    }
+    
+    const checkAndSync = async () => {
+      const now = new Date()
+      const lastAutoSyncKey = 'lastAutoSync'
+      const lastAutoSync = localStorage.getItem(lastAutoSyncKey)
+      
+      if (lastAutoSync) {
+        const lastSyncDate = new Date(lastAutoSync)
+        const hoursSinceLastSync = (now.getTime() - lastSyncDate.getTime()) / (1000 * 60 * 60)
+        
+        if (hoursSinceLastSync < SYNC_INTERVAL_HOURS) {
+          return
+        }
+      }
+      
+      if (gitHubSkills.value.length > 0 && !batchSyncing.value) {
+        console.log('Starting scheduled GitHub sync...')
+        await batchSyncAllGitHubSkills(false)
+        localStorage.setItem(lastAutoSyncKey, now.toISOString())
+      }
+    }
+    
+    // 立即检查一次
+    checkAndSync()
+    
+    // 每小时检查一次是否需要同步
+    syncTimer = setInterval(checkAndSync, 60 * 60 * 1000)
+  }
+
+  // 停止定时同步任务
+  function stopAutoSync() {
+    if (syncTimer) {
+      clearInterval(syncTimer)
+      syncTimer = null
+    }
+  }
+
+  onUnmounted(() => {
+    stopAutoSync()
+  })
+
   return {
     skills,
     filteredSkills,
+    gitHubSkills,
     selectedSkill,
     searchQuery,
     selectedTag,
     loading,
     viewMode,
+    syncingSkillIds,
+    syncProgress,
+    batchSyncing,
+    batchSyncProgress,
     loadSkills,
     addSkill,
     updateSkill,
@@ -174,6 +317,11 @@ export const useSkillStore = defineStore('skill', () => {
     setSelectedTag,
     setViewMode,
     syncGitHubSkill,
-    isSyncing
+    batchSyncAllGitHubSkills,
+    isSyncing,
+    getSyncProgress,
+    loadAndSelectSkill,
+    startAutoSync,
+    stopAutoSync
   }
 })

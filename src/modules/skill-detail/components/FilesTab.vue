@@ -8,37 +8,31 @@
         <div v-if="skill.files && skill.files.length > 0">
           <div class="space-y-0.5">
             <template v-for="node in tree" :key="node._key">
-              <!-- 文件夹节点 -->
-              <div
-                v-if="node._isFolder"
-                @click="toggleFolder(node._key)"
-                class="tree-item cursor-pointer transition-colors text-sm flex items-center gap-1.5"
-                :style="{ paddingLeft: (node._depth * 16 + 8) + 'px', color: 'var(--text-muted)' }"
-              >
-                <span class="text-xs transition-transform duration-200" :style="{ transform: expandedFolders.has(node._key) ? 'rotate(90deg)' : 'rotate(0deg)' }">▶</span>
-                <span class="mr-0.5">{{ expandedFolders.has(node._key) ? '📂' : '📁' }}</span>
-                <span class="hover:text-[var(--neon-cyan)] transition-colors">{{ node.name }}</span>
-              </div>
-              <!-- 文件节点：仅当父文件夹展开或没有父文件夹时显示 -->
-              <div
-                v-else-if="isNodeVisible(node)"
-                @click="selectFile(node)"
-                class="tree-item cursor-pointer transition-colors text-sm flex items-center gap-1.5"
-                :style="{ paddingLeft: (node._depth * 16 + 24) + 'px', color: selectedPath === node.path ? 'var(--neon-cyan)' : 'var(--text-muted)' }"
-              >
-                <span class="mr-0.5">📄</span>
-                <span class="hover:text-[var(--neon-cyan)] transition-colors">{{ node.name }}</span>
-              </div>
+              <!-- 所有节点都需要检查可见性 -->
+              <template v-if="isNodeVisible(node)">
+                <!-- 文件夹节点 -->
+                <div
+                  v-if="node._isFolder"
+                  @click="toggleFolder(node._key)"
+                  class="tree-item cursor-pointer transition-colors text-sm flex items-center gap-1.5"
+                  :style="{ paddingLeft: (node._depth * 16 + 8) + 'px', color: 'var(--text-muted)' }"
+                >
+                  <span class="text-xs transition-transform duration-200" :style="{ transform: expandedFolders.includes(node._key) ? 'rotate(90deg)' : 'rotate(0deg)' }">▶</span>
+                  <span class="mr-0.5">{{ expandedFolders.includes(node._key) ? '📂' : '📁' }}</span>
+                  <span class="hover:text-[var(--neon-cyan)] transition-colors">{{ node.name }}</span>
+                </div>
+                <!-- 文件节点 -->
+                <div
+                  v-else
+                  @click="selectFile(node)"
+                  class="tree-item cursor-pointer transition-colors text-sm flex items-center gap-1.5"
+                  :style="{ paddingLeft: (node._depth * 16 + 24) + 'px', color: selectedPath === node.path ? 'var(--neon-cyan)' : 'var(--text-muted)' }"
+                >
+                  <span class="mr-0.5">📄</span>
+                  <span class="hover:text-[var(--neon-cyan)] transition-colors">{{ node.name }}</span>
+                </div>
+              </template>
             </template>
-          </div>
-          <!-- 展开/收起按钮 -->
-          <div class="flex justify-center gap-3 mt-4 pt-3 border-t" style="border-color: rgba(0,245,255,0.1)">
-            <el-button size="small" @click="expandAll" class="text-xs">
-              全部展开
-            </el-button>
-            <el-button size="small" @click="collapseAll" class="text-xs">
-              全部收起
-            </el-button>
           </div>
         </div>
         <div v-else class="text-center py-10" style="color: var(--text-muted)">
@@ -64,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive } from 'vue'
+import { computed, ref } from 'vue'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css'
 import type { Skill, SkillFile } from '@/types'
@@ -85,7 +79,7 @@ interface TreeNode {
 
 const props = defineProps<Props>()
 const selectedPath = ref<string | null>(null)
-const expandedFolders = reactive(new Set<string>())
+const expandedFolders = ref<string[]>([])
 
 function buildTree(files: SkillFile[]): TreeNode[] {
   const root: Record<string, any> = {}
@@ -139,19 +133,8 @@ function buildTree(files: SkillFile[]): TreeNode[] {
 
 const tree = computed(() => buildTree(props.skill.files))
 
-const allFolderKeys = computed(() => {
-  const keys: string[] = []
-  function collect(obj: Record<string, any>, parentPath = '') {
-    for (const key of Object.keys(obj)) {
-      if (obj[key]._isFolder) {
-        const fullPath = parentPath ? `${parentPath}/${key}` : key
-        keys.push(fullPath)
-        if (obj[key]._children) {
-          collect(obj[key]._children, fullPath)
-        }
-      }
-    }
-  }
+// 构建嵌套的树形结构用于递归查找子文件夹
+const folderTree = computed(() => {
   const root: Record<string, any> = {}
   for (const file of props.skill.files) {
     const parts = file.path.split('/')
@@ -159,19 +142,17 @@ const allFolderKeys = computed(() => {
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i]
       const isLast = i === parts.length - 1
-      if (!current[part]) {
-        current[part] = {
-          _isFolder: !isLast,
-          _children: isLast ? undefined : {}
-        }
-      }
+      const fullPath = parts.slice(0, i + 1).join('/')
+      
       if (!isLast) {
-        current = current[part]._children
+        if (!current[part]) {
+          current[part] = { children: {} }
+        }
+        current = current[part].children
       }
     }
   }
-  collect(root)
-  return keys
+  return root
 })
 
 const selectedFile = computed(() => {
@@ -190,35 +171,59 @@ const highlightedContent = computed(() => {
   return hljs.highlightAuto(selectedFile.value.content).value
 })
 
+// 递归收集所有子文件夹路径
+function collectChildFolders(folderObj: Record<string, any>, parentPath: string, result: string[]) {
+  for (const key of Object.keys(folderObj)) {
+    const childPath = parentPath ? `${parentPath}/${key}` : key
+    result.push(childPath)
+    if (folderObj[key].children) {
+      collectChildFolders(folderObj[key].children, childPath, result)
+    }
+  }
+}
+
 function toggleFolder(key: string) {
-  if (expandedFolders.has(key)) {
-    expandedFolders.delete(key)
+  const index = expandedFolders.value.indexOf(key)
+  if (index > -1) {
+    // 收起时：递归移除所有子文件夹
+    const childFolders: string[] = []
+    
+    // 在 folderTree 中找到当前节点并收集子文件夹
+    const parts = key.split('/')
+    let current = folderTree.value
+    let found = true
+    for (let i = 0; i < parts.length; i++) {
+      if (current[parts[i]]) {
+        if (i < parts.length - 1) {
+          current = current[parts[i]].children
+        } else {
+          // 找到了目标节点，收集子文件夹
+          collectChildFolders(current[parts[i]].children, key, childFolders)
+        }
+      } else {
+        found = false
+        break
+      }
+    }
+    
+    // 移除当前文件夹和所有子文件夹
+    const toRemove = new Set([key, ...childFolders])
+    expandedFolders.value = expandedFolders.value.filter(path => !toRemove.has(path))
   } else {
-    expandedFolders.add(key)
+    // 展开时：只添加当前文件夹
+    expandedFolders.value.push(key)
   }
-}
-
-function expandAll() {
-  for (const key of allFolderKeys.value) {
-    expandedFolders.add(key)
-  }
-}
-
-function collapseAll() {
-  expandedFolders.clear()
 }
 
 function isNodeVisible(node: TreeNode): boolean {
-  // 文件夹始终可见
-  if (node._isFolder) return true
-  // 根级文件始终可见
+  // 根节点总是可见
   if (node._depth === 0) return true
   // 检查所有父文件夹是否都展开
   const parts = node.path.split('/')
-  parts.pop()
+  parts.pop() // 移除当前节点
   for (let i = parts.length; i > 0; i--) {
     const parentKey = parts.slice(0, i).join('/')
-    if (!expandedFolders.has(parentKey)) {
+    if (!expandedFolders.value.includes(parentKey)) {
       return false
     }
   }

@@ -19,6 +19,13 @@
             <router-link to="/skills" class="text-[var(--text-muted)] hover:text-[var(--neon-cyan)] font-medium hover:border-b-2 hover:border-[var(--neon-cyan)] pb-1 transition-all">
               Skills
             </router-link>
+            <router-link 
+              v-if="authStore.isAuthenticated"
+              to="/admin" 
+              class="text-[var(--text-muted)] hover:text-[var(--neon-purple)] font-medium hover:border-b-2 hover:border-[var(--neon-purple)] pb-1 transition-all flex items-center gap-1">
+              <el-icon><Setting /></el-icon>
+              Admin
+            </router-link>
           </nav>
         </div>
         <div class="flex items-center">
@@ -31,4 +38,8 @@
 
 <script setup lang="ts">
 import ThemeToggle from '@/components/features/ThemeToggle.vue'
+import { Setting } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/authStore'
+
+const authStore = useAuthStore()
 </script>

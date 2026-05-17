@@ -356,10 +356,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useSkillStore } from '@/stores/skillStore'
 import { parseSkillFromZip, parseSkillFromMarkdown } from '@/utils/skillParser'
-import { fetchGitHubRepo, fetchGitHubRepoFiles, fetchGitHubFileContent, toGithubMeta } from '@/utils/githubClient'
+import { fetchGitHubRepo, fetchGitHubRepoFiles, fetchGitHubFileContent, toGithubMeta, fetchFullSkillFromGitHub } from '@/utils/githubClient'
 import type { Skill, SkillFile } from '@/types'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -444,44 +444,69 @@ const renderedMarkdown = computed(() => {
   return md.render(mdContent.value)
 })
 
-const mdPreview = computed(() => {
-  if (!mdContent.value.trim()) return null
-  const lines = mdContent.value.split('\n')
-  let name = ''
-  let description = ''
-  let version = ''
-  let author = ''
-  let tags: string[] = []
-  let currentSection = ''
+const mdPreviewRef = ref<any>(null)
+const mdPreview = computed(() => mdPreviewRef.value)
 
-  for (const line of lines) {
-    if (line.startsWith('# ')) {
-      name = line.substring(2).trim()
-    } else if (line.startsWith('## ')) {
-      currentSection = line.substring(3).trim().toLowerCase()
-    } else if (currentSection) {
-      const trimmedLine = line.trim()
-      if (trimmedLine) {
-        if (currentSection.includes('描述') || currentSection.includes('description')) {
-          description += line + '\n'
-        } else if (currentSection.includes('版本') || currentSection.includes('version')) {
-          const match = trimmedLine.match(/(\d+\.\d+\.\d+)/)
-          if (match) version = match[1]
-        } else if (currentSection.includes('作者') || currentSection.includes('author')) {
-          author = trimmedLine
-        } else if (currentSection.includes('标签') || currentSection.includes('tags')) {
-          if (trimmedLine.startsWith('- ')) {
-            tags.push(trimmedLine.substring(2).trim())
-          } else if (trimmedLine.includes(',')) {
-            tags.push(...trimmedLine.split(',').map(t => t.trim()))
+// 使用 watch 监听 mdContent 的变化，异步更新 mdPreview
+watch(mdContent, async (newContent) => {
+  if (!newContent.trim()) {
+    mdPreviewRef.value = null
+    return
+  }
+  
+  try {
+    // 使用我们在 skillParser 中写的正确的 frontmatter 解析函数
+    const parsed = await parseSkillFromMarkdown(newContent, 'preview.md')
+    mdPreviewRef.value = {
+      name: parsed.name,
+      description: parsed.description,
+      version: parsed.version,
+      author: parsed.author,
+      tags: parsed.tags
+    }
+  } catch (e) {
+    console.error('Failed to parse markdown preview:', e)
+    // 如果解析失败，回退到原来的简单方法
+    const lines = newContent.split('\n')
+    let name = ''
+    let description = ''
+    let version = ''
+    let author = ''
+    let tags: string[] = []
+    let currentSection = ''
+
+    for (const line of lines) {
+      if (line.startsWith('# ')) {
+        name = line.substring(2).trim()
+      } else if (line.startsWith('## ')) {
+        currentSection = line.substring(3).trim().toLowerCase()
+      } else if (currentSection) {
+        const trimmedLine = line.trim()
+        if (trimmedLine) {
+          if (currentSection.includes('描述') || currentSection.includes('description')) {
+            description += line + '\n'
+          } else if (currentSection.includes('版本') || currentSection.includes('version')) {
+            const match = trimmedLine.match(/(\d+\.\d+\.\d+)/)
+            if (match) version = match[1]
+          } else if (currentSection.includes('作者') || currentSection.includes('author')) {
+            author = trimmedLine
+          } else if (currentSection.includes('标签') || currentSection.includes('tags')) {
+            if (trimmedLine.startsWith('- ')) {
+              tags.push(trimmedLine.substring(2).trim())
+            } else if (trimmedLine.includes(',')) {
+              tags.push(...trimmedLine.split(',').map(t => t.trim()))
+            }
           }
         }
       }
     }
-  }
 
-  return { name, description: description.trim(), version, author, tags }
-})
+    mdPreviewRef.value = { name, description: description.trim(), version, author, tags }
+  }
+}, { immediate: true })
+
+// 当导入文件时也要触发更新
+
 
 const canImport = computed(() => {
   if (activeTab.value === 'zip') return !!zipPreview.value
@@ -577,7 +602,9 @@ async function fetchGitHub() {
     await loadGitHubFiles()
     ElMessage.success(`成功获取仓库: ${githubMeta.value.full_name}`)
   } catch (e) {
-    ElMessage.error('获取仓库信息失败，请检查 URL 是否正确')
+    console.error('GitHub fetch error:', e)
+    const errorMsg = e instanceof Error ? e.message : '获取仓库信息失败'
+    ElMessage.error(errorMsg)
   } finally {
     githubLoading.value = false
   }
@@ -631,79 +658,12 @@ async function doImport() {
         }]
       }
     } else if (activeTab.value === 'github' && githubMeta.value) {
-      // 只获取基础信息和最小文件，详细内容在详情页动态加载
-      const files: SkillFile[] = []
-      
-      // 只获取 README.md 用于描述提取
-      const fetchFiles = githubSelectedPath.value
-        ? (await fetchGitHubRepoFiles(githubUrl.value, githubSelectedPath.value, githubSelectedBranch.value))
-            .filter((f: any) => f.type === 'file' && f.name.toLowerCase() === 'readme.md')
-        : githubFiles.value.filter((f: any) => f.name.toLowerCase() === 'readme.md')
-      
-      let readmeContent = ''
-      for (const file of fetchFiles.slice(0, 1)) {
-        try {
-          const content = await fetchGitHubFileContent(githubUrl.value, file.path, githubSelectedBranch.value)
-          files.push({
-            path: file.path,
-            name: file.name,
-            content,
-            language: 'markdown'
-          })
-          readmeContent = content
-        } catch (e) {
-          console.error(`Failed to fetch ${file.path}:`, e)
-        }
-      }
-
-      const skillName = githubSelectedPath.value
-        ? githubSelectedPath.value.split('/').pop() || githubMeta.value.name
-        : githubMeta.value.name
-
-      // 尝试从 README.md 提取更丰富的描述
-      let description = githubMeta.value.description || 'GitHub Repository Skill'
-      if (readmeContent && (!githubMeta.value.description || githubMeta.value.description.length < 30)) {
-        const descLines: string[] = []
-        for (const line of readmeContent.split('\n').slice(1, 20)) {
-          if (line.startsWith('# ')) continue
-          if (line.startsWith('## ')) break
-          if (line.trim() && !line.startsWith('![') && !line.startsWith('<')) {
-            descLines.push(line.trim())
-          }
-        }
-        if (descLines.length > 0) {
-          description = descLines.join(' ').slice(0, 200)
-        }
-      }
-
-      const meta = toGithubMeta(
-        githubMeta.value,
+      // 使用优化的导入函数，支持子文件夹和增量更新
+      skill = await fetchFullSkillFromGitHub(
+        githubUrl.value,
         githubSelectedBranch.value || githubMeta.value.default_branch,
         githubSelectedPath.value || undefined
       )
-      const tags = ['github']
-      if (meta.language) tags.push(meta.language.toLowerCase())
-      tags.push(...meta.topics.slice(0, 5))
-
-      skill = {
-        id: crypto.randomUUID(),
-        name: skillName,
-        description,
-        version: '1.0.0',
-        author: githubMeta.value.full_name.split('/')[0],
-        tags,
-        source: {
-          type: 'github',
-          origin: githubMeta.value.html_url,
-          lastSync: new Date(),
-          lastRemoteUpdate: new Date(githubMeta.value.pushed_at),
-          githubMeta: meta,
-          isContentCached: false
-        },
-        files,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
     } else {
       throw new Error('请先提供有效的技能数据')
     }
@@ -714,7 +674,8 @@ async function doImport() {
     visible.value = false
   } catch (e) {
     console.error('添加失败:', e)
-    ElMessage.error(`添加失败: ${e instanceof Error ? e.message : '未知错误'}`)
+    const errorMsg = e instanceof Error ? e.message : '未知错误'
+    ElMessage.error(`添加失败: ${errorMsg}`)
   } finally {
     importing.value = false
   }

@@ -33,6 +33,8 @@ export interface SkillSource {
   lastRemoteUpdate?: Date
   githubMeta?: GithubMeta
   isContentCached?: boolean
+  // 文件 SHA 映射，用于增量更新
+  fileShas?: Record<string, string>
 }
 
 export interface Skill {

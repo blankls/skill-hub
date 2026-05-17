@@ -47,7 +47,7 @@
           <!-- 右侧：操作按钮组 -->
           <div class="flex flex-wrap gap-3 items-start">
             <el-button 
-              v-if="isGitHubSkill" 
+              v-if="isGitHubSkill && isFromAdmin" 
               @click="handleSync"
               :loading="syncing"
               class="flex items-center gap-2 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/50 hover:border-[var(--neon-cyan)] text-[var(--text-light)] rounded-xl"
@@ -191,23 +191,6 @@ onMounted(async () => {
     await skillStore.loadSkills()
   }
   loading.value = false
-  
-  // 如果是 GitHub 技能，自动尝试同步（不阻塞界面）
-  const currentSkill = skillStore.skills.find(s => s.id === route.params.id)
-  if (currentSkill?.source.type === 'github') {
-    // 先显示本地内容，后台进行同步
-    syncing.value = true
-    skillStore.syncGitHubSkill(currentSkill.id, false)
-      .then(() => {
-        // 同步完成后的静默处理
-      })
-      .catch(() => {
-        // 同步失败静默处理
-      })
-      .finally(() => {
-        syncing.value = false
-      })
-  }
 })
 </script>
 

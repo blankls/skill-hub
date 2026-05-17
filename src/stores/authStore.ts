@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 // 会话超时时间（毫秒）- 30分钟
 const SESSION_TIMEOUT = 30 * 60 * 1000
@@ -54,7 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    isAuthenticated: () => state.value.isAuthenticated,
+    isAuthenticated: computed(() => state.value.isAuthenticated),
     login,
     logout,
     checkSession

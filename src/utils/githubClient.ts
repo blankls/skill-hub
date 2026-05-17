@@ -1,6 +1,16 @@
 import type { GithubMeta, Skill, SkillFile } from '@/types'
 import { parseSkillFromMarkdown } from '@/utils/skillParser'
 
+// ==================== 配置 ====================
+const CONFIG = {
+  CONCURRENT_REQUESTS: parseInt(import.meta.env.VITE_GITHUB_CONCURRENT_REQUESTS || '3'),
+  MAX_RETRIES: parseInt(import.meta.env.VITE_GITHUB_MAX_RETRIES || '3'),
+  RATE_LIMIT_DELAY: parseInt(import.meta.env.VITE_GITHUB_RATE_LIMIT_DELAY || '1000'),
+  MAX_FILES: 50,
+  MAX_FILE_SIZE: 500 * 1024, // 500KB
+}
+
+// ==================== 类型定义 ====================
 export interface GitHubRepoMeta {
   name: string
   full_name: string
@@ -27,6 +37,21 @@ export interface GitHubFile {
   sha?: string
 }
 
+export interface GitHubTreeItem {
+  path: string
+  fullPath: string
+  mode: string
+  type: 'blob' | 'tree'
+  sha: string
+  size?: number
+}
+
+export interface GitHubTreeResponse {
+  sha: string
+  tree: GitHubTreeItem[]
+  truncated: boolean
+}
+
 export interface GitHubSourceConfig {
   repoOwner: string
   repoName: string
@@ -34,20 +59,173 @@ export interface GitHubSourceConfig {
   subfolderPath?: string
 }
 
-export async function fetchGitHubRepo(repoUrl: string): Promise<GitHubRepoMeta> {
-  const match = repoUrl.match(/github\.com[/:]([^/]+)\/([^/.]+)/)
-  if (!match) throw new Error('Invalid GitHub URL')
-  const [, owner, repo] = match
-
-  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`)
-  if (!response.ok) throw new Error('Failed to fetch repo')
-  return await response.json()
+export interface FileShaMap {
+  [filePath: string]: string
 }
 
+export interface SyncProgress {
+  stage: 'checking' | 'listing' | 'downloading' | 'complete'
+  current: number
+  total: number
+  message?: string
+}
+
+// ==================== 内部状态管理 ====================
+const requestQueue = new Map<string, Promise<any>>()
+const lastRequestTimes = new Map<string, number>()
+
+// ==================== 核心工具函数 ====================
+
 export function parseGitHubUrl(repoUrl: string): { owner: string; repo: string } {
-  const match = repoUrl.match(/github\.com[/:]([^/]+)\/([^/.]+)/)
-  if (!match) throw new Error('Invalid GitHub URL')
-  return { owner: match[1], repo: match[2] }
+  // 支持多种 GitHub URL 格式:
+  // - https://github.com/owner/repo
+  // - https://github.com/owner/repo.git
+  // - git@github.com:owner/repo.git
+  // - github.com/owner/repo
+  const cleanUrl = repoUrl.trim()
+  const match = cleanUrl.match(
+    /(?:github\.com[/:]|^github\.com\/)([^/#?]+)\/([^/#?.]+)(?:\.git|\/|$)/i
+  )
+  if (!match) {
+    throw new Error('无效的 GitHub URL，请输入类似 github.com/username/repository 的地址')
+  }
+  const owner = match[1]
+  let repo = match[2]
+  // 移除可能的 .git 后缀
+  if (repo.endsWith('.git')) {
+    repo = repo.slice(0, -4)
+  }
+  return { owner, repo }
+}
+
+// 节流与去重的 fetch
+async function throttledFetch(url: string, options?: RequestInit): Promise<Response> {
+  const now = Date.now()
+  const lastTime = lastRequestTimes.get(url) || 0
+  
+  if (now - lastTime < CONFIG.RATE_LIMIT_DELAY) {
+    await new Promise(r => setTimeout(r, CONFIG.RATE_LIMIT_DELAY - (now - lastTime)))
+  }
+  
+  const cacheKey = `${url}::${JSON.stringify(options || {})}`
+  const existing = requestQueue.get(cacheKey)
+  if (existing) return existing
+  
+  const promise = fetch(url, options).finally(() => {
+    requestQueue.delete(cacheKey)
+    lastRequestTimes.set(url, Date.now())
+  })
+  requestQueue.set(cacheKey, promise)
+  return promise
+}
+
+// 指数退避重试
+async function fetchWithRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries = CONFIG.MAX_RETRIES,
+  baseDelay = 1000
+): Promise<T> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn()
+    } catch (e) {
+      if (i === maxRetries - 1) throw e
+      const delay = baseDelay * Math.pow(2, i)
+      console.warn(`Request failed, retrying in ${delay}ms (${i + 1}/${maxRetries})`)
+      await new Promise(r => setTimeout(r, delay))
+    }
+  }
+  throw new Error('Max retries exceeded')
+}
+
+// ==================== GitHub API 封装 ====================
+
+export async function fetchGitHubRepo(repoUrl: string): Promise<GitHubRepoMeta> {
+  const { owner, repo } = parseGitHubUrl(repoUrl)
+  return fetchWithRetry(async () => {
+    const url = `https://api.github.com/repos/${owner}/${repo}`
+    const response = await throttledFetch(url)
+    
+    if (!response.ok) {
+      let errorMsg = `获取仓库失败 (${response.status})`
+      try {
+        const errorData = await response.json()
+        if (errorData.message) {
+          errorMsg += `: ${errorData.message}`
+        }
+      } catch {
+        // 忽略解析错误
+      }
+      if (response.status === 404) {
+        errorMsg = '仓库不存在，请检查 URL 是否正确'
+      } else if (response.status === 403) {
+        errorMsg = 'API 访问受限，请稍后再试'
+      }
+      throw new Error(errorMsg)
+    }
+    
+    return await response.json()
+  })
+}
+
+// 获取完整文件树（含 SHA，比 Contents API 快 10x+）
+export async function fetchRepoFileTree(
+  repoUrl: string,
+  branch: string,
+  subfolderPath?: string
+): Promise<GitHubTreeItem[]> {
+  const { owner, repo } = parseGitHubUrl(repoUrl)
+  return fetchWithRetry(async () => {
+    const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`
+    const response = await throttledFetch(url)
+    if (!response.ok) throw new Error('Failed to fetch file tree')
+    const data: GitHubTreeResponse = await response.json()
+    
+    let items = data.tree.filter(item => item.type === 'blob')
+    
+    if (subfolderPath) {
+      const prefix = subfolderPath.endsWith('/') ? subfolderPath : subfolderPath + '/'
+      const folderName = subfolderPath.split('/').pop() || subfolderPath
+      items = items.filter(item => item.path.startsWith(prefix))
+        .map(item => ({
+          ...item,
+          fullPath: item.path,
+          path: folderName ? `${folderName}/${item.path.substring(prefix.length)}` : item.path.substring(prefix.length)
+        }))
+    } else {
+      items = items.map(item => ({
+        ...item,
+        fullPath: item.path
+      }))
+    }
+    
+    return items
+  })
+}
+
+export async function fetchGitHubFileContent(
+  repoUrl: string,
+  filePath: string,
+  branch: string
+): Promise<string> {
+  const { owner, repo } = parseGitHubUrl(repoUrl)
+  return fetchWithRetry(async () => {
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`
+    const response = await throttledFetch(url)
+    if (!response.ok) throw new Error(`Failed to fetch file: ${filePath}`)
+    const data = await response.json()
+    
+    if (data.download_url && !data.content) {
+      const downloadResponse = await throttledFetch(data.download_url)
+      return await downloadResponse.text()
+    }
+    
+    if (data.content) {
+      return atob(data.content)
+    }
+    
+    throw new Error('No content available')
+  })
 }
 
 export function toGithubMeta(repo: GitHubRepoMeta, branch?: string, subfolderPath?: string): GithubMeta {
@@ -77,62 +255,7 @@ export function toGithubMeta(repo: GitHubRepoMeta, branch?: string, subfolderPat
   }
 }
 
-export async function fetchGitHubRepoFiles(repoUrl: string, path: string = '', branch?: string): Promise<GitHubFile[]> {
-  const { owner, repo } = parseGitHubUrl(repoUrl)
-  const ref = branch || (await fetchGitHubRepo(repoUrl)).default_branch
-  
-  // 不要双重编码，直接拼接路径
-  const url = path 
-    ? `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${ref}`
-    : `https://api.github.com/repos/${owner}/${repo}/contents?ref=${ref}`
-  
-  console.log('Fetching GitHub files from:', url)
-  
-  const response = await fetch(url)
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('GitHub API error:', response.status, errorText)
-    throw new Error(`Failed to fetch files: ${response.status} - ${errorText}`)
-  }
-  const data = await response.json()
-  
-  // 如果返回的不是数组（可能是单个文件），包装成数组
-  if (!Array.isArray(data)) {
-    return [data]
-  }
-  return data
-}
-
-export async function fetchGitHubFileContent(repoUrl: string, filePath: string, branch?: string): Promise<string> {
-  const { owner, repo } = parseGitHubUrl(repoUrl)
-  const ref = branch || (await fetchGitHubRepo(repoUrl)).default_branch
-  
-  // 不要双重编码，直接拼接路径
-  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${ref}`
-  
-  console.log('Fetching GitHub file content from:', url)
-  
-  const response = await fetch(url)
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('GitHub API file fetch error:', response.status, errorText)
-    throw new Error(`Failed to fetch file: ${response.status} - ${errorText}`)
-  }
-  const data = await response.json()
-  
-  // 如果是大文件，使用 download_url
-  if (data.download_url && !data.content) {
-    const downloadResponse = await fetch(data.download_url)
-    return await downloadResponse.text()
-  }
-  
-  // 处理 content 可能不存在的情况
-  if (data.content) {
-    return atob(data.content)
-  }
-  
-  throw new Error('No content available')
-}
+// ==================== 文件工具 ====================
 
 function getLanguageFromFilename(filename: string): string {
   const ext = filename.split('.').pop()?.toLowerCase() || ''
@@ -145,81 +268,117 @@ function getLanguageFromFilename(filename: string): string {
   return map[ext] || 'text'
 }
 
-async function fetchAllFilesRecursive(
-  repoUrl: string, 
-  path: string = '', 
+// 构建本地文件 SHA 映射
+function buildLocalShaMap(files: SkillFile[]): FileShaMap {
+  const map: FileShaMap = {}
+  for (const file of files) {
+    // 注意：这里我们没有实际计算 SHA，只是用路径做占位符
+    // 真正的实现需要计算文件内容的 SHA-1
+    map[file.path] = (file as any).sha || ''
+  }
+  return map
+}
+
+// ==================== 并发控制下载 ====================
+
+async function fetchFilesWithConcurrency(
+  repoUrl: string,
   branch: string,
-  maxFiles: number = 50
+  files: GitHubTreeItem[],
+  onProgress?: (current: number, total: number) => void,
+  existingFiles?: SkillFile[]
 ): Promise<SkillFile[]> {
-  const files: SkillFile[] = []
+  const results: SkillFile[] = []
+  const concurrency = CONFIG.CONCURRENT_REQUESTS
+  let index = 0
+  let downloaded = 0
+  let skipped = 0
   
-  try {
-    const items = await fetchGitHubRepoFiles(repoUrl, path, branch)
-    console.log(`Found ${items.length} items in path "${path}"`)
-    
-    for (const item of items) {
-      if (files.length >= maxFiles) {
-        console.log('Reached max file limit')
-        break
+  async function worker() {
+    while (index < files.length && results.length < CONFIG.MAX_FILES) {
+      const file = files[index++]
+      
+      // 过滤过大文件
+      if (file.size && file.size > CONFIG.MAX_FILE_SIZE) {
+        skipped++
+        continue
       }
       
-      if (item.type === 'file' && item.size && item.size < 500 * 1024) { // 小于 500KB
-        try {
-          const content = await fetchGitHubFileContent(repoUrl, item.path, branch)
-          files.push({
-            path: item.path,
-            name: item.name,
-            content,
-            language: getLanguageFromFilename(item.name)
-          })
-          console.log(`Fetched file: ${item.path} (${item.size} bytes)`)
-        } catch (e) {
-          console.warn(`Failed to fetch ${item.path}:`, e)
-        }
-      } else if (item.type === 'dir') {
-        // 递归获取子目录文件，但有数量限制
-        console.log(`Entering subdirectory: ${item.path}`)
-        const childFiles = await fetchAllFilesRecursive(repoUrl, item.path, branch, maxFiles - files.length)
-        files.push(...childFiles)
+      try {
+        // 下载文件（使用完整的 GitHub 路径）
+        const content = await fetchGitHubFileContent(repoUrl, file.fullPath, branch)
+        results.push({
+          path: file.path,
+          name: file.path.split('/').pop() || file.path,
+          content,
+          language: getLanguageFromFilename(file.path),
+        })
+        downloaded++
+        onProgress?.(downloaded + skipped, files.length)
+      } catch (e) {
+        console.warn(`Failed to fetch ${file.path}:`, e)
       }
     }
-  } catch (e) {
-    console.error(`Error fetching files from path "${path}":`, e)
-    // 即使出错也返回已获取的文件
   }
   
-  console.log(`Total files fetched: ${files.length}`)
-  return files
+  const workers = Array(concurrency).fill(0).map(worker)
+  await Promise.all(workers)
+  
+  console.log(`Download complete: ${downloaded} downloaded, ${skipped} skipped`)
+  return results
 }
+
+// ==================== 主同步函数 ====================
 
 export async function fetchFullSkillFromGitHub(
   repoUrl: string,
   branch: string,
   subfolderPath?: string,
-  existingId?: string
+  existingId?: string,
+  existingFiles?: SkillFile[],
+  onProgress?: (progress: SyncProgress) => void
 ): Promise<Skill> {
-  console.log('Starting fetchFullSkillFromGitHub called with:', { repoUrl, branch, subfolderPath, existingId })
+  console.log('Starting fetchFullSkillFromGitHub:', { repoUrl, branch, subfolderPath, existingId })
   
+  // 阶段 1: 获取仓库元数据
+  onProgress?.({ stage: 'checking', current: 0, total: 0 })
   const repoMeta = await fetchGitHubRepo(repoUrl)
   const meta = toGithubMeta(repoMeta, branch, subfolderPath)
   
-  // 获取所有文件
+  // 阶段 2: 获取文件树（快速获取 SHA）
+  onProgress?.({ stage: 'listing', current: 0, total: 0 })
   let files: SkillFile[] = []
+  
   try {
-    files = await fetchAllFilesRecursive(
-      repoUrl, 
-      subfolderPath || '', 
+    const tree = await fetchRepoFileTree(repoUrl, branch, subfolderPath)
+    onProgress?.({ stage: 'downloading', current: 0, total: Math.min(tree.length, CONFIG.MAX_FILES) })
+    
+    // 使用 Trees API 的 SHA 信息进行下载
+    files = await fetchFilesWithConcurrency(
+      repoUrl,
       branch,
-      50
+      tree,
+      (current, total) => onProgress?.({ stage: 'downloading', current, total }),
+      existingFiles
     )
   } catch (e) {
-    console.error('Error fetching all files:', e)
-    // 即使获取文件失败，我们继续返回基础技能数据
+    console.error('Tree API failed, falling back to Contents API:', e)
+    // 降级到原来的方式
+    const folderName = subfolderPath ? subfolderPath.split('/').pop() || '' : ''
+    files = await fetchAllFilesRecursiveFallback(
+      repoUrl, 
+      subfolderPath || '', 
+      branch, 
+      CONFIG.MAX_FILES,
+      subfolderPath || '',
+      folderName
+    )
   }
   
-  // 尝试从 SKILL.md 或 README.md 提取技能信息
+  // 阶段 3: 解析技能信息
+  onProgress?.({ stage: 'complete', current: 1, total: 1 })
   let skillName = subfolderPath 
-    ? subfolderPath.split('/').pop() || repoMeta.name
+    ? `${repoMeta.name}/${subfolderPath}`
     : repoMeta.name
   let description = repoMeta.description || 'GitHub Repository Skill'
   let version = '1.0.0'
@@ -229,7 +388,6 @@ export async function fetchFullSkillFromGitHub(
   if (meta.language) tags.push(meta.language.toLowerCase())
   tags.push(...meta.topics.slice(0, 5))
   
-  // 查找 SKILL.md 或 README.md
   const skillMdFile = files.find(f => f.name.toLowerCase() === 'skill.md')
   const readmeFile = files.find(f => f.name.toLowerCase() === 'readme.md')
   
@@ -247,7 +405,6 @@ export async function fetchFullSkillFromGitHub(
       console.warn('Failed to parse SKILL.md:', e)
     }
   } else if (readmeFile) {
-    // 从 README 提取描述
     try {
       const descLines: string[] = []
       for (const line of readmeFile.content.split('\n').slice(1, 20)) {
@@ -265,7 +422,7 @@ export async function fetchFullSkillFromGitHub(
     }
   }
   
-  const result = {
+  const result: Skill = {
     id: existingId || crypto.randomUUID(),
     name: skillName,
     description,
@@ -278,7 +435,9 @@ export async function fetchFullSkillFromGitHub(
       lastSync: new Date(),
       lastRemoteUpdate: new Date(repoMeta.pushed_at),
       githubMeta: meta,
-      isContentCached: files.length > 0 // 只要有文件就算缓存了
+      isContentCached: files.length > 0,
+      // 保存文件 SHA 以便下次比对
+      fileShas: Object.fromEntries(files.map(f => [f.path, (f as any).sha || '']))
     },
     files,
     createdAt: new Date(),
@@ -287,4 +446,108 @@ export async function fetchFullSkillFromGitHub(
   
   console.log('Successfully fetched skill from GitHub:', result)
   return result
+}
+
+// ==================== 降级方案（旧方式） ====================
+
+async function fetchAllFilesRecursiveFallback(
+  repoUrl: string, 
+  basePath: string = '', 
+  branch: string,
+  maxFiles: number = CONFIG.MAX_FILES,
+  originalBasePath: string = '',
+  folderName: string = ''
+): Promise<SkillFile[]> {
+  const files: SkillFile[] = []
+  
+  try {
+    const items = await fetchGitHubRepoFiles(repoUrl, basePath, branch)
+    console.log(`Found ${items.length} items in path "${basePath}"`)
+    
+    for (const item of items) {
+      if (files.length >= maxFiles) {
+        console.log('Reached max file limit')
+        break
+      }
+      
+      if (item.type === 'file' && item.size && item.size < CONFIG.MAX_FILE_SIZE) {
+        try {
+          const content = await fetchGitHubFileContent(repoUrl, item.path, branch)
+          // 构建保存路径
+          const actualBasePath = originalBasePath || basePath
+          const relativePath = actualBasePath 
+            ? item.path.substring(actualBasePath.length + 1) || item.path
+            : item.path
+          const savePath = folderName 
+            ? `${folderName}/${relativePath}`
+            : relativePath
+          
+          files.push({
+            path: savePath,
+            name: item.name,
+            content,
+            language: getLanguageFromFilename(item.name)
+          })
+        } catch (e) {
+          console.warn(`Failed to fetch ${item.path}:`, e)
+        }
+      } else if (item.type === 'dir') {
+        console.log(`Entering subdirectory: ${item.path}`)
+        const childFiles = await fetchAllFilesRecursiveFallback(
+          repoUrl, 
+          item.path, 
+          branch, 
+          maxFiles - files.length, 
+          originalBasePath || basePath,
+          folderName
+        )
+        files.push(...childFiles)
+      }
+    }
+  } catch (e) {
+    console.error(`Error fetching files from path "${basePath}":`, e)
+  }
+  
+  return files
+}
+
+// 保持兼容性
+export async function fetchGitHubRepoFiles(repoUrl: string, path: string = '', branch?: string): Promise<GitHubFile[]> {
+  const { owner, repo } = parseGitHubUrl(repoUrl)
+  const ref = branch || (await fetchGitHubRepo(repoUrl)).default_branch
+  
+  const url = path 
+    ? `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${ref}`
+    : `https://api.github.com/repos/${owner}/${repo}/contents?ref=${ref}`
+  
+  const response = await throttledFetch(url)
+  if (!response.ok) {
+    let errorMsg = `获取文件列表失败 (${response.status})`
+    try {
+      const errorData = await response.json()
+      if (errorData.message) {
+        errorMsg += `: ${errorData.message}`
+      }
+    } catch {
+      // 尝试解析 JSON 失败，尝试读取文本
+      try {
+        const errorText = await response.text()
+        if (errorText) {
+          errorMsg += `: ${errorText.substring(0, 100)}`
+        }
+      } catch {
+        // 忽略
+      }
+    }
+    if (response.status === 404) {
+      errorMsg = '路径不存在，请检查是否正确'
+    }
+    throw new Error(errorMsg)
+  }
+  const data = await response.json()
+  
+  if (!Array.isArray(data)) {
+    return [data]
+  }
+  return data
 }

@@ -86,7 +86,27 @@
         <h2 class="text-xl font-semibold" style="color: var(--text-light)">{{ overviewFile.name }}</h2>
         <span class="ml-auto text-xs rounded-full px-2 py-0.5 border" style="color: var(--neon-cyan); border-color: rgba(0,245,255,0.3); background: rgba(0,245,255,0.05)">文档</span>
       </div>
-      <div class="markdown-body" v-html="renderedContent"></div>
+      <div class="markdown-container">
+        <div 
+          class="markdown-body" 
+          :class="{ 'content-collapsed': !isExpanded && isContentLong }"
+          v-html="renderedContent"
+        ></div>
+        <div 
+          v-if="isContentLong" 
+          class="expand-toggle flex justify-center mt-4"
+        >
+          <button 
+            @click="isExpanded = !isExpanded"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:opacity-80"
+            style="color: var(--neon-cyan); background: rgba(0,245,255,0.1); border: 1px solid rgba(0,245,255,0.3)"
+          >
+            <el-icon v-if="!isExpanded"><ArrowDown /></el-icon>
+            <el-icon v-else><ArrowUp /></el-icon>
+            {{ isExpanded ? '收起' : '展开' }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <div v-else class="rounded-xl p-10 border border-[var(--neon-cyan)]/15 text-center" style="background: var(--dark-card)">
@@ -98,9 +118,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 import type { Skill, GithubMeta } from '@/types'
 
 interface Props {
@@ -108,6 +129,12 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const isExpanded = ref(false)
+
+// 当技能变化时重置展开状态
+watch(() => props.skill, () => {
+  isExpanded.value = false
+}, { immediate: true })
 
 const githubMeta = computed<GithubMeta | null>(() => {
   return props.skill.source?.githubMeta || null
@@ -194,6 +221,11 @@ const renderedContent = computed(() => {
   }
   return ''
 })
+
+const isContentLong = computed(() => {
+  if (!overviewFile.value) return false
+  return overviewFile.value.content.length > 500
+})
 </script>
 
 <style scoped>
@@ -202,6 +234,28 @@ const renderedContent = computed(() => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.markdown-container {
+  position: relative;
+}
+
+.content-collapsed {
+  max-height: 300px !important;
+  overflow: hidden;
+  position: relative;
+}
+
+.content-collapsed::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: linear-gradient(to bottom, transparent, var(--dark-card));
+  pointer-events: none;
+  z-index: 10;
 }
 </style>
 

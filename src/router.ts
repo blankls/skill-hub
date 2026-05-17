@@ -39,19 +39,10 @@ const router = createRouter({
   }
 })
 
-// 路由守卫
+// 路由守卫 - 不立即重定向，让组件自己处理登录
 router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore()
-
-  if (to.meta.requiresAuth) {
-    if (authStore.checkSession()) {
-      next()
-    } else {
-      next('/')
-    }
-  } else {
-    next()
-  }
+  // 对于需要认证的路由，先放行让组件显示登录弹窗
+  next()
 })
 
 export default router

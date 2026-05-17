@@ -1,6 +1,12 @@
 <template>
   <div class="min-h-screen bg-[var(--dark-bg)]">
-    <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- 未登录状态：什么都不显示，只处理登录流程 -->
+    <div v-if="!isAuthenticated" class="min-h-screen flex items-center justify-center">
+      <!-- 登录过程在 script 中处理，不显示任何内容 -->
+    </div>
+    
+    <!-- 已登录状态：显示管理页面 -->
+    <div v-else class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
@@ -31,7 +37,7 @@
 
       <!-- 统计卡片 + 视图切换 同行 -->
       <div class="flex items-center gap-6 mb-6 flex-wrap">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 min-w-0">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1 min-w-0">
           <div class="bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 rounded-xl p-4 flex items-center gap-4">
             <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[var(--neon-cyan)]/20 to-[var(--neon-cyan)]/5 flex items-center justify-center">
               <span class="text-2xl">🧠</span>
@@ -52,16 +58,29 @@
           </div>
           <div class="bg-[var(--dark-card)] border border-[var(--neon-yellow)]/30 rounded-xl p-4 flex items-center gap-4">
             <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[var(--neon-yellow)]/20 to-[var(--neon-yellow)]/5 flex items-center justify-center">
-              <span class="text-2xl">📁</span>
+              <span class="text-2xl">📄</span>
             </div>
             <div>
               <div class="text-2xl font-bold text-[var(--neon-yellow)] font-mono">{{ totalFiles }}</div>
               <div class="text-sm text-[var(--text-muted)]">文件总数</div>
             </div>
           </div>
+          <div class="bg-[var(--dark-card)] border border-[var(--neon-green)]/30 rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:bg-[var(--neon-green)]/5 transition-all duration-300" @click="handleQuickSync">
+            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[var(--neon-green)]/20 to-[var(--neon-green)]/5 flex items-center justify-center">
+              <el-icon v-if="skillStore.batchSyncing" class="text-2xl animate-spin text-[var(--neon-green)]"><Loading /></el-icon>
+              <span v-else class="text-2xl">🐙</span>
+            </div>
+            <div class="flex-1">
+              <div class="text-2xl font-bold text-[var(--neon-green)] font-mono">{{ gitHubSkillCount }}</div>
+              <div class="text-sm text-[var(--text-muted)]">GitHub 技能</div>
+            </div>
+            <div class="text-[var(--neon-green)] text-xs opacity-70">
+              点击同步
+            </div>
+          </div>
         </div>
 
-        <div class="flex items-center gap-1 p-1 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/20 rounded-lg shrink-0">
+        <div class="flex flex-col items-center gap-1 p-1 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/20 rounded-lg shrink-0">
           <button
             @click="viewMode = 'grid'"
             :class="[
@@ -84,6 +103,22 @@
           >
             <el-icon class="text-xl"><List /></el-icon>
           </button>
+        </div>
+      </div>
+
+      <!-- 同步进度提示 -->
+      <div v-if="skillStore.batchSyncing" class="mb-6 p-4 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 rounded-xl">
+        <div class="flex items-center gap-3">
+          <el-icon class="animate-spin text-[var(--neon-cyan)]"><Loading /></el-icon>
+          <div class="flex-1">
+            <div class="text-[var(--text-light)]">正在同步 GitHub 技能</div>
+            <div class="text-sm text-[var(--text-muted)] mt-1">
+              {{ skillStore.batchSyncProgress.current }}/{{ skillStore.batchSyncProgress.total }}
+              <span v-if="skillStore.batchSyncProgress.currentSkill" class="text-[var(--neon-cyan)] ml-2">
+                {{ skillStore.batchSyncProgress.currentSkill }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -120,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useSkillStore } from '@/stores/skillStore'
 import { useAuthStore } from '@/stores/authStore'
 import SkillImportModal from '@/components/features/SkillImportModal.vue'
@@ -136,6 +171,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const skillStore = useSkillStore()
 const authStore = useAuthStore()
+const isAuthenticated = ref(false)
 const showImport = ref(false)
 const viewMode = ref<'grid' | 'list'>('grid')
 const showEdit = ref(false)
@@ -149,6 +185,10 @@ const totalTags = computed(() => {
 
 const totalFiles = computed(() => {
   return skillStore.skills.reduce((sum, s) => sum + (s.files?.length || 0), 0)
+})
+
+const gitHubSkillCount = computed(() => {
+  return skillStore.gitHubSkills.length
 })
 
 function openCreateSkill() {
@@ -182,11 +222,18 @@ async function handleLogout() {
       type: 'warning'
     })
     authStore.logout()
+    isAuthenticated.value = false
+    skillStore.stopAutoSync()
     router.replace('/')
     ElMessage.success('已安全登出')
   } catch {
     // 用户取消
   }
+}
+
+async function handleQuickSync() {
+  if (skillStore.batchSyncing) return
+  await skillStore.batchSyncAllGitHubSkills(false)
 }
 
 onMounted(async () => {
@@ -197,22 +244,27 @@ onMounted(async () => {
         confirmButtonText: '确认',
         cancelButtonText: '取消',
         inputValidator(val) {
-          if (!val) return '密码不能为空'
+          if (!val) return '请输入密码'
+          const success = authStore.login(val)
+          if (!success) return '密码错误'
           return true
         }
       })
-      if (authStore.login(value)) {
-        ElMessage.success('验证通过')
-      } else {
-        ElMessage.error('密码错误')
-        router.replace('/')
-        return
-      }
+      isAuthenticated.value = true
     } catch {
+      // 用户取消，返回首页
       router.replace('/')
       return
     }
+  } else {
+    isAuthenticated.value = true
   }
-  skillStore.loadSkills()
+  await skillStore.loadSkills()
+  // 启动自动同步任务
+  skillStore.startAutoSync()
+})
+
+onUnmounted(() => {
+  skillStore.stopAutoSync()
 })
 </script>

@@ -1,5 +1,5 @@
 {
-  "id": "5a7d345e-8b1c-47fe-8534-2864833ed1a3",
+  "id": "dfe0ad0a-de99-4e48-beb7-6512f610610a",
   "name": "qa",
   "description": "Systematically QA test a web application and fix bugs found. Runs QA testing,\n  then iteratively fixes bugs in source code, committing each fix atomically and\n  re-verifying. Use when asked to \"qa\", \"QA\", \"test this site\", \"find bugs\",\n  \"test and fix\", or \"fix what's broken\".\n  Proactively suggest when the user says a feature is ready for testing\n  or asks \"does this work?\". Three tiers: Quick (critical/high only),\n  Standard (+ medium), Exhaustive (+ cosmetic). Produces before/after health scores,\n  fix evidence, and a ship-readiness summary. For report-only mode, use /qa-only. (gstack)\n  Voice triggers (speech-to-text aliases): \"quality check\", \"test the app\", \"run QA\".",
   "version": "2.0.0",
@@ -11,7 +11,7 @@
   "source": {
     "type": "github",
     "origin": "https://github.com/garrytan/gstack",
-    "lastSync": "2026-05-17T02:12:53.040Z",
+    "lastSync": "2026-05-17T08:32:01.000Z",
     "lastRemoteUpdate": "2026-05-16T21:17:34.000Z",
     "githubMeta": {
       "full_name": "garrytan/gstack",
@@ -20,19 +20,25 @@
       "repoUrl": "https://github.com/garrytan/gstack",
       "subfolderUrl": "https://github.com/garrytan/gstack/tree/main/qa",
       "branch": "main",
-      "stars": 98063,
-      "forks": 14594,
-      "watchers": 600,
+      "stars": 98213,
+      "forks": 14614,
+      "watchers": 601,
       "language": "TypeScript",
       "license": "MIT",
       "topics": [],
       "createdAt": "2026-03-11T21:22:45Z",
-      "updatedAt": "2026-05-17T02:03:17Z",
+      "updatedAt": "2026-05-17T08:31:19Z",
       "repoOwner": "garrytan",
       "repoName": "gstack",
       "subfolderPath": "qa"
     },
-    "isContentCached": true
+    "isContentCached": true,
+    "fileShas": {
+      "qa/SKILL.md": "",
+      "qa/SKILL.md.tmpl": "",
+      "qa/references/issue-taxonomy.md": "",
+      "qa/templates/qa-report-template.md": ""
+    }
   },
   "files": [
     {
@@ -60,6 +66,6 @@
       "language": "markdown"
     }
   ],
-  "createdAt": "2026-05-17T01:10:06.790Z",
-  "updatedAt": "2026-05-17T02:12:53.040Z"
+  "createdAt": "2026-05-17T08:32:01.000Z",
+  "updatedAt": "2026-05-17T08:32:01.000Z"
 }
