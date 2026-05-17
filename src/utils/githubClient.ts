@@ -74,6 +74,16 @@ export interface SyncProgress {
 const requestQueue = new Map<string, Promise<any>>()
 const lastRequestTimes = new Map<string, number>()
 
+// ==================== 仓库级缓存 ====================
+// 同一仓库的多个技能共享这些缓存，大幅减少 API 调用
+interface RepoCacheEntry {
+  repoMeta: GitHubRepoMeta
+  fullTree: GitHubTreeItem[]
+  fetchedAt: number
+}
+const repoCache = new Map<string, RepoCacheEntry>()
+const REPO_CACHE_TTL = 5 * 60 * 1000 // 5 分钟内复用缓存
+
 // ==================== 核心工具函数 ====================
 
 export function parseGitHubUrl(repoUrl: string): { owner: string; repo: string } {
@@ -446,6 +456,248 @@ export async function fetchFullSkillFromGitHub(
   
   console.log('Successfully fetched skill from GitHub:', result)
   return result
+}
+
+// ==================== 仓库缓存管理 ====================
+
+function buildCacheKey(repoUrl: string, branch: string): string {
+  return `${repoUrl}#${branch}`
+}
+
+async function getRepoCache(repoUrl: string, branch: string): Promise<RepoCacheEntry> {
+  const key = buildCacheKey(repoUrl, branch)
+  const cache = repoCache.get(key)
+  
+  if (cache) {
+    const age = Date.now() - cache.fetchedAt
+    if (age < REPO_CACHE_TTL) {
+      return cache
+    }
+    // TTL 已过，需要重新验证（检查 push 时间）
+    try {
+      const latestMeta = await fetchGitHubRepo(repoUrl)
+      if (latestMeta.pushed_at === cache.repoMeta.pushed_at) {
+        // 仓库没变化，更新 fetchedAt 并继续使用缓存
+        cache.fetchedAt = Date.now()
+        return cache
+      }
+    } catch {
+      // 验证失败，降级使用旧缓存
+      return cache
+    }
+  }
+  
+  // 无缓存或已过期 → 重新拉取
+  const [repoMeta, fullTree] = await Promise.all([
+    fetchGitHubRepo(repoUrl),
+    fetchRepoFileTree(repoUrl, branch)
+  ])
+  
+  const entry: RepoCacheEntry = {
+    repoMeta,
+    fullTree,
+    fetchedAt: Date.now()
+  }
+  repoCache.set(key, entry)
+  return entry
+}
+
+// ==================== 同仓多技能批量同步 ====================
+
+/**
+ * 高效同步同一个仓库下的多个技能
+ * - 仓库元数据和文件树只拉取一次
+ * - 按 subfolderPath 过滤各自文件
+ * - 支持进度回调
+ */
+export async function fetchSkillsFromSameRepo(
+  repoUrl: string,
+  branch: string,
+  skillConfigs: Array<{
+    id: string
+    name: string
+    subfolderPath?: string
+    existingFiles?: SkillFile[]
+    force?: boolean
+  }>,
+  onSkillProgress?: (skillId: string, progress: SyncProgress) => void,
+  onRepoProgress?: (current: number, total: number) => void
+): Promise<Skill[]> {
+  const total = skillConfigs.length
+  let completed = 0
+  
+  console.log(`Syncing ${total} skill(s) from same repo: ${repoUrl}`)
+  
+  // 阶段 1: 获取仓库元数据和完整文件树（仅一次）
+  onRepoProgress?.(0, total)
+  let repoMeta: GitHubRepoMeta
+  let fullTree: GitHubTreeItem[]
+  
+  try {
+    const cache = await getRepoCache(repoUrl, branch)
+    repoMeta = cache.repoMeta
+    fullTree = cache.fullTree
+  } catch {
+    // 直接拉取
+    [repoMeta, fullTree] = await Promise.all([
+      fetchGitHubRepo(repoUrl),
+      fetchRepoFileTree(repoUrl, branch)
+    ])
+  }
+  
+  const meta = toGithubMeta(repoMeta, branch)
+  
+  // 阶段 2: 并行处理每个技能
+  const results: Skill[] = []
+  
+  for (const config of skillConfigs) {
+    const skillId = config.id
+    onSkillProgress?.(skillId, { stage: 'checking', current: 0, total: 0 })
+    
+    // 检查是否需要更新（非强制模式）
+    if (!config.force) {
+      const lastRemoteUpdate = new Date(repoMeta.pushed_at)
+      const now = Date.now()
+      // 如果 push 时间没变，说明仓库没更新
+      // 注意：这里不逐个 skill 判断，统一用仓库 push 时间
+      if (repoMeta.pushed_at) {
+        onSkillProgress?.(skillId, { stage: 'checking', current: 0, total: 0 })
+        // 留给 skillStore 层做更精细的判断
+      }
+    }
+    
+    // 从完整树中过滤出该技能的文件
+    let skillFiles: GitHubTreeItem[] = []
+    if (config.subfolderPath) {
+      const prefix = config.subfolderPath.endsWith('/') ? config.subfolderPath : config.subfolderPath + '/'
+      const folderName = config.subfolderPath.split('/').pop() || config.subfolderPath
+      skillFiles = fullTree
+        .filter(item => item.path.startsWith(prefix))
+        .map(item => ({
+          ...item,
+          fullPath: item.path,
+          path: folderName ? `${folderName}/${item.path.substring(prefix.length)}` : item.path.substring(prefix.length)
+        }))
+    } else {
+      skillFiles = fullTree.map(item => ({
+        ...item,
+        fullPath: item.path
+      }))
+    }
+    
+    // 阶段 3: 下载文件
+    const totalFiles = Math.min(skillFiles.length, CONFIG.MAX_FILES)
+    onSkillProgress?.(skillId, { stage: 'downloading', current: 0, total: totalFiles })
+    
+    let files: SkillFile[]
+    try {
+      files = await fetchFilesWithConcurrency(
+        repoUrl,
+        branch,
+        skillFiles,
+        (current, total) => {
+          onSkillProgress?.(skillId, { stage: 'downloading', current, total })
+        },
+        config.existingFiles
+      )
+    } catch (e) {
+      console.error(`Failed to download files for ${config.name}:`, e)
+      files = []
+    }
+    
+    // 阶段 4: 构建 Skill 对象
+    onSkillProgress?.(skillId, { stage: 'complete', current: 1, total: 1 })
+    
+    let skillName = config.subfolderPath
+      ? `${repoMeta.name}/${config.subfolderPath}`
+      : repoMeta.name
+    let description = repoMeta.description || 'GitHub Repository Skill'
+    let version = '1.0.0'
+    let author = meta.repoOwner
+    let tags: string[] = ['github']
+    
+    if (meta.language) tags.push(meta.language.toLowerCase())
+    tags.push(...meta.topics.slice(0, 5))
+    
+    const skillMdFile = files.find(f => f.name.toLowerCase() === 'skill.md')
+    const readmeFile = files.find(f => f.name.toLowerCase() === 'readme.md')
+    
+    if (skillMdFile) {
+      try {
+        const parsedSkill = await parseSkillFromMarkdown(skillMdFile.content, skillMdFile.name)
+        skillName = parsedSkill.name || skillName
+        description = parsedSkill.description || description
+        version = parsedSkill.version || version
+        author = parsedSkill.author || author
+        if (parsedSkill.tags.length > 0) {
+          tags = Array.from(new Set([...tags, ...parsedSkill.tags]))
+        }
+      } catch (e) {
+        console.warn('Failed to parse SKILL.md:', e)
+      }
+    } else if (readmeFile) {
+      try {
+        const descLines: string[] = []
+        for (const line of readmeFile.content.split('\n').slice(1, 20)) {
+          if (line.startsWith('# ')) continue
+          if (line.startsWith('## ')) break
+          if (line.trim() && !line.startsWith('![') && !line.startsWith('<')) {
+            descLines.push(line.trim())
+          }
+        }
+        if (descLines.length > 0) {
+          description = descLines.join(' ').slice(0, 200)
+        }
+      } catch (e) {
+        console.warn('Failed to parse README.md:', e)
+      }
+    }
+    
+    const result: Skill = {
+      id: config.id || crypto.randomUUID(),
+      name: skillName,
+      description,
+      version,
+      author,
+      tags,
+      source: {
+        type: 'github',
+        origin: repoUrl,
+        lastSync: new Date(),
+        lastRemoteUpdate: new Date(repoMeta.pushed_at),
+        githubMeta: {
+          ...meta,
+          subfolderPath: config.subfolderPath
+        },
+        isContentCached: files.length > 0,
+        fileShas: Object.fromEntries(files.map(f => [f.path, (f as any).sha || '']))
+      },
+      files,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    results.push(result)
+    completed++
+    onRepoProgress?.(completed, total)
+  }
+  
+  return results
+}
+
+/**
+ * 清除仓库缓存（用于强制刷新）
+ */
+export function clearRepoCache(repoUrl?: string) {
+  if (repoUrl) {
+    for (const [key] of repoCache) {
+      if (key.startsWith(repoUrl)) {
+        repoCache.delete(key)
+      }
+    }
+  } else {
+    repoCache.clear()
+  }
 }
 
 // ==================== 降级方案（旧方式） ====================

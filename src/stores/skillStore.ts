@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, toRaw, onUnmounted } from 'vue'
 import type { Skill } from '@/types'
 import { db } from '@/utils/db'
-import { fetchFullSkillFromGitHub, fetchGitHubRepo, type SyncProgress } from '@/utils/githubClient'
+import { fetchFullSkillFromGitHub, fetchSkillsFromSameRepo, fetchGitHubRepo, clearRepoCache, type SyncProgress } from '@/utils/githubClient'
 import { ElMessage } from 'element-plus'
 
 // 定时任务配置
@@ -200,7 +200,7 @@ export const useSkillStore = defineStore('skill', () => {
     }
   }
 
-  // 批量同步所有 GitHub 技能
+  // 批量同步所有 GitHub 技能（按仓库分组高效同步）
   async function batchSyncAllGitHubSkills(force: boolean = false) {
     if (batchSyncing.value) {
       ElMessage.warning('已有同步任务进行中')
@@ -220,25 +220,97 @@ export const useSkillStore = defineStore('skill', () => {
       currentSkill: ''
     }
 
+    let completedCount = 0
+
+    function updateProgress(skillName?: string) {
+      batchSyncProgress.value = {
+        current: completedCount,
+        total: skillsToSync.length,
+        currentSkill: skillName || ''
+      }
+    }
+
     try {
-      for (let i = 0; i < skillsToSync.length; i += BATCH_SIZE) {
-        const batch = skillsToSync.slice(i, i + BATCH_SIZE)
-        
-        for (const skill of batch) {
-          batchSyncProgress.value.currentSkill = skill.name
+      if (force) {
+        clearRepoCache()
+      }
+
+      // 按 repoUrl 分组
+      const repoGroups = new Map<string, Skill[]>()
+      for (const skill of skillsToSync) {
+        const repoUrl = skill.source.githubMeta?.repoUrl
+        if (!repoUrl) continue
+        const existing = repoGroups.get(repoUrl)
+        if (existing) {
+          existing.push(skill)
+        } else {
+          repoGroups.set(repoUrl, [skill])
+        }
+      }
+
+      for (const [repoUrl, groupSkills] of repoGroups) {
+        if (groupSkills.length === 1) {
+          // 单技能仓库 → 走原来的流程
+          const skill = groupSkills[0]
+          updateProgress(skill.name)
           try {
             await syncGitHubSkill(skill.id, force, false)
           } catch (e) {
             console.error(`Failed to sync ${skill.name}:`, e)
           }
-          batchSyncProgress.value.current++
-          
-          if (i + BATCH_SIZE < skillsToSync.length) {
-            await new Promise(r => setTimeout(r, SYNC_DELAY_MS))
+          completedCount++
+          updateProgress()
+        } else {
+          // 多技能同仓 → 高效批量同步
+          const meta = groupSkills[0].source.githubMeta!
+          const branch = meta.branch
+
+          const skillConfigs = groupSkills.map(s => ({
+            id: s.id,
+            name: s.name,
+            subfolderPath: s.source.githubMeta?.subfolderPath,
+            existingFiles: s.files,
+            force
+          }))
+
+          try {
+            const updatedSkills = await fetchSkillsFromSameRepo(
+              repoUrl,
+              branch,
+              skillConfigs,
+              (skillId, progress) => {
+                syncProgress.value.set(skillId, progress)
+              }
+            )
+
+            for (const updatedSkill of updatedSkills) {
+              const original = groupSkills.find(s => s.id === updatedSkill.id)
+              if (original) {
+                updatedSkill.createdAt = original.createdAt
+                await updateSkill(updatedSkill)
+              }
+              completedCount++
+              updateProgress(updatedSkill.name)
+            }
+          } catch (e) {
+            console.error(`Failed to batch sync from repo ${repoUrl}:`, e)
+            // 降级：逐个同步
+            for (const skill of groupSkills) {
+              updateProgress(skill.name)
+              try {
+                await syncGitHubSkill(skill.id, force, false)
+              } catch (e2) {
+                console.error(`Failed to sync ${skill.name}:`, e2)
+              }
+              completedCount++
+            }
+            updateProgress()
           }
         }
       }
-      
+
+      completedCount = skillsToSync.length
+      updateProgress()
       ElMessage.success(`批量同步完成，共同步 ${skillsToSync.length} 个技能`)
     } catch (e) {
       console.error('Batch sync failed:', e)
