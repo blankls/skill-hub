@@ -1,18 +1,21 @@
 <template>
   <div class="min-h-screen bg-[var(--dark-bg)]">
-    <!-- 顶部工具栏（类似技能列表页面） -->
-    <div class="toolbar-container bg-[var(--dark-card)] border-b border-[var(--neon-cyan)]/20 sticky top-0 z-20">
-      <div class="max-w-[95rem] mx-auto px-6 py-4">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-          <!-- 标题 -->
-          <div>
-            <h1 class="text-xl font-bold text-[var(--neon-cyan)] font-mono flex items-center gap-3">
-              <span class="text-2xl">⚙️</span>
-              > 管理面板
-            </h1>
-            <p class="text-sm text-[var(--text-muted)] font-mono">技能导入与管理</p>
-          </div>
-          
+    <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <!-- Header -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-[var(--text-light)]">技能管理</h1>
+          <p class="mt-1 text-[var(--text-muted)]">管理技能库中的技能，添加、编辑和删除技能</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <!-- 登出按钮 -->
+          <button
+            @click="handleLogout"
+            class="px-4 py-2.5 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 text-[var(--text-light)] font-medium rounded-lg transition-all duration-300 hover:bg-[var(--neon-cyan)]/10 hover:border-[var(--neon-cyan)] flex items-center gap-2"
+          >
+            <el-icon><SwitchButton /></el-icon>
+            登出
+          </button>
           <!-- 添加技能按钮 -->
           <div class="flex items-center gap-3">
             <button
@@ -25,10 +28,7 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- 内容区域 -->
-    <div class="max-w-[95rem] mx-auto p-6">
       <!-- 统计卡片 + 视图切换 同行 -->
       <div class="flex items-center gap-6 mb-6 flex-wrap">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 min-w-0">
@@ -87,20 +87,14 @@
         </div>
       </div>
 
-      <!-- 加载状态 -->
-      <div v-if="skillStore.loading" class="text-center py-20">
-        <el-icon class="text-5xl text-[var(--neon-cyan)] animate-spin"><Loading /></el-icon>
-        <p class="mt-6 text-[var(--text-muted)] text-lg">加载技能中...</p>
-      </div>
-
-      <!-- 空状态 -->
-      <div v-else-if="skillStore.skills.length === 0" class="text-center py-20">
-        <div class="text-7xl mb-6">📭</div>
-        <h3 class="text-xl font-bold text-[var(--text-light)] mb-3">暂无技能</h3>
-        <p class="text-[var(--text-muted)] mb-6">点击上方按钮导入你的第一个技能</p>
-      </div>
-
       <!-- 技能列表 -->
+      <div v-if="skillStore.loading" class="flex items-center justify-center py-20">
+        <el-icon class="animate-spin text-4xl text-[var(--neon-cyan)]"><Loading /></el-icon>
+      </div>
+      <div v-else-if="skillStore.skills.length === 0" class="text-center py-20">
+        <div class="text-4xl mb-4">📦</div>
+        <p class="text-[var(--text-muted)]">暂无技能，点击上方「添加技能」开始</p>
+      </div>
       <div v-else>
         <SkillGridView 
           v-if="viewMode === 'grid'" 
@@ -126,26 +120,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useSkillStore } from '@/stores/skillStore'
-import { Plus, Grid, List, Loading } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/authStore'
 import SkillImportModal from '@/components/features/SkillImportModal.vue'
 import SkillGridView from '@/modules/skill-list/components/SkillGridView.vue'
 import SkillListView from '@/modules/skill-list/components/SkillListView.vue'
 import SkillEditor from '@/components/features/SkillEditor.vue'
 import type { Skill } from '@/types'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Grid, List, Loading, SwitchButton } from '@element-plus/icons-vue'
 
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 const skillStore = useSkillStore()
+const authStore = useAuthStore()
 const showImport = ref(false)
 const viewMode = ref<'grid' | 'list'>('grid')
 const showEdit = ref(false)
 const editingSkill = ref<Skill | undefined>()
 
 const totalTags = computed(() => {
-  const tags = new Set<string>()
-  skillStore.skills.forEach(s => s.tags.forEach(t => tags.add(t)))
-  return tags.size
+  const allTags = new Set<string>()
+  skillStore.skills.forEach(s => s.tags?.forEach(t => allTags.add(t)))
+  return allTags.size
 })
 
 const totalFiles = computed(() => {
@@ -174,10 +173,46 @@ async function handleSave(skill: Skill) {
     ElMessage.error('保存失败')
   }
 }
-</script>
 
-<style scoped>
-.toolbar-container {
-  backdrop-filter: blur-xl;
+async function handleLogout() {
+  try {
+    await ElMessageBox.confirm('确定要退出登录吗？', '确认登出', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    authStore.logout()
+    router.replace('/')
+    ElMessage.success('已安全登出')
+  } catch {
+    // 用户取消
+  }
 }
-</style>
+
+onMounted(async () => {
+  if (!authStore.checkSession()) {
+    try {
+      const { value } = await ElMessageBox.prompt('请输入管理密码', '身份验证', {
+        inputType: 'password',
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputValidator(val) {
+          if (!val) return '密码不能为空'
+          return true
+        }
+      })
+      if (authStore.login(value)) {
+        ElMessage.success('验证通过')
+      } else {
+        ElMessage.error('密码错误')
+        router.replace('/')
+        return
+      }
+    } catch {
+      router.replace('/')
+      return
+    }
+  }
+  skillStore.loadSkills()
+})
+</script>

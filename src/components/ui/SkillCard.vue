@@ -3,17 +3,18 @@
     <div class="p-6 relative">
       <!-- 快速操作按钮 - 右侧悬浮 -->
       <div class="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 z-10">
-        <el-tooltip content="编辑" placement="left">
-          <el-button 
-            v-if="showAdminActions"
-            circle 
-            size="small" 
-            class="action-btn edit-btn" 
-            @click.stop="handleEdit"
-          >
-            <el-icon class="text-[var(--neon-cyan)]"><Edit /></el-icon>
-          </el-button>
-        </el-tooltip>
+        <template v-if="showAdminActions">
+          <el-tooltip content="编辑" placement="left">
+            <el-button 
+              circle 
+              size="small" 
+              class="action-btn edit-btn" 
+              @click.stop="handleEdit"
+            >
+              <el-icon class="text-[var(--neon-cyan)]"><Edit /></el-icon>
+            </el-button>
+          </el-tooltip>
+        </template>
 
         <el-tooltip content="下载" placement="left">
           <el-button 
@@ -25,17 +26,19 @@
             <el-icon class="text-[var(--neon-purple)]"><Download /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="删除" placement="left">
-          <el-button 
-            v-if="showAdminActions"
-            circle 
-            size="small" 
-            class="action-btn delete-btn" 
-            @click.stop="handleDelete"
-          >
-            <el-icon class="text-red-400"><Delete /></el-icon>
-          </el-button>
-        </el-tooltip>
+        
+        <template v-if="showAdminActions">
+          <el-tooltip content="删除" placement="left">
+            <el-button 
+              circle 
+              size="small" 
+              class="action-btn delete-btn" 
+              @click.stop="handleDelete"
+            >
+              <el-icon class="text-red-400"><Delete /></el-icon>
+            </el-button>
+          </el-tooltip>
+        </template>
       </div>
       
       <div class="flex items-start justify-between mb-4">

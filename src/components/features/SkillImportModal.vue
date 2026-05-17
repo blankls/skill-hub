@@ -116,10 +116,27 @@
                 {{ mdContent.trim() ? '正在编辑' : '等待输入' }}
               </span>
             </div>
-            <button
-              @click="insertTemplate"
-              class="px-3 py-1.5 bg-[var(--dark-card)] border border-[var(--neon-yellow)]/40 hover:border-[var(--neon-yellow)] text-[var(--text-light)] text-xs rounded-lg transition-all hover:shadow-[0_0_10px_rgba(234,179,8,0.2)]">
-              📋 插入模板
+            <div class="flex items-center gap-2">
+              <label class="px-3 py-1.5 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/40 hover:border-[var(--neon-cyan)] text-[var(--text-light)] text-xs rounded-lg transition-all cursor-pointer hover:shadow-[0_0_10px_rgba(0,245,255,0.2)]">
+                📂 导入文件
+                <input type="file" accept=".md" @change="handleMdFileImport" class="hidden" />
+              </label>
+              <button
+                @click="insertTemplate"
+                class="px-3 py-1.5 bg-[var(--dark-card)] border border-[var(--neon-yellow)]/40 hover:border-[var(--neon-yellow)] text-[var(--text-light)] text-xs rounded-lg transition-all hover:shadow-[0_0_10px_rgba(234,179,8,0.2)]">
+                📋 插入模板
+              </button>
+            </div>
+          </div>
+
+          <div v-if="mdFileName" class="mb-4 flex items-center justify-between px-4 py-2.5 bg-[var(--neon-cyan)]/5 border border-[var(--neon-cyan)]/20 rounded-lg">
+            <div class="flex items-center gap-2 text-sm">
+              <span>📄</span>
+              <span class="text-[var(--neon-cyan)] font-bold">{{ mdFileName }}</span>
+              <span class="text-xs text-[var(--text-muted)]">已导入，将放入同名文件夹</span>
+            </div>
+            <button @click="resetMdFile" class="text-xs text-[var(--text-muted)] hover:text-[var(--neon-yellow)] transition-colors">
+              ✕ 清除
             </button>
           </div>
 
@@ -141,7 +158,7 @@
                 <span class="w-1.5 h-1.5 rounded-full bg-[var(--neon-purple)]" />
                 <span class="text-xs text-[var(--neon-purple)] font-bold">预览</span>
               </div>
-              <div class="p-4 overflow-auto text-[var(--text-light)] markdown-body custom-scroll" style="height: 460px" v-html="renderedMarkdown"></div>
+              <div class="p-4 overflow-auto text-[var(--text-light)] markdown-body custom-scroll" style="max-height: 400px" v-html="renderedMarkdown"></div>
             </div>
           </div>
 
@@ -342,12 +359,17 @@
 import { ref, computed } from 'vue'
 import { useSkillStore } from '@/stores/skillStore'
 import { parseSkillFromZip, parseSkillFromMarkdown } from '@/utils/skillParser'
-import { fetchGitHubRepo, fetchGitHubRepoFiles, fetchGitHubFileContent } from '@/utils/githubClient'
+import { fetchGitHubRepo, fetchGitHubRepoFiles, fetchGitHubFileContent, toGithubMeta } from '@/utils/githubClient'
 import type { Skill, SkillFile } from '@/types'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
+import 'highlight.js/styles/github-dark.css'
+
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
 
 const md = MarkdownIt({
   highlight: function (str, lang) {
@@ -356,7 +378,7 @@ const md = MarkdownIt({
         return hljs.highlight(str, { language: lang }).value
       } catch (__) {}
     }
-    return ''
+    return escapeHtml(str)
   }
 })
 
@@ -375,6 +397,7 @@ const visible = computed({
 const activeTab = ref('zip')
 const zipPreview = ref<Skill | null>(null)
 const mdContent = ref('')
+const mdFileName = ref<string | null>(null)
 const githubUrl = ref('')
 const githubMeta = ref<any>(null)
 const githubFiles = ref<any[]>([])
@@ -495,6 +518,24 @@ function insertTemplate() {
   mdContent.value = TEMPLATE
 }
 
+async function handleMdFileImport(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  try {
+    const text = await file.text()
+    mdContent.value = text
+    mdFileName.value = file.name
+  } catch (e) {
+    ElMessage.error('读取文件失败')
+  }
+}
+
+function resetMdFile() {
+  mdContent.value = ''
+  mdFileName.value = null
+}
+
 function resetZip() {
   zipPreview.value = null
 }
@@ -578,40 +619,40 @@ async function doImport() {
     if (activeTab.value === 'zip' && zipPreview.value) {
       skill = zipPreview.value
     } else if (activeTab.value === 'md') {
-      skill = await parseSkillFromMarkdown(mdContent.value)
+      let fileName = mdFileName.value || 'SKILL.md'
+      skill = await parseSkillFromMarkdown(mdContent.value, fileName)
+      if (mdFileName.value) {
+        const folderName = skill.name.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').trim()
+        skill.files = [{
+          path: folderName ? `${folderName}/${mdFileName.value}` : mdFileName.value,
+          name: mdFileName.value,
+          content: mdContent.value,
+          language: 'markdown'
+        }]
+      }
     } else if (activeTab.value === 'github' && githubMeta.value) {
+      // 只获取基础信息和最小文件，详细内容在详情页动态加载
       const files: SkillFile[] = []
-
-      if (githubSelectedPath.value) {
-        const selectedFiles = await fetchGitHubRepoFiles(githubUrl.value, githubSelectedPath.value, githubSelectedBranch.value)
-        const targetFiles = selectedFiles.filter((f: any) => f.type === 'file').slice(0, 15)
-
-        for (const file of targetFiles) {
-          try {
-            const content = await fetchGitHubFileContent(githubUrl.value, file.path, githubSelectedBranch.value)
-            files.push({
-              path: file.path,
-              name: file.name,
-              content,
-              language: getLanguageFromFilename(file.name)
-            })
-          } catch (e) {
-            console.error(`Failed to fetch ${file.path}:`, e)
-          }
-        }
-      } else {
-        for (const file of githubFiles.value.slice(0, 10)) {
-          try {
-            const content = await fetchGitHubFileContent(githubUrl.value, file.path, githubSelectedBranch.value)
-            files.push({
-              path: file.path,
-              name: file.name,
-              content,
-              language: getLanguageFromFilename(file.name)
-            })
-          } catch (e) {
-            console.error(`Failed to fetch ${file.path}:`, e)
-          }
+      
+      // 只获取 README.md 用于描述提取
+      const fetchFiles = githubSelectedPath.value
+        ? (await fetchGitHubRepoFiles(githubUrl.value, githubSelectedPath.value, githubSelectedBranch.value))
+            .filter((f: any) => f.type === 'file' && f.name.toLowerCase() === 'readme.md')
+        : githubFiles.value.filter((f: any) => f.name.toLowerCase() === 'readme.md')
+      
+      let readmeContent = ''
+      for (const file of fetchFiles.slice(0, 1)) {
+        try {
+          const content = await fetchGitHubFileContent(githubUrl.value, file.path, githubSelectedBranch.value)
+          files.push({
+            path: file.path,
+            name: file.name,
+            content,
+            language: 'markdown'
+          })
+          readmeContent = content
+        } catch (e) {
+          console.error(`Failed to fetch ${file.path}:`, e)
         }
       }
 
@@ -619,17 +660,45 @@ async function doImport() {
         ? githubSelectedPath.value.split('/').pop() || githubMeta.value.name
         : githubMeta.value.name
 
+      // 尝试从 README.md 提取更丰富的描述
+      let description = githubMeta.value.description || 'GitHub Repository Skill'
+      if (readmeContent && (!githubMeta.value.description || githubMeta.value.description.length < 30)) {
+        const descLines: string[] = []
+        for (const line of readmeContent.split('\n').slice(1, 20)) {
+          if (line.startsWith('# ')) continue
+          if (line.startsWith('## ')) break
+          if (line.trim() && !line.startsWith('![') && !line.startsWith('<')) {
+            descLines.push(line.trim())
+          }
+        }
+        if (descLines.length > 0) {
+          description = descLines.join(' ').slice(0, 200)
+        }
+      }
+
+      const meta = toGithubMeta(
+        githubMeta.value,
+        githubSelectedBranch.value || githubMeta.value.default_branch,
+        githubSelectedPath.value || undefined
+      )
+      const tags = ['github']
+      if (meta.language) tags.push(meta.language.toLowerCase())
+      tags.push(...meta.topics.slice(0, 5))
+
       skill = {
         id: crypto.randomUUID(),
         name: skillName,
-        description: githubMeta.value.description || 'GitHub Repository Skill',
+        description,
         version: '1.0.0',
         author: githubMeta.value.full_name.split('/')[0],
-        tags: ['github', 'imported'],
+        tags,
         source: {
           type: 'github',
           origin: githubMeta.value.html_url,
-          lastSync: new Date()
+          lastSync: new Date(),
+          lastRemoteUpdate: new Date(githubMeta.value.pushed_at),
+          githubMeta: meta,
+          isContentCached: false
         },
         files,
         createdAt: new Date(),
@@ -651,21 +720,13 @@ async function doImport() {
   }
 }
 
-function getLanguageFromFilename(filename: string): string {
-  const ext = filename.split('.').pop()?.toLowerCase() || ''
-  const map: Record<string, string> = {
-    ts: 'typescript', tsx: 'typescript', js: 'javascript', jsx: 'javascript',
-    py: 'python', java: 'java', cpp: 'cpp', c: 'c', go: 'go', rs: 'rust',
-    rb: 'ruby', php: 'php', html: 'html', css: 'css', md: 'markdown',
-    json: 'json', yml: 'yaml', yaml: 'yaml', vue: 'html', svelte: 'html'
-  }
-  return map[ext] || 'text'
-}
+
 
 function reset() {
   activeTab.value = 'zip'
   zipPreview.value = null
   mdContent.value = ''
+  mdFileName.value = null
   githubUrl.value = ''
   githubMeta.value = null
   githubFiles.value = []
@@ -681,6 +742,9 @@ function reset() {
   border: 1px solid rgba(0, 245, 255, 0.15) !important;
   border-radius: 16px !important;
   overflow: hidden;
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 85vh !important;
 }
 
 .create-skill-dialog :deep(.el-dialog__header) {
@@ -688,16 +752,20 @@ function reset() {
   border-bottom: 1px solid rgba(0, 245, 255, 0.15) !important;
   padding: 20px 24px !important;
   margin: 0 !important;
+  flex-shrink: 0 !important;
 }
 
 .create-skill-dialog :deep(.el-dialog__body) {
   padding: 0 !important;
+  flex: 1 !important;
+  min-height: 0 !important;
 }
 
 .create-skill-dialog :deep(.el-dialog__footer) {
   background-color: var(--dark-card) !important;
   border-top: 1px solid rgba(0, 245, 255, 0.15) !important;
   padding: 16px 24px !important;
+  flex-shrink: 0 !important;
 }
 
 .cyber-tabs :deep(.el-tabs__header) {
@@ -736,7 +804,25 @@ function reset() {
 
 .tab-content {
   padding: 24px;
-  min-height: 400px;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.tab-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.tab-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 245, 255, 0.15);
+  border-radius: 3px;
+}
+
+.tab-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 245, 255, 0.35);
 }
 
 .cyber-uploader :deep(.el-upload-dragger) {

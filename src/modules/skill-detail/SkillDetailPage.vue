@@ -7,37 +7,86 @@
       </div>
       <template v-else-if="skill">
         <!-- Return Button & Header -->
-        <div class="flex items-center justify-between mb-8">
-          <div class="flex items-center gap-4">
-            <el-button
-              @click="router.back()"
-              class="flex items-center gap-2 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 text-[var(--text-light)] rounded-xl transition-all"
-            >
-              <el-icon><ArrowLeft /></el-icon>
-              <span>返回</span>
-            </el-button>
-            <div>
-              <h1 class="text-3xl font-bold mb-2 text-[var(--text-light)]">{{ skill.name }}</h1>
-              <p class="text-[var(--text-muted)]">{{ skill.description }}</p>
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+          <!-- 左侧：返回按钮 + 技能信息 -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-4 mb-4">
+              <el-button
+                @click="router.back()"
+                class="flex items-center gap-2 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 text-[var(--text-light)] rounded-xl transition-all"
+              >
+                <el-icon><ArrowLeft /></el-icon>
+                <span>返回</span>
+              </el-button>
+            </div>
+            <div class="min-w-0">
+              <h1 class="text-3xl font-bold mb-2 text-[var(--text-light)] truncate">{{ skill.name }}</h1>
+              <div class="flex flex-wrap items-center gap-3 mb-2 text-sm">
+                <span class="px-2 py-1 rounded-full bg-[var(--neon-yellow)]/10 text-[var(--neon-yellow)] border border-[var(--neon-yellow)]/30">
+                  {{ getSourceLabel(skill.source.type) }}
+                </span>
+                <span class="text-[var(--text-muted)] font-mono">v{{ skill.version }}</span>
+                <span v-if="skill.author" class="text-[var(--text-muted)]">
+                  <el-icon class="mr-1"><User /></el-icon>{{ skill.author }}
+                </span>
+              </div>
+              <el-tooltip placement="top" :disabled="!isDescriptionLong">
+                <template #content>
+                  <div class="max-w-lg whitespace-pre-line">{{ skill.description }}</div>
+                </template>
+                <p 
+                  class="text-[var(--text-muted)]"
+                  :class="{ 'line-clamp-3 hover:text-[var(--neon-cyan)]': isDescriptionLong }"
+                >
+                  {{ skill.description }}
+                </p>
+              </el-tooltip>
             </div>
           </div>
-          <div class="flex gap-2">
-            <el-button v-if="isFromAdmin" @click="showEditor = true" class="bg-[var(--dark-card)] border border-[var(--neon-yellow)]/50 hover:border-[var(--neon-yellow)] text-[var(--text-light)]">
+
+          <!-- 右侧：操作按钮组 -->
+          <div class="flex flex-wrap gap-3 items-start">
+            <el-button 
+              v-if="isGitHubSkill" 
+              @click="handleSync"
+              :loading="syncing"
+              class="flex items-center gap-2 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/50 hover:border-[var(--neon-cyan)] text-[var(--text-light)] rounded-xl"
+            >
+              <el-icon><Refresh /></el-icon> 同步
+            </el-button>
+            <el-button v-if="isFromAdmin" @click="showEditor = true" class="flex items-center gap-2 bg-[var(--dark-card)] border border-[var(--neon-yellow)]/50 hover:border-[var(--neon-yellow)] text-[var(--text-light)] rounded-xl">
               <el-icon><Edit /></el-icon> 编辑
             </el-button>
-            <el-button v-if="isFromAdmin" type="danger" @click="handleDelete">
+            <ZipExportBtn :skill="skill" />
+            <el-button v-if="isFromAdmin" type="danger" @click="handleDelete" class="flex items-center gap-2 rounded-xl">
               <el-icon><Delete /></el-icon> 删除
             </el-button>
-            <ZipExportBtn :skill="skill" />
           </div>
         </div>
+        
+        <!-- GitHub 同步状态提示 -->
+        <div v-if="isGitHubSkill && !skill.source.isContentCached" class="mb-4 p-4 bg-[var(--neon-yellow)]/10 border border-[var(--neon-yellow)]/30 rounded-xl">
+          <p class="text-[var(--neon-yellow)] text-sm">
+            <el-icon class="mr-1"><InfoFilled /></el-icon>
+            此技能内容尚未完全加载，正在从 GitHub 获取完整内容...
+          </p>
+        </div>
+        
+        <!-- 同步中提示 -->
+        <div v-if="syncing && skill.source.isContentCached" class="mb-4 p-4 bg-[var(--neon-cyan)]/10 border border-[var(--neon-cyan)]/30 rounded-xl">
+          <p class="text-[var(--neon-cyan)] text-sm flex items-center gap-2">
+            <el-icon class="animate-spin"><Loading /></el-icon>
+            正在从 GitHub 同步最新内容...
+          </p>
+        </div>
+        
         <div class="mt-8">
           <el-tabs v-model="activeTab">
             <el-tab-pane label="概览" name="overview">
               <OverviewTab :skill="skill" />
             </el-tab-pane>
-            <el-tab-pane label="工具" name="tools">
-              <ToolsTab :skill="skill" />
+            <el-tab-pane label="指导" name="guide">
+              <GuideTab :skill="skill" />
             </el-tab-pane>
             <el-tab-pane label="文件" name="files">
               <FilesTab :skill="skill" />
@@ -63,18 +112,19 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Loading, ArrowLeft, Edit, Delete } from '@element-plus/icons-vue'
+import { Loading, ArrowLeft, Edit, Delete, Refresh, InfoFilled, User } from '@element-plus/icons-vue'
 import { useSkillStore } from '@/stores/skillStore'
 import SkillEditor from '@/components/features/SkillEditor.vue'
 import ZipExportBtn from '@/components/features/ZipExportBtn.vue'
 import OverviewTab from './components/OverviewTab.vue'
-import ToolsTab from './components/ToolsTab.vue'
+import GuideTab from './components/GuideTab.vue'
 import FilesTab from './components/FilesTab.vue'
 
 const route = useRoute()
 const router = useRouter()
 const skillStore = useSkillStore()
 const loading = ref(true)
+const syncing = ref(false)
 const activeTab = ref('overview')
 const showEditor = ref(false)
 
@@ -82,9 +132,40 @@ const skill = computed(() => {
   return skillStore.skills.find(s => s.id === route.params.id) || null
 })
 
+const isDescriptionLong = computed(() => {
+  return (skill.value?.description?.length || 0) > 150
+})
+
+const isGitHubSkill = computed(() => {
+  return skill.value?.source.type === 'github'
+})
+
 const isFromAdmin = computed(() => {
   return route.path.startsWith('/admin')
 })
+
+function getSourceLabel(type: string) {
+  const labels: Record<string, string> = {
+    local: '本地',
+    zip: 'ZIP',
+    github: 'GitHub',
+    skillmd: 'Markdown'
+  }
+  return labels[type] || '本地'
+}
+
+async function handleSync() {
+  if (!skill.value) return
+  syncing.value = true
+  try {
+    await skillStore.syncGitHubSkill(skill.value.id, true)
+    ElMessage.success('同步成功')
+  } catch (e) {
+    ElMessage.error('同步失败')
+  } finally {
+    syncing.value = false
+  }
+}
 
 async function handleSave(updatedSkill: any) {
   await skillStore.updateSkill(updatedSkill)
@@ -99,7 +180,7 @@ async function handleDelete() {
     if (skill.value) {
       await skillStore.deleteSkill(skill.value.id)
       ElMessage.success('技能删除成功')
-      router.push('/skills')
+      router.push(isFromAdmin.value ? '/admin' : '/skills')
     }
   } catch (e) {
   }
@@ -110,12 +191,36 @@ onMounted(async () => {
     await skillStore.loadSkills()
   }
   loading.value = false
+  
+  // 如果是 GitHub 技能，自动尝试同步（不阻塞界面）
+  const currentSkill = skillStore.skills.find(s => s.id === route.params.id)
+  if (currentSkill?.source.type === 'github') {
+    // 先显示本地内容，后台进行同步
+    syncing.value = true
+    skillStore.syncGitHubSkill(currentSkill.id, false)
+      .then(() => {
+        // 同步完成后的静默处理
+      })
+      .catch(() => {
+        // 同步失败静默处理
+      })
+      .finally(() => {
+        syncing.value = false
+      })
+  }
 })
 </script>
 
 <style scoped>
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 :deep(.el-tabs__header) {
-  border-color: rgba(0, 245, 255, 0.2) !important;
+  border-color: rgba(0,245,255,0.2) !important;
 }
 
 :deep(.el-tabs__item) {

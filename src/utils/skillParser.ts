@@ -39,27 +39,129 @@ export async function parseSkillFromZip(zipBlob: Blob, zipFileName?: string): Pr
 
       // 如果是 markdown 文件，尝试从内容提取信息
       if (path.toLowerCase() === 'readme.md' && !inferredDescription) {
-        try {
-          const firstLines = content.split('\n')
-          for (const line of firstLines.slice(0, 50)) {
-            if (line.startsWith('# ') && !skillData.name) {
-              inferredName = line.substring(2).trim()
-            } else if (!inferredDescription && line.trim() && !line.startsWith('#')) {
-              inferredDescription += line + '\n'
-            } else if (inferredDescription && line.startsWith('## ')) {
-              break
+            try {
+              const firstLines = content.split('\n')
+              const descLines: string[] = []
+              for (const line of firstLines.slice(0, 50)) {
+                if (line.startsWith('# ') && !skillData.name) {
+                  inferredName = line.substring(2).trim()
+                } else if (line.trim() && !line.startsWith('#')) {
+                  descLines.push(line)
+                } else if (descLines.length > 0 && line.startsWith('## ')) {
+                  break
+                }
+              }
+              if (descLines.length > 0) {
+                inferredDescription = descLines.join('\n')
+              }
+            } catch {
+              // 忽略解析错误
             }
           }
-        } catch {
-          // 忽略解析错误
-        }
-      }
     }
   }
 
-  // 确定最终的技能名
-  let finalName = skillData.name || inferredName || (zipFileName ? zipFileName.replace(/\.zip$/i, '') : null) || '未命名技能'
-  let finalDescription = skillData.description || inferredDescription || ''
+  // 尝试从 SKILL.md 提取描述（优先级高）
+  let skillMdDescription: string | null = null
+  if (skillMd) {
+    try {
+      const content = await skillMd.async('string')
+      const lines = content.split('\n')
+
+      // 1) 先尝试解析 YAML frontmatter (--- ... ---)
+      if (lines[0]?.trim() === '---') {
+        let currentKey: string | null = null
+        let multiLineValue: string[] = []
+        let isMultiLine = false
+        
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i]
+          if (line.trim() === '---') {
+            // 保存最后一个多行值
+            if (currentKey && multiLineValue.length > 0) {
+              const value = multiLineValue.join('\n').trim()
+              if (currentKey === 'description' && value) {
+                skillMdDescription = value
+              }
+              if (currentKey === 'name' && value && !skillData.name && !inferredName) {
+                inferredName = value
+              }
+            }
+            break
+          }
+          
+          // 检查是否是新的键值对
+          const keyMatch = line.match(/^(\w[\w-]*)\s*:\s*(.*)$/)
+          if (keyMatch) {
+            // 先保存之前的多行值
+            if (currentKey && multiLineValue.length > 0) {
+              const value = multiLineValue.join('\n').trim()
+              if (currentKey === 'description' && value) {
+                skillMdDescription = value
+              }
+              if (currentKey === 'name' && value && !skillData.name && !inferredName) {
+                inferredName = value
+              }
+            }
+            
+            currentKey = keyMatch[1].toLowerCase()
+            let value = keyMatch[2].trim()
+            
+            // 检查是否是多行标记（| 或 >）
+            if (value === '|' || value === '>') {
+              isMultiLine = true
+              multiLineValue = []
+            } else {
+              // 单行值
+              isMultiLine = false
+              multiLineValue = []
+              value = value.replace(/^['"]|['"]$/g, '')
+              if (currentKey === 'description' && value) {
+                skillMdDescription = value
+              }
+              if (currentKey === 'name' && value && !skillData.name && !inferredName) {
+                inferredName = value
+              }
+            }
+          } else if (isMultiLine && currentKey && (line.startsWith('  ') || line.startsWith('\t') || line.trim() === '')) {
+            // 多行值的一部分
+            multiLineValue.push(line.trimEnd())
+          }
+        }
+      }
+
+      // 2) 如果 frontmatter 没拿到 description，尝试从 ## 描述 段落提取
+      if (!skillMdDescription) {
+        let inDesc = false
+        const descLines: string[] = []
+        for (const line of lines) {
+          if (line.startsWith('## ') && (line.toLowerCase().includes('描述') || line.toLowerCase().includes('description'))) {
+            inDesc = true
+            continue
+          }
+          if (inDesc) {
+            if (line.startsWith('## ')) break
+            if (line.trim()) descLines.push(line.trim())
+          }
+        }
+        if (descLines.length > 0) {
+          skillMdDescription = descLines.join('\n')
+        }
+      }
+
+      for (const line of lines) {
+        if (line.startsWith('# ') && !skillData.name && !inferredName) {
+          inferredName = line.substring(2).trim()
+          break
+        }
+      }
+    } catch {
+      // 忽略解析错误
+    }
+  }
+
+  const finalName = skillData.name || inferredName || (zipFileName ? zipFileName.replace(/\.zip$/i, '') : null) || '未命名技能'
+  const finalDescription = skillData.description || skillMdDescription || inferredDescription || ''
 
   return {
     id: uuidv4(),
@@ -83,11 +185,74 @@ export async function parseSkillFromMarkdown(content: string, fileName: string =
   let version = '1.0.0'
   let author = '匿名'
   let tags: string[] = []
-  
+
+  // 1) 先解析 YAML frontmatter
+  let frontmatterParsed = false
+  if (lines[0]?.trim() === '---') {
+    let currentKey: string | null = null
+    let multiLineValue: string[] = []
+    let isMultiLine = false
+    
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i]
+      if (line.trim() === '---') {
+        frontmatterParsed = true
+        // 保存最后一个多行值
+        if (currentKey && multiLineValue.length > 0) {
+          const value = multiLineValue.join('\n').trim()
+          if (currentKey === 'name' && value) name = value
+          if (currentKey === 'description' && value) description = value
+          if (currentKey === 'version' && value) version = value
+          if (currentKey === 'author' && value) author = value
+          if (currentKey === 'tags' && value) tags = value.split(',').map((t: string) => t.trim())
+        }
+        break
+      }
+      
+      // 检查是否是新的键值对
+      const keyMatch = line.match(/^(\w[\w-]*)\s*:\s*(.*)$/)
+      if (keyMatch) {
+        // 先保存之前的多行值
+        if (currentKey && multiLineValue.length > 0) {
+          const value = multiLineValue.join('\n').trim()
+          if (currentKey === 'name' && value) name = value
+          if (currentKey === 'description' && value) description = value
+          if (currentKey === 'version' && value) version = value
+          if (currentKey === 'author' && value) author = value
+          if (currentKey === 'tags' && value) tags = value.split(',').map((t: string) => t.trim())
+        }
+        
+        currentKey = keyMatch[1].toLowerCase()
+        let value = keyMatch[2].trim()
+        
+        // 检查是否是多行标记（| 或 >）
+        if (value === '|' || value === '>') {
+          isMultiLine = true
+          multiLineValue = []
+        } else {
+          // 单行值
+          isMultiLine = false
+          multiLineValue = []
+          value = value.replace(/^['"]|['"]$/g, '')
+          if (currentKey === 'name' && value) name = value
+          if (currentKey === 'description' && value) description = value
+          if (currentKey === 'version' && value) version = value
+          if (currentKey === 'author' && value) author = value
+          if (currentKey === 'tags' && value) tags = value.split(',').map((t: string) => t.trim())
+        }
+      } else if (isMultiLine && currentKey && (line.startsWith('  ') || line.startsWith('\t') || line.trim() === '')) {
+        // 多行值的一部分
+        multiLineValue.push(line.trimEnd())
+      }
+    }
+  }
+
+  // 2) 回退到 markdown 标题解析
   let currentSection = ''
+  const startIndex = frontmatterParsed ? lines.findIndex((l, i) => i > 0 && l.trim() === '---') + 1 : 0
   
-  for (const line of lines) {
-    if (line.startsWith('# ')) {
+  for (const line of lines.slice(startIndex)) {
+    if (line.startsWith('# ') && name === '未命名技能') {
       name = line.substring(2).trim()
     } else if (line.startsWith('## ')) {
       currentSection = line.substring(3).trim().toLowerCase()
@@ -95,12 +260,12 @@ export async function parseSkillFromMarkdown(content: string, fileName: string =
       const trimmedLine = line.trim()
       if (trimmedLine) {
         if (currentSection.includes('描述') || currentSection.includes('description')) {
-          description += line + '\n'
+          if (!description) description += line + '\n'
         } else if (currentSection.includes('版本') || currentSection.includes('version')) {
           const match = trimmedLine.match(/(\d+\.\d+\.\d+)/)
           if (match) version = match[1]
         } else if (currentSection.includes('作者') || currentSection.includes('author')) {
-          author = trimmedLine
+          if (author === '匿名') author = trimmedLine
         } else if (currentSection.includes('标签') || currentSection.includes('tags')) {
           if (trimmedLine.startsWith('- ')) {
             tags.push(trimmedLine.substring(2).trim())
@@ -109,7 +274,7 @@ export async function parseSkillFromMarkdown(content: string, fileName: string =
           }
         }
       }
-    } else if (description === '' && trimmedLine) {
+    } else if (!description && line.trim()) {
       description += line + '\n'
     }
   }

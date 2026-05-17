@@ -21,39 +21,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { markRaw } from 'vue'
 import { Search, Folder, Download, Link, MagicStick, Monitor } from '@element-plus/icons-vue'
 
-const features = ref([
+const features = [
   {
-    icon: Search,
+    icon: markRaw(Search),
     title: '智能搜索',
     description: '快速找到你需要的 Skill，支持关键词、标签筛选'
   },
   {
-    icon: Folder,
+    icon: markRaw(Folder),
     title: '双重来源',
     description: '支持本地 Skill 和 GitHub 热门 Skill 两种来源'
   },
   {
-    icon: Download,
+    icon: markRaw(Download),
     title: '一键导出',
     description: '支持 ZIP 格式导出，方便分享和迁移'
   },
   {
-    icon: Link,
+    icon: markRaw(Link),
     title: 'GitHub 集成',
     description: '直接跳转原始仓库，查看完整源代码'
   },
   {
-    icon: MagicStick,
+    icon: markRaw(MagicStick),
     title: '工具详情',
     description: '详细展示每个工具的参数、示例和使用方法'
   },
   {
-    icon: Monitor,
+    icon: markRaw(Monitor),
     title: '主题切换',
     description: '支持深色/浅色主题，保护你的眼睛'
   }
-])
+]
 </script>

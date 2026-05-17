@@ -5,10 +5,34 @@ export interface SkillFile {
   language?: string
 }
 
+export interface GithubMeta {
+  full_name: string
+  description: string
+  html_url: string
+  repoUrl: string
+  subfolderUrl: string
+  branch: string
+  stars: number
+  forks: number
+  watchers: number
+  language: string
+  license: string
+  topics: string[]
+  createdAt: string
+  updatedAt: string
+  // GitHub 源的额外静态信息
+  repoOwner: string
+  repoName: string
+  subfolderPath?: string
+}
+
 export interface SkillSource {
   type: 'local' | 'zip' | 'github' | 'skillmd'
-  origin?: string // 文件路径或 GitHub URL
+  origin?: string
   lastSync?: Date
+  lastRemoteUpdate?: Date
+  githubMeta?: GithubMeta
+  isContentCached?: boolean
 }
 
 export interface Skill {

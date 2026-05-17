@@ -17,7 +17,12 @@
           </span>
           <span class="text-[var(--neon-yellow)] font-mono text-sm font-bold">v{{ skill.version }}</span>
         </div>
-        <p class="text-[var(--text-muted)] truncate mb-3">{{ skill.description }}</p>
+        <el-tooltip placement="top" :disabled="!isDescriptionLong(skill)">
+          <template #content>
+            <div class="max-w-lg whitespace-pre-line">{{ skill.description }}</div>
+          </template>
+          <p class="text-[var(--text-muted)] line-clamp-2 mb-3">{{ skill.description }}</p>
+        </el-tooltip>
         <div class="flex flex-wrap items-center gap-3">
           <div class="flex flex-wrap gap-2">
             <span v-for="tag in skill.tags" :key="tag" class="px-3 py-1 bg-[var(--neon-purple)]/20 border border-[var(--neon-purple)]/30 text-[var(--neon-purple)] rounded-full text-xs font-mono">
@@ -38,17 +43,18 @@
       </div>
       <!-- 快速操作按钮 -->
       <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0 transition-transform duration-300">
-        <el-tooltip content="编辑" placement="top">
-          <el-button 
-            v-if="showAdminActions"
-            circle 
-            size="small" 
-            class="action-btn edit-btn" 
-            @click.stop="handleEdit(skill)"
-          >
-            <el-icon class="text-[var(--neon-cyan)]"><Edit /></el-icon>
-          </el-button>
-        </el-tooltip>
+        <template v-if="showAdminActions">
+          <el-tooltip content="编辑" placement="top">
+            <el-button 
+              circle 
+              size="small" 
+              class="action-btn edit-btn" 
+              @click.stop="handleEdit(skill)"
+            >
+              <el-icon class="text-[var(--neon-cyan)]"><Edit /></el-icon>
+            </el-button>
+          </el-tooltip>
+        </template>
 
         <el-tooltip content="下载" placement="top">
           <el-button 
@@ -60,17 +66,19 @@
             <el-icon class="text-[var(--neon-purple)]"><Download /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="删除" placement="top">
-          <el-button 
-            v-if="showAdminActions"
-            circle 
-            size="small" 
-            class="action-btn delete-btn" 
-            @click.stop="handleDelete(skill)"
-          >
-            <el-icon class="text-red-400"><Delete /></el-icon>
-          </el-button>
-        </el-tooltip>
+        
+        <template v-if="showAdminActions">
+          <el-tooltip content="删除" placement="top">
+            <el-button 
+              circle 
+              size="small" 
+              class="action-btn delete-btn" 
+              @click.stop="handleDelete(skill)"
+            >
+              <el-icon class="text-red-400"><Delete /></el-icon>
+            </el-button>
+          </el-tooltip>
+        </template>
       </div>
     </div>
   </div>
@@ -140,6 +148,10 @@ const handleDelete = async (skill: Skill) => {
   }
 }
 
+const isDescriptionLong = (skill: any) => {
+  return (skill.description?.length || 0) > 100
+}
+
 const getSourceLabel = (type: string) => {
   const labels: Record<string, string> = {
     local: '本地',
@@ -152,6 +164,13 @@ const getSourceLabel = (type: string) => {
 </script>
 
 <style scoped>
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .skill-card {
   background-color: var(--dark-card);
   border: 1px solid rgba(0, 245, 255, 0.1);
