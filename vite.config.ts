@@ -10,7 +10,11 @@ export default defineConfig({
     }
   },
   server: {
-    host: true
+    host: true,
+    open: true,
+    allowedHosts: [
+      "3026b84w47.goho.co"
+    ]
   },
   test: {
     environment: 'happy-dom',

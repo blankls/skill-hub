@@ -238,31 +238,59 @@ async function handleQuickSync() {
 
 onMounted(async () => {
   if (!authStore.checkSession()) {
-    try {
-      const { value } = await ElMessageBox.prompt('请输入管理密码', '身份验证', {
-        inputType: 'password',
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
-        inputValidator(val) {
-          if (!val) return '请输入密码'
-          const success = authStore.login(val)
-          if (!success) return '密码错误'
-          return true
-        }
-      })
-      isAuthenticated.value = true
-    } catch {
-      // 用户取消，返回首页
-      router.replace('/')
-      return
-    }
+    await promptPassword()
   } else {
     isAuthenticated.value = true
   }
+  if (!isAuthenticated.value) return
   await skillStore.loadSkills()
-  // 启动自动同步任务
   skillStore.startAutoSync()
 })
+
+async function promptPassword() {
+  const maxRetries = 3
+  let lockedMessage = ''
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const { value } = await ElMessageBox.prompt(
+        lockedMessage || (i > 0 ? `密码错误，还剩 ${maxRetries - i} 次机会` : '请输入管理密码'),
+        '身份验证',
+        {
+          inputType: 'password',
+          confirmButtonText: '确认',
+          cancelButtonText: '取消',
+          inputValidator(val) {
+            if (!val) return '请输入密码'
+            return true
+          }
+        }
+      )
+      
+      const result = await authStore.login(value!)
+      
+      if (result.success) {
+        isAuthenticated.value = true
+        return
+      }
+      
+      // 处理锁定
+      if (result.lockUntil) {
+        const lockTime = new Date(result.lockUntil)
+        const minutes = Math.ceil((lockTime.getTime() - Date.now()) / 60000)
+        lockedMessage = `账户已锁定，请 ${minutes} 分钟后再试`
+        ElMessage.error(result.error)
+        break
+      }
+      
+      // 普通错误，继续循环
+      lockedMessage = ''
+    } catch {
+      break
+    }
+  }
+  router.replace('/')
+}
 
 onUnmounted(() => {
   skillStore.stopAutoSync()

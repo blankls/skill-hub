@@ -13,12 +13,65 @@ const __dirname = path.dirname(__filename)
 // 读取环境变量
 const PORT = process.env.PORT || 3001
 const HOST = process.env.HOST || 'localhost'
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'
 // 配置数据目录：如果环境变量配置了则使用，否则使用默认的 data/skills
 const DATA_DIR = process.env.DATA_DIR 
   ? path.isAbsolute(process.env.DATA_DIR) 
     ? process.env.DATA_DIR 
     : path.join(__dirname, process.env.DATA_DIR)
   : path.join(__dirname, 'data', 'skills')
+
+// ==================== 登录限流配置 ====================
+const LOGIN_RATE_LIMIT = {
+    MAX_ATTEMPTS: 5,              // 最大失败次数
+    WINDOW_MS: 5 * 60 * 1000,     // 5 分钟窗口
+    LOCK_MS: 15 * 60 * 1000       // 锁定 15 分钟
+}
+
+// 内存存储：IP -> { count, firstAttempt, lockedUntil }
+const loginAttempts = new Map()
+
+// 日志文件路径
+const LOG_DIR = path.join(__dirname, 'logs')
+const AUTH_LOG_FILE = path.join(LOG_DIR, 'auth.log')
+
+// 确保日志目录存在
+if (!fs.existsSync(LOG_DIR)) {
+    fs.mkdirSync(LOG_DIR, { recursive: true })
+}
+
+// 写入认证日志
+function logAuthEvent(ip, event, details = {}) {
+    const timestamp = new Date().toISOString()
+    const logLine = JSON.stringify({ timestamp, ip, event, ...details }) + '\n'
+    fs.appendFile(AUTH_LOG_FILE, logLine, (err) => {
+        if (err) console.error('Failed to write auth log:', err)
+    })
+}
+
+// 获取客户端真实 IP
+function getClientIP(req) {
+    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() 
+        || req.headers['x-real-ip'] 
+        || req.connection?.remoteAddress 
+        || req.socket?.remoteAddress 
+        || 'unknown'
+}
+
+// 定期清理过期记录（每 10 分钟）
+setInterval(() => {
+    const now = Date.now()
+    for (const [ip, record] of loginAttempts) {
+        // 锁定已过期
+        if (record.lockedUntil && now > record.lockedUntil) {
+            loginAttempts.delete(ip)
+        }
+        // 窗口已过期
+        else if (!record.lockedUntil && now - record.firstAttempt > LOGIN_RATE_LIMIT.WINDOW_MS) {
+            loginAttempts.delete(ip)
+        }
+    }
+}, 10 * 60 * 1000)
 
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true })
@@ -107,6 +160,71 @@ app.delete('/api/skills/:id', (req, res) => {
         if (!existing) return res.status(404).json({ error: 'Skill not found' })
         deleteSkillFile(req.params.id)
         res.json({ success: true })
+    } catch (e) {
+        res.status(500).json({ error: e.message })
+    }
+})
+
+// POST /api/auth/verify - 校验管理员密码（带限流）
+app.post('/api/auth/verify', (req, res) => {
+    try {
+        const ip = getClientIP(req)
+        const { password } = req.body
+        const now = Date.now()
+        
+        // 获取或初始化该 IP 的记录
+        let record = loginAttempts.get(ip)
+        
+        // 检查是否被锁定
+        if (record?.lockedUntil && now < record.lockedUntil) {
+            const remainingMinutes = Math.ceil((record.lockedUntil - now) / 60000)
+            logAuthEvent(ip, 'login_blocked', { remainingMinutes })
+            return res.status(429).json({ 
+                error: `尝试次数过多，请 ${remainingMinutes} 分钟后再试`,
+                lockUntil: new Date(record.lockedUntil).toISOString()
+            })
+        }
+        
+        // 检查密码是否为空
+        if (!password) {
+            return res.status(400).json({ error: '密码不能为空' })
+        }
+        
+        // 验证密码
+        if (password === ADMIN_PASSWORD) {
+            // 登录成功，清除失败记录
+            loginAttempts.delete(ip)
+            logAuthEvent(ip, 'login_success')
+            return res.json({ success: true })
+        }
+        
+        // 登录失败，更新记录
+        if (!record || now - record.firstAttempt > LOGIN_RATE_LIMIT.WINDOW_MS) {
+            // 新窗口，重置计数
+            record = { count: 0, firstAttempt: now, lockedUntil: null }
+        }
+        
+        record.count++
+        
+        // 检查是否触发锁定
+        if (record.count >= LOGIN_RATE_LIMIT.MAX_ATTEMPTS) {
+            record.lockedUntil = now + LOGIN_RATE_LIMIT.LOCK_MS
+            loginAttempts.set(ip, record)
+            logAuthEvent(ip, 'login_locked', { attempts: record.count })
+            return res.status(429).json({ 
+                error: '尝试次数过多，账户已锁定 15 分钟',
+                lockUntil: new Date(record.lockedUntil).toISOString()
+            })
+        }
+        
+        loginAttempts.set(ip, record)
+        logAuthEvent(ip, 'login_failed', { attempts: record.count })
+        
+        const attemptsLeft = LOGIN_RATE_LIMIT.MAX_ATTEMPTS - record.count
+        res.status(401).json({ 
+            error: '密码错误', 
+            attemptsLeft 
+        })
     } catch (e) {
         res.status(500).json({ error: e.message })
     }

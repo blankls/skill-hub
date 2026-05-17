@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+
 // 会话超时时间（毫秒）- 30分钟
 const SESSION_TIMEOUT = 30 * 60 * 1000
 
@@ -31,16 +33,31 @@ function getStoredAuth(): AuthState {
 export const useAuthStore = defineStore('auth', () => {
   const state = ref<AuthState>(getStoredAuth())
 
-  function login(password: string): boolean {
-    // TODO: 在生产环境应该使用哈希密码比较
-    // 简单的密码验证
-    if (password === import.meta.env.VITE_ADMIN_PASSWORD || password === 'admin123') {
-      const now = Date.now()
-      state.value = { isAuthenticated: true, timestamp: now }
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state.value))
-      return true
+  async function login(password: string): Promise<{ success: boolean; error?: string; lockUntil?: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/auth/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      })
+      const data = await res.json()
+      
+      if (res.ok) {
+        const now = Date.now()
+        state.value = { isAuthenticated: true, timestamp: now }
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state.value))
+        return { success: true }
+      }
+      
+      // 返回错误信息
+      return { 
+        success: false, 
+        error: data.error || '密码错误',
+        lockUntil: data.lockUntil
+      }
+    } catch {
+      return { success: false, error: '网络错误，请稍后重试' }
     }
-    return false
   }
 
   function logout() {

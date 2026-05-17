@@ -3,7 +3,8 @@ node_modules/
 dist/
 .DS_Store
 *.log
+logs/
 .env
 .env.local
 .env.*.local
-.data/
+data
