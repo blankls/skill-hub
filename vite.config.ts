@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
-  base: '/skill-hub/',  // 方案二：项目名路径
+  base: '/',
   plugins: [vue()],
   resolve: {
     alias: {
