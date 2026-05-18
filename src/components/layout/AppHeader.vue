@@ -43,3 +43,41 @@ import { useAuthStore } from '@/stores/authStore'
 
 const authStore = useAuthStore()
 </script>
+
+<style scoped>
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .h-20 {
+    height: 64px !important;
+  }
+  
+  .w-12.h-12 {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  
+  .w-12.h-12 span {
+    font-size: 1.25rem !important;
+  }
+  
+  .text-xl.font-black {
+    font-size: 1rem !important;
+  }
+  
+  .px-4.sm\:px-6.lg\:px-8 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  .flex.items-center.gap-8 {
+    gap: 1rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Hide text logo on very small screens */
+  .leading-tight {
+    display: none !important;
+  }
+}
+</style>

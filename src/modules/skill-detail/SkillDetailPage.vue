@@ -217,4 +217,51 @@ onMounted(async () => {
 :deep(.el-tabs__active-bar) {
   background-color: var(--neon-cyan) !important;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .px-4.sm\:px-6.lg\:px-8 {
+    padding: 1rem !important;
+  }
+  
+  .py-12 {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+  }
+  
+  .flex.flex-col.sm\:flex-row {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  
+  h1 {
+    font-size: 1.5rem !important;
+  }
+  
+  .flex.flex-wrap.gap-3.items-start {
+    width: 100% !important;
+  }
+  
+  .flex.flex-wrap.gap-3.items-start .el-button {
+    flex: 1 1 45% !important;
+  }
+  
+  :deep(.el-tabs__item) {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .flex.flex-wrap.gap-3.items-start .el-button {
+    flex: 1 1 100% !important;
+  }
+  
+  :deep(.el-tabs__item) {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+}
 </style>

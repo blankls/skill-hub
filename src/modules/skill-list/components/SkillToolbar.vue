@@ -195,4 +195,43 @@ function handleViewModeChange(mode: 'grid' | 'list') {
 .no-input-border :deep(.el-input__placeholder) {
   color: var(--text-muted) !important;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .toolbar-top {
+    padding: 0.75rem 1rem !important;
+  }
+  
+  .toolbar-top > div {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    align-items: stretch !important;
+  }
+  
+  .flex.items-center.gap-4.flex-1 {
+    width: 100% !important;
+  }
+  
+  .relative.flex-1.max-w-xl {
+    max-width: 100% !important;
+  }
+  
+  .flex.items-center.gap-3 {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  
+  .toolbar-bottom {
+    padding: 0 1rem !important;
+  }
+  
+  .toolbar-bottom span {
+    width: 100% !important;
+    text-align: center !important;
+  }
+  
+  .toolbar-bottom div {
+    justify-content: center !important;
+  }
+}
 </style>

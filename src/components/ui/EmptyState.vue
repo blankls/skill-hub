@@ -109,4 +109,41 @@ function handleAction() {
 .cyber-btn-primary:hover {
   box-shadow: 0 0 20px rgba(0, 245, 255, 0.4);
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .empty-state-container {
+    padding: 3rem 1.5rem !important;
+  }
+  
+  .empty-state-icon,
+  .default-icon {
+    font-size: 3.5rem !important;
+  }
+  
+  .empty-state-title {
+    font-size: 1.25rem !important;
+  }
+  
+  .empty-state-description {
+    font-size: 0.9rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .cyber-btn-primary {
+    padding: 0.875rem 1.75rem !important;
+    min-width: 200px !important;
+  }
+  
+  .empty-state-actions {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .empty-state-icon,
+  .default-icon {
+    font-size: 3rem !important;
+  }
+}
 </style>

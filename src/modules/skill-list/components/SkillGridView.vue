@@ -27,3 +27,13 @@ defineEmits<{
   (e: 'edit', skill: Skill): void
 }>()
 </script>
+
+<style scoped>
+/* Mobile Grid Responsive */
+@media (max-width: 768px) {
+  .grid.md\:grid-cols-2.lg\:grid-cols-3.gap-6 {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
+</style>

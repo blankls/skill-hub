@@ -61,3 +61,31 @@ onMounted(() => {
   }
 })
 </script>
+
+<style scoped>
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .max-w-[95rem].mx-auto.p-6 {
+    padding: 1rem !important;
+  }
+  
+  .py-20 {
+    padding-top: 3rem !important;
+    padding-bottom: 3rem !important;
+  }
+  
+  .text-5xl {
+    font-size: 2rem !important;
+  }
+  
+  /* Grid spacing for mobile */
+  :deep(.grid.gap-6) {
+    gap: 1rem !important;
+  }
+  
+  /* List spacing for mobile */
+  :deep(.space-y-4) > * + * {
+    margin-top: 1rem !important;
+  }
+}
+</style>

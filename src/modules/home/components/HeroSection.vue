@@ -250,4 +250,84 @@ onUnmounted(() => {
 .no-input-border :deep(.el-input__wrapper.is-focus) {
   box-shadow: none !important;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2.5rem !important;
+  }
+  
+  h1 span {
+    font-size: 0.875rem !important;
+  }
+  
+  p {
+    font-size: 0.875rem !important;
+  }
+  
+  .relative.z-10 {
+    padding: 1rem !important;
+  }
+  
+  .relative.flex.items-center {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    border-radius: 1rem !important;
+  }
+  
+  .relative.flex.items-center .el-input {
+    width: 100% !important;
+  }
+  
+  .relative.flex.items-center .el-button {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: 2rem !important;
+  }
+  
+  .relative.z-10 {
+    padding: 0.75rem !important;
+  }
+}
+
+/* Touch friendly improvements */
+@media (max-width: 768px) {
+  .flex.flex-wrap.justify-center.gap-2 {
+    gap: 0.75rem !important;
+  }
+  
+  /* Make tags bigger for touch */
+  .flex.flex-wrap.justify-center.gap-2 .router-link {
+    padding: 12px 20px !important;
+    font-size: 0.9rem !important;
+  }
+  
+  /* Improve search input touch */
+  .relative.flex.items-center {
+    padding: 1rem !important;
+  }
+  
+  /* Larger tap target for the big launch button */
+  .bg-gradient-to-r.from-\\[var\\(--neon-cyan\\)\\].to-\\[var\\(--neon-purple\\)\\] {
+    padding: 14px 24px !important;
+    font-size: 1rem !important;
+  }
+}
+
+/* Disable hover effects on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .hover\\:shadow-\\[0_0_20px_rgba\\(0,245,255,0.5\\)\\]:hover,
+  .hover\\:scale-105:hover,
+  .group:hover .group-hover\\:scale-110,
+  .group:hover .group-hover\\:text-\\[var\\(--neon-cyan\\)\\] {
+    transform: none !important;
+    box-shadow: none !important;
+    transition: none !important;
+  }
+}
 </style>

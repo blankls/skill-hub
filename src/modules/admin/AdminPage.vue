@@ -296,3 +296,66 @@ onUnmounted(() => {
   skillStore.stopAutoSync()
 })
 </script>
+
+<style scoped>
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .px-4.sm\:px-6.lg\:px-8 {
+    padding: 1rem !important;
+  }
+  
+  .py-12 {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+  }
+  
+  .flex.flex-col.md\:flex-row {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  
+  h1 {
+    font-size: 1.5rem !important;
+  }
+  
+  .flex.items-center.gap-3 {
+    width: 100% !important;
+  }
+  
+  .flex.items-center.gap-3 button {
+    flex: 1 !important;
+  }
+  
+  .grid.grid-cols-1.md\:grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  .w-12.h-12 {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+  
+  .text-2xl.font-bold {
+    font-size: 1.25rem !important;
+  }
+  
+  .flex.items-center.gap-6.mb-6 {
+    flex-direction: column !important;
+  }
+  
+  .flex.items-center.gap-6.mb-6 .flex.flex-col {
+    flex-direction: row !important;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .grid.grid-cols-1.md\:grid-cols-4 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+  
+  .flex.items-center.gap-3 button {
+    width: 100% !important;
+  }
+}
+</style>

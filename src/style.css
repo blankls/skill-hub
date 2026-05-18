@@ -122,3 +122,82 @@ body {
   overflow-x: auto;
   border: 1px solid rgba(0, 245, 255, 0.1);
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+  
+  .code-block {
+    font-size: 0.75rem;
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 13px;
+  }
+}
+
+/* Touch-Friendly Improvements */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, .el-button, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+a, .router-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Smooth touch scrolling */
+html {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Better touch feedback */
+button:active, .el-button:active, [role="button"]:active {
+  transform: scale(0.98);
+  opacity: 0.8;
+}
+
+/* Mobile specific padding for inputs */
+@media (max-width: 768px) {
+  .el-input__inner {
+    padding: 12px 16px !important;
+    font-size: 16px !important;
+  }
+  
+  /* Prevent zoom on form elements in iOS */
+  select, textarea, input[type="text"], 
+  input[type="password"], input[type="datetime"], 
+  input[type="datetime-local"], input[type="date"], 
+  input[type="month"], input[type="time"], 
+  input[type="week"], input[type="number"], 
+  input[type="email"], input[type="url"], 
+  input[type="search"], input[type="tel"] {
+    font-size: 16px !important;
+  }
+  
+  /* Larger touch targets */
+  .el-button {
+    padding: 12px 20px !important;
+  }
+  
+  /* Better spacing for mobile */
+  .space-y-4 > * + * {
+    margin-top: 1rem !important;
+  }
+  
+  .gap-6 {
+    gap: 1.5rem !important;
+  }
+}

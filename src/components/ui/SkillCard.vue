@@ -271,4 +271,65 @@ const formatDate = (date: Date | string) => {
   font-size: 12px !important;
   padding: 6px 12px !important;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .skill-card {
+    border-radius: 1rem !important;
+  }
+  
+  .skill-card .p-6 {
+    padding: 1.25rem !important;
+  }
+  
+  .w-14.h-14 {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    font-size: 1.25rem !important;
+  }
+  
+  h3 {
+    font-size: 1.125rem !important;
+  }
+  
+  p {
+    font-size: 0.875rem !important;
+  }
+  
+  .absolute.top-4.right-4 {
+    opacity: 1 !important;
+    transform: translateX(0) !important;
+    position: static !important;
+  }
+  
+  .flex.items-center.justify-between {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .skill-card .p-6 {
+    padding: 1rem !important;
+  }
+}
+
+/* Touch friendly buttons */
+@media (max-width: 768px) {
+  .action-btn {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    padding: 10px !important;
+  }
+  
+  .skill-card {
+    touch-action: manipulation;
+  }
+  
+  /* Ensure the whole card is touchable */
+  .group.skill-card {
+    cursor: pointer;
+  }
+}
 </style>
