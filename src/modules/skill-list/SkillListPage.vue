@@ -15,10 +15,7 @@
       <div v-else-if="skillStore.filteredSkills.length === 0">
         <EmptyState 
           title="技能仓库为空"
-          description="开始导入你的第一个 AI 技能，建立你的专属技能库"
-          action-text="导入技能"
-          :show-default-action="true"
-          @action="goToAdmin"
+          description="技能库中暂无技能，等待管理员添加技能"
         >
           <template #icon>
             <span class="text-7xl">💻</span>
@@ -35,7 +32,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useSkillStore } from '@/stores/skillStore'
 import { Loading } from '@element-plus/icons-vue'
 import SkillToolbar from './components/SkillToolbar.vue'
@@ -44,7 +41,6 @@ import SkillListView from './components/SkillListView.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
 const route = useRoute()
-const router = useRouter()
 const skillStore = useSkillStore()
 const searchQuery = ref('')
 
@@ -64,8 +60,4 @@ onMounted(() => {
     skillStore.setSearchQuery(searchQuery.value)
   }
 })
-
-function goToAdmin() {
-  router.push('/admin')
-}
 </script>
