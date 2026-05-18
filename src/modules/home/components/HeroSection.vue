@@ -297,37 +297,15 @@ onUnmounted(() => {
 
 /* Touch friendly improvements */
 @media (max-width: 768px) {
-  .flex.flex-wrap.justify-center.gap-2 {
-    gap: 0.75rem !important;
-  }
-  
   /* Make tags bigger for touch */
-  .flex.flex-wrap.justify-center.gap-2 .router-link {
+  .tags-container a {
     padding: 12px 20px !important;
     font-size: 0.9rem !important;
   }
   
   /* Improve search input touch */
-  .relative.flex.items-center {
+  .search-container {
     padding: 1rem !important;
-  }
-  
-  /* Larger tap target for the big launch button */
-  .bg-gradient-to-r.from-\\[var\\(--neon-cyan\\)\\].to-\\[var\\(--neon-purple\\)\\] {
-    padding: 14px 24px !important;
-    font-size: 1rem !important;
-  }
-}
-
-/* Disable hover effects on touch devices */
-@media (hover: none) and (pointer: coarse) {
-  .hover\\:shadow-\\[0_0_20px_rgba\\(0,245,255,0.5\\)\\]:hover,
-  .hover\\:scale-105:hover,
-  .group:hover .group-hover\\:scale-110,
-  .group:hover .group-hover\\:text-\\[var\\(--neon-cyan\\)\\] {
-    transform: none !important;
-    box-shadow: none !important;
-    transition: none !important;
   }
 }
 </style>
