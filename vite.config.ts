@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
-  base: '/skill-hub/',  // 使用自定义域名时用根路径，GitHub Pages 项目路径用 '/skill-hub/'
+  base: '/skill-hub/',  // 方案二：项目名路径
   plugins: [vue()],
   resolve: {
     alias: {
