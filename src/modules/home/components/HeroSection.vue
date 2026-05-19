@@ -64,14 +64,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search } from '@element-plus/icons-vue'
+import { useSkillStore } from '@/stores/skillStore'
 
 const router = useRouter()
 const searchQuery = ref('')
 const canvas = ref<HTMLCanvasElement | null>(null)
-const popularTags = ['代码生成', '翻译', '写作', '数据分析', '创意', '编程', '学习']
+const skillStore = useSkillStore()
+
+const popularTags = computed(() => {
+  const tags = new Set<string>()
+  skillStore.skills.forEach(skill => {
+    skill.tags.forEach(tag => tags.add(tag))
+  })
+  return Array.from(tags)
+})
 
 let animationId: number
 let particles: Particle3D[] = []
@@ -222,9 +231,12 @@ function handleResize() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   initParticles()
   window.addEventListener('resize', handleResize)
+  if (skillStore.skills.length === 0) {
+    await skillStore.loadSkills()
+  }
 })
 
 onUnmounted(() => {
