@@ -183,7 +183,7 @@ const defaultTagLimit = 8
 
 const sourceOptions = computed(() => [
   { 
-    label: 'ZIP / MD 导入', 
+    label: '本地导入', 
     value: 'local',
     count: skillStore.skills.filter(s => ['zip', 'skillmd', 'local'].includes(s.source.type)).length
   },

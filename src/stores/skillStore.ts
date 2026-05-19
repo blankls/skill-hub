@@ -57,6 +57,8 @@ export const useSkillStore = defineStore('skill', () => {
         }
         return selectedSources.value.includes(type)
       })
+    } else {
+      result = []
     }
 
     if (minRating.value > 0) {
