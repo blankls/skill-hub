@@ -5,6 +5,8 @@ import { db } from '@/utils/db'
 import { fetchFullSkillFromGitHub, fetchSkillsFromSameRepo, fetchGitHubRepo, clearRepoCache, type SyncProgress } from '@/utils/githubClient'
 import { ElMessage } from 'element-plus'
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+
 // 定时任务配置
 const SYNC_INTERVAL_HOURS = 24 // 每天同步一次
 const BATCH_SIZE = 3 // 每批同步 3 个技能
@@ -72,7 +74,11 @@ export const useSkillStore = defineStore('skill', () => {
 
     switch (sortBy.value) {
       case 'likes':
-        result.sort((a, b) => (b.likes || 0) - (a.likes || 0))
+        result.sort((a, b) => {
+          const diff = (b.likes || 0) - (a.likes || 0)
+          if (diff !== 0) return diff
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        })
         break
       case 'name':
         result.sort((a, b) => a.name.localeCompare(b.name))
@@ -175,7 +181,7 @@ export const useSkillStore = defineStore('skill', () => {
     if (!skill) return 0
     const newLikes = (skill.likes || 0) + 1
     try {
-      const res = await fetch(`/api/skills/${skillId}/like`, {
+      const res = await fetch(`${API_BASE}/skills/${skillId}/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({})

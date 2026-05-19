@@ -31,8 +31,8 @@
             </span>
           </div>
           <div class="flex items-center gap-2 text-[var(--text-muted)] text-xs font-mono">
-            <span v-if="skill.likes" class="flex items-center gap-1 text-orange-400">
-              🔥 {{ skill.likes }}
+            <span class="flex items-center gap-1 text-orange-400">
+              🔥 {{ skill.likes || 0 }}
             </span>
             <span class="flex items-center gap-1">
               <el-icon class="text-xs"><Document /></el-icon>

@@ -30,6 +30,9 @@
       
       <div class="flex items-center justify-between pt-2 md:pt-3 border-t border-[var(--neon-cyan)]/10 text-[10px] md:text-xs">
         <div class="flex items-center gap-1 md:gap-2">
+          <span class="flex items-center gap-0.5 md:gap-1 text-orange-400 font-mono font-semibold">
+            🔥 {{ skill.likes || 0 }}
+          </span>
           <span class="text-[var(--neon-yellow)] font-mono font-semibold">
             v{{ skill.version }}
           </span>

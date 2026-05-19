@@ -26,7 +26,11 @@ const skillStore = useSkillStore()
 
 const popularSkills = computed(() => {
   return [...skillStore.skills]
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .sort((a, b) => {
+      const likesDiff = (b.likes || 0) - (a.likes || 0)
+      if (likesDiff !== 0) return likesDiff
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    })
     .slice(0, 4)
 })
 

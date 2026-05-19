@@ -79,8 +79,8 @@
           </span>
         </div>
         <div class="flex items-center gap-3 text-xs text-[var(--text-muted)] font-mono">
-          <span v-if="skill.likes" class="flex items-center gap-1 text-orange-400">
-            🔥 {{ skill.likes }}
+          <span class="flex items-center gap-1 text-orange-400">
+            🔥 {{ skill.likes || 0 }}
           </span>
           <span class="flex items-center gap-1">
             <el-icon class="text-xs"><Document /></el-icon>

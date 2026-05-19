@@ -29,6 +29,9 @@
                 <span v-if="skill.author" class="text-[var(--text-muted)]">
                   <el-icon class="mr-1"><User /></el-icon>{{ skill.author }}
                 </span>
+                <span class="flex items-center gap-1 text-orange-400 font-mono">
+                  🔥 {{ skill.likes || 0 }}
+                </span>
               </div>
               <el-tooltip placement="top" :disabled="!isDescriptionLong">
                 <template #content>
@@ -46,6 +49,15 @@
 
           <!-- 右侧：操作按钮组 -->
           <div class="flex flex-wrap gap-3 items-start">
+            <button
+              @click="handleLike"
+              class="px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 flex items-center gap-2"
+              :class="liking
+                ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
+                : 'bg-gradient-to-r from-orange-500/10 to-red-500/10 text-orange-400 border border-orange-500/30 hover:from-orange-500/20 hover:to-red-500/20 hover:border-orange-500/50'"
+            >
+              🔥 {{ liking ? '已点赞' : '点赞' }}
+            </button>
             <el-button 
               v-if="isGitHubSkill && isFromAdmin" 
               @click="handleSync"
@@ -127,6 +139,7 @@ const loading = ref(true)
 const syncing = ref(false)
 const activeTab = ref('overview')
 const showEditor = ref(false)
+const liking = ref(false)
 
 const skill = computed(() => {
   return skillStore.skills.find(s => s.id === route.params.id) || null
@@ -152,6 +165,13 @@ function getSourceLabel(type: string) {
     skillmd: 'Markdown'
   }
   return labels[type] || '本地'
+}
+
+const handleLike = async () => {
+  if (!skill.value || liking.value) return
+  liking.value = true
+  await skillStore.toggleLike(skill.value.id)
+  setTimeout(() => { liking.value = false }, 1500)
 }
 
 async function handleSync() {
