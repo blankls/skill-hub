@@ -53,9 +53,19 @@
       </div>
 
       <!-- Popular Tags -->
-      <div class="flex flex-wrap justify-center gap-2">
-        <router-link v-for="tag in popularTags" :key="tag" :to="`/skills?tag=${tag}`"
-          class="px-4 py-2 bg-[var(--dark-card)] hover:bg-[var(--neon-cyan)]/10 border border-[var(--neon-cyan)]/20 hover:border-[var(--neon-cyan)]/50 text-[var(--text-light)] rounded-full transition-all duration-200 font-mono text-sm">
+      <div class="flex flex-wrap justify-center gap-3">
+        <router-link 
+          v-for="(tag, index) in popularTags" 
+          :key="tag" 
+          :to="`/skills?tag=${tag}`"
+          class="tag-cloud-item px-5 py-2.5 rounded-full font-mono text-sm font-medium transition-all duration-300 ease-out"
+          :style="{
+            backgroundColor: getTagColor(tag, index).bg,
+            borderColor: getTagColor(tag, index).border,
+            color: getTagColor(tag, index).border.replace('0.5', '1'),
+            boxShadow: `0 0 10px ${getTagColor(tag, index).bg}`
+          }"
+        >
           #{{ tag }}
         </router-link>
       </div>
@@ -75,11 +85,20 @@ const canvas = ref<HTMLCanvasElement | null>(null)
 const skillStore = useSkillStore()
 
 const popularTags = computed(() => {
-  const tags = new Set<string>()
+  const tagCount: Record<string, number> = {}
+  
   skillStore.skills.forEach(skill => {
-    skill.tags.forEach(tag => tags.add(tag))
+    skill.tags.forEach(tag => {
+      tagCount[tag] = (tagCount[tag] || 0) + 1
+    })
   })
-  return Array.from(tags)
+  
+  const sortedTags = Object.entries(tagCount)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 8)
+    .map(([tag]) => tag)
+  
+  return sortedTags
 })
 
 let animationId: number
@@ -108,6 +127,23 @@ const colorBases = [
 const focalLength = 500
 const centerX = ref(0)
 const centerY = ref(0)
+
+const tagColors = [
+  { bg: 'rgba(14, 165, 233, 0.2)', border: 'rgba(14, 165, 233, 0.5)', hover: 'rgba(14, 165, 233, 0.4)' },
+  { bg: 'rgba(236, 72, 153, 0.2)', border: 'rgba(236, 72, 153, 0.5)', hover: 'rgba(236, 72, 153, 0.4)' },
+  { bg: 'rgba(139, 92, 246, 0.2)', border: 'rgba(139, 92, 246, 0.5)', hover: 'rgba(139, 92, 246, 0.4)' },
+  { bg: 'rgba(34, 197, 94, 0.2)', border: 'rgba(34, 197, 94, 0.5)', hover: 'rgba(34, 197, 94, 0.4)' },
+  { bg: 'rgba(251, 146, 60, 0.2)', border: 'rgba(251, 146, 60, 0.5)', hover: 'rgba(251, 146, 60, 0.4)' },
+  { bg: 'rgba(168, 85, 247, 0.2)', border: 'rgba(168, 85, 247, 0.5)', hover: 'rgba(168, 85, 247, 0.4)' },
+  { bg: 'rgba(20, 184, 166, 0.2)', border: 'rgba(20, 184, 166, 0.5)', hover: 'rgba(20, 184, 166, 0.4)' },
+  { bg: 'rgba(244, 63, 94, 0.2)', border: 'rgba(244, 63, 94, 0.5)', hover: 'rgba(244, 63, 94, 0.4)' }
+]
+
+function getTagColor(tag: string, index: number) {
+  const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  const colorIndex = (hash + index) % tagColors.length
+  return tagColors[colorIndex]
+}
 
 function handleSearch() {
   if (searchQuery.value.trim()) {
@@ -261,6 +297,22 @@ onUnmounted(() => {
 .no-input-border :deep(.el-input__wrapper:hover),
 .no-input-border :deep(.el-input__wrapper.is-focus) {
   box-shadow: none !important;
+}
+
+/* Tag Cloud Hover Effects */
+.tag-cloud-item {
+  border-width: 1px;
+  border-style: solid;
+  transform: translateY(0);
+}
+
+.tag-cloud-item:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 20px var(--neon-cyan) !important;
+}
+
+.tag-cloud-item:active {
+  transform: translateY(0) scale(0.98);
 }
 
 /* Mobile Responsive */
