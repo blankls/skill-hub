@@ -1,13 +1,65 @@
 <template>
-  <aside class="w-72 flex-shrink-0 bg-[var(--dark-card)] rounded-xl p-6 shadow-lg border border-white/5">
-    <div class="space-y-8">
+  <aside class="w-72 flex-shrink-0 bg-[var(--dark-card)] rounded-xl p-5 shadow-lg border border-white/5 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto">
+    <div class="space-y-6">
+      <!-- 搜索框 -->
+      <div class="filter-section">
+        <h3 class="text-sm font-semibold text-[var(--text-light)] mb-3 flex items-center">
+          <span class="w-1 h-4 bg-gradient-to-b from-[var(--neon-cyan)] to-[var(--neon-purple)] rounded-full mr-2"></span>
+          搜索
+        </h3>
+        <div class="relative flex items-center bg-[var(--dark-bg)] border border-[var(--neon-cyan)]/30 rounded-lg p-1.5 transition-all hover:border-[var(--neon-cyan)]/50 focus-within:border-[var(--neon-cyan)]">
+          <el-icon class="text-[var(--neon-cyan)] text-lg flex-shrink-0 ml-1"><Search /></el-icon>
+          <el-input
+            :model-value="skillStore.searchQuery"
+            @update:model-value="onSearchChange"
+            placeholder="搜索技能..."
+            class="flex-1 bg-transparent no-input-border"
+            clearable
+          />
+        </div>
+      </div>
+
+      <!-- 视图切换 -->
+      <div class="filter-section">
+        <h3 class="text-sm font-semibold text-[var(--text-light)] mb-3 flex items-center">
+          <span class="w-1 h-4 bg-gradient-to-b from-[var(--neon-cyan)] to-[var(--neon-purple)] rounded-full mr-2"></span>
+          显示方式
+        </h3>
+        <div class="flex items-center gap-1 p-1 bg-[var(--dark-bg)] border border-[var(--neon-cyan)]/20 rounded-lg">
+          <button
+            @click="skillStore.setViewMode('grid')"
+            :class="[
+              'flex-1 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center gap-1.5 text-sm',
+              skillStore.viewMode === 'grid' 
+                ? 'bg-[var(--neon-cyan)] text-white shadow-[0_0_10px_rgba(0,245,255,0.4)]' 
+                : 'text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10'
+            ]"
+          >
+            <el-icon><Grid /></el-icon>
+            网格
+          </button>
+          <button
+            @click="skillStore.setViewMode('list')"
+            :class="[
+              'flex-1 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center gap-1.5 text-sm',
+              skillStore.viewMode === 'list' 
+                ? 'bg-[var(--neon-cyan)] text-white shadow-[0_0_10px_rgba(0,245,255,0.4)]' 
+                : 'text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10'
+            ]"
+          >
+            <el-icon><List /></el-icon>
+            列表
+          </button>
+        </div>
+      </div>
+
       <!-- 来源筛选 -->
       <div class="filter-section">
-        <h3 class="text-sm font-semibold text-[var(--text-light)] mb-4 flex items-center">
+        <h3 class="text-sm font-semibold text-[var(--text-light)] mb-3 flex items-center">
           <span class="w-1 h-4 bg-gradient-to-b from-[var(--neon-cyan)] to-[var(--neon-purple)] rounded-full mr-2"></span>
           数据来源
         </h3>
-        <div class="space-y-2 ml-3">
+        <div class="space-y-1 ml-1">
           <label 
             v-for="source in sourceOptions" 
             :key="source.value"
@@ -34,7 +86,7 @@
 
       <!-- 标签筛选 -->
       <div class="filter-section">
-        <h3 class="text-sm font-semibold text-[var(--text-light)] mb-4 flex items-center">
+        <h3 class="text-sm font-semibold text-[var(--text-light)] mb-3 flex items-center">
           <span class="w-1 h-4 bg-gradient-to-b from-[var(--neon-cyan)] to-[var(--neon-purple)] rounded-full mr-2"></span>
           标签筛选
         </h3>
@@ -44,10 +96,10 @@
             v-for="(tag, index) in tagList"
             :key="tag.name"
             @click="onToggleTag(tag.name)"
-            class="tag-filter-btn w-full flex items-center justify-between py-2.5 px-4 rounded-lg transition-all duration-300 hover:scale-[1.02]"
+            class="tag-filter-btn w-full flex items-center justify-between py-2 px-3 rounded-lg transition-all duration-300 hover:scale-[1.02]"
             :class="[
               skillStore.selectedTags.includes(tag.name) 
-                ? 'ring-2 ring-offset-2 ring-offset-[var(--dark-card)]' 
+                ? 'ring-2 ring-offset-1 ring-offset-[var(--dark-card)]' 
                 : 'hover:bg-white/5'
             ]"
             :style="{
@@ -60,7 +112,7 @@
           >
             <div class="flex items-center">
               <span 
-                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                 :style="{
                   backgroundColor: getTagColor(tag.name, index).bg,
                   color: getTagColor(tag.name, index).text,
@@ -70,21 +122,20 @@
                 #{{ tag.name }}
               </span>
             </div>
-            <span class="text-xs px-2 py-1 rounded-full bg-white/10 text-[var(--text-muted)]">
+            <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-[var(--text-muted)]">
               {{ tag.count }}
             </span>
           </button>
         </div>
 
-        <div v-else class="text-center py-8 text-sm text-[var(--text-muted)]">
+        <div v-else class="text-center py-6 text-sm text-[var(--text-muted)]">
           暂无标签
         </div>
 
-        <!-- 清除筛选 -->
         <button
           v-if="skillStore.selectedTags.length > 0"
           @click="onClearTags"
-          class="mt-4 w-full py-2 px-4 rounded-lg text-sm text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 transition-colors border border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)]/50"
+          class="mt-3 w-full py-1.5 px-3 rounded-lg text-sm text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 transition-colors border border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)]/50"
         >
           清除标签筛选 ({{ skillStore.selectedTags.length }})
         </button>
@@ -92,11 +143,11 @@
 
       <!-- 评分筛选 -->
       <div class="filter-section">
-        <h3 class="text-sm font-semibold text-[var(--text-light)] mb-4 flex items-center">
+        <h3 class="text-sm font-semibold text-[var(--text-light)] mb-3 flex items-center">
           <span class="w-1 h-4 bg-gradient-to-b from-[var(--neon-cyan)] to-[var(--neon-purple)] rounded-full mr-2"></span>
           最低评分
         </h3>
-        <div class="px-2">
+        <div class="px-1">
           <el-slider 
             :model-value="skillStore.minRating"
             @update:model-value="onRatingChange"
@@ -114,7 +165,7 @@
       <button
         v-if="hasActiveFilters"
         @click="onResetAll"
-        class="w-full py-3 px-4 rounded-lg text-sm font-medium bg-gradient-to-r from-[var(--neon-cyan)]/10 to-[var(--neon-purple)]/10 hover:from-[var(--neon-cyan)]/20 hover:to-[var(--neon-purple)]/20 text-[var(--text-light)] transition-all duration-300 border border-white/10 hover:border-white/20"
+        class="w-full py-2.5 px-4 rounded-lg text-sm font-medium bg-gradient-to-r from-[var(--neon-cyan)]/10 to-[var(--neon-purple)]/10 hover:from-[var(--neon-cyan)]/20 hover:to-[var(--neon-purple)]/20 text-[var(--text-light)] transition-all duration-300 border border-white/10 hover:border-white/20"
       >
         重置所有筛选条件
       </button>
@@ -126,6 +177,7 @@
 import { ref, computed } from 'vue'
 import { useSkillStore } from '@/stores/skillStore'
 import { getTagColor } from '@/utils/tagColors'
+import { Search, Grid, List } from '@element-plus/icons-vue'
 
 const skillStore = useSkillStore()
 
@@ -159,8 +211,12 @@ const tagList = computed(() => {
 })
 
 const hasActiveFilters = computed(() => {
-  return skillStore.selectedTags.length > 0 || skillStore.minRating > 0
+  return skillStore.selectedTags.length > 0 || skillStore.minRating > 0 || skillStore.searchQuery !== ''
 })
+
+const onSearchChange = (val: string) => {
+  skillStore.setSearchQuery(val)
+}
 
 const onToggleTag = (tag: string) => {
   skillStore.toggleSelectedTag(tag)
@@ -209,6 +265,27 @@ const onResetAll = () => {
   height: 200px;
 }
 
+.no-input-border :deep(.el-input__wrapper) {
+  box-shadow: none !important;
+  border: none !important;
+  background-color: transparent !important;
+  padding: 0 !important;
+}
+
+.no-input-border :deep(.el-input__inner) {
+  background-color: transparent !important;
+  color: var(--text-light) !important;
+}
+
+.no-input-border :deep(.el-input__wrapper:hover),
+.no-input-border :deep(.el-input__wrapper.is-focus) {
+  box-shadow: none !important;
+}
+
+.no-input-border :deep(.el-input__placeholder) {
+  color: var(--text-muted) !important;
+}
+
 :deep(.el-slider__runway) {
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
@@ -223,5 +300,22 @@ const onResetAll = () => {
 
 :deep(.el-slider__stop) {
   background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+aside::-webkit-scrollbar {
+  width: 4px;
+}
+
+aside::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+aside::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+aside::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 </style>
