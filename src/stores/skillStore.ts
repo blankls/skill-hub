@@ -15,6 +15,9 @@ export const useSkillStore = defineStore('skill', () => {
   const selectedSkill = ref<Skill | null>(null)
   const searchQuery = ref('')
   const selectedTag = ref('')
+  const selectedTags = ref<string[]>([])
+  const selectedSources = ref<string[]>(['local', 'github'])
+  const minRating = ref(0)
   const loading = ref(false)
   const syncingSkillIds = ref<Set<string>>(new Set())
   const syncProgress = ref<Map<string, SyncProgress>>(new Map())
@@ -37,6 +40,24 @@ export const useSkillStore = defineStore('skill', () => {
     if (selectedTag.value) {
       result = result.filter(skill => 
         skill.tags.includes(selectedTag.value)
+      )
+    }
+
+    if (selectedTags.value.length > 0) {
+      result = result.filter(skill =>
+        selectedTags.value.some(tag => skill.tags.includes(tag))
+      )
+    }
+
+    if (selectedSources.value.length > 0) {
+      result = result.filter(skill =>
+        selectedSources.value.includes(skill.source.type)
+      )
+    }
+
+    if (minRating.value > 0) {
+      result = result.filter(skill =>
+        (skill.rating || 0) >= minRating.value
       )
     }
     
@@ -98,6 +119,35 @@ export const useSkillStore = defineStore('skill', () => {
 
   function setSelectedTag(tag: string) {
     selectedTag.value = tag
+  }
+
+  function setSelectedTags(tags: string[]) {
+    selectedTags.value = tags
+  }
+
+  function toggleSelectedTag(tag: string) {
+    const idx = selectedTags.value.indexOf(tag)
+    if (idx > -1) {
+      selectedTags.value.splice(idx, 1)
+    } else {
+      selectedTags.value.push(tag)
+    }
+  }
+
+  function setSelectedSources(sources: string[]) {
+    selectedSources.value = sources
+  }
+
+  function setMinRating(rating: number) {
+    minRating.value = rating
+  }
+
+  function clearAllFilters() {
+    selectedTag.value = ''
+    selectedTags.value = []
+    selectedSources.value = ['local', 'github']
+    minRating.value = 0
+    searchQuery.value = ''
   }
 
   function setViewMode(mode: 'grid' | 'list') {
@@ -374,6 +424,9 @@ export const useSkillStore = defineStore('skill', () => {
     selectedSkill,
     searchQuery,
     selectedTag,
+    selectedTags,
+    selectedSources,
+    minRating,
     loading,
     viewMode,
     syncingSkillIds,
@@ -387,6 +440,11 @@ export const useSkillStore = defineStore('skill', () => {
     selectSkill,
     setSearchQuery,
     setSelectedTag,
+    setSelectedTags,
+    toggleSelectedTag,
+    setSelectedSources,
+    setMinRating,
+    clearAllFilters,
     setViewMode,
     syncGitHubSkill,
     batchSyncAllGitHubSkills,

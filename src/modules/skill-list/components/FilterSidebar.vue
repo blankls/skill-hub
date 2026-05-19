@@ -17,7 +17,8 @@
               <input 
                 type="checkbox" 
                 :value="source.value"
-                v-model="selectedSources"
+                v-model="localSources"
+                @change="onSourceChange"
                 class="w-4 h-4 rounded border-gray-600 text-[var(--neon-cyan)] focus:ring-[var(--neon-cyan)] focus:ring-offset-0 bg-transparent"
               />
               <span class="ml-3 text-sm text-[var(--text-muted)] group-hover:text-[var(--text-light)] transition-colors">
@@ -42,15 +43,15 @@
           <button
             v-for="(tag, index) in tagList"
             :key="tag.name"
-            @click="toggleTag(tag.name)"
+            @click="onToggleTag(tag.name)"
             class="tag-filter-btn w-full flex items-center justify-between py-2.5 px-4 rounded-lg transition-all duration-300 hover:scale-[1.02]"
             :class="[
-              selectedTags.includes(tag.name) 
+              skillStore.selectedTags.includes(tag.name) 
                 ? 'ring-2 ring-offset-2 ring-offset-[var(--dark-card)]' 
                 : 'hover:bg-white/5'
             ]"
             :style="{
-              backgroundColor: selectedTags.includes(tag.name) 
+              backgroundColor: skillStore.selectedTags.includes(tag.name) 
                 ? getTagColor(tag.name, index).bg 
                 : 'transparent',
               ringColor: getTagColor(tag.name, index).border,
@@ -63,7 +64,7 @@
                 :style="{
                   backgroundColor: getTagColor(tag.name, index).bg,
                   color: getTagColor(tag.name, index).text,
-                  border: `1px solid ${getTagColor(tag.name, index).border)}`
+                  border: `1px solid ${getTagColor(tag.name, index).border}`
                 }"
               >
                 #{{ tag.name }}
@@ -81,11 +82,11 @@
 
         <!-- 清除筛选 -->
         <button
-          v-if="selectedTags.length > 0"
-          @click="clearTags"
+          v-if="skillStore.selectedTags.length > 0"
+          @click="onClearTags"
           class="mt-4 w-full py-2 px-4 rounded-lg text-sm text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 transition-colors border border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)]/50"
         >
-          清除标签筛选 ({{ selectedTags.length }})
+          清除标签筛选 ({{ skillStore.selectedTags.length }})
         </button>
       </div>
 
@@ -97,7 +98,8 @@
         </h3>
         <div class="px-2">
           <el-slider 
-            v-model="minRating" 
+            :model-value="skillStore.minRating"
+            @update:model-value="onRatingChange"
             :min="0" 
             :max="5" 
             :step="0.5" 
@@ -111,7 +113,7 @@
       <!-- 重置所有筛选 -->
       <button
         v-if="hasActiveFilters"
-        @click="resetAll"
+        @click="onResetAll"
         class="w-full py-3 px-4 rounded-lg text-sm font-medium bg-gradient-to-r from-[var(--neon-cyan)]/10 to-[var(--neon-purple)]/10 hover:from-[var(--neon-cyan)]/20 hover:to-[var(--neon-purple)]/20 text-[var(--text-light)] transition-all duration-300 border border-white/10 hover:border-white/20"
       >
         重置所有筛选条件
@@ -121,18 +123,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useSkillStore } from '@/stores/skillStore'
 import { getTagColor } from '@/utils/tagColors'
 
-const emit = defineEmits<{
-  (e: 'filter-change', filters: any): void
-}>()
-
 const skillStore = useSkillStore()
-const selectedSources = ref<string[]>(['local', 'github'])
-const selectedTags = ref<string[]>([])
-const minRating = ref(0)
+
+const localSources = ref<string[]>([...skillStore.selectedSources])
 
 const sourceOptions = computed(() => [
   { 
@@ -162,42 +159,29 @@ const tagList = computed(() => {
 })
 
 const hasActiveFilters = computed(() => {
-  return selectedTags.value.length > 0 || minRating.value > 0
+  return skillStore.selectedTags.length > 0 || skillStore.minRating > 0
 })
 
-const toggleTag = (tag: string) => {
-  const idx = selectedTags.value.indexOf(tag)
-  if (idx > -1) {
-    selectedTags.value.splice(idx, 1)
-  } else {
-    selectedTags.value.push(tag)
-  }
-  emitFilters()
+const onToggleTag = (tag: string) => {
+  skillStore.toggleSelectedTag(tag)
 }
 
-const clearTags = () => {
-  selectedTags.value = []
-  emitFilters()
+const onClearTags = () => {
+  skillStore.setSelectedTags([])
 }
 
-const resetAll = () => {
-  selectedSources.value = ['local', 'github']
-  selectedTags.value = []
-  minRating.value = 0
-  emitFilters()
+const onSourceChange = () => {
+  skillStore.setSelectedSources([...localSources.value])
 }
 
-const emitFilters = () => {
-  emit('filter-change', {
-    sources: selectedSources.value,
-    tags: selectedTags.value,
-    minRating: minRating.value
-  })
+const onRatingChange = (val: number) => {
+  skillStore.setMinRating(val)
 }
 
-watch([selectedSources, minRating], () => {
-  emitFilters()
-}, { deep: true })
+const onResetAll = () => {
+  skillStore.clearAllFilters()
+  localSources.value = ['local', 'github']
+}
 </script>
 
 <style scoped>
