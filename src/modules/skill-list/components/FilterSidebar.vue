@@ -149,21 +149,26 @@
         </button>
       </div>
 
-      <!-- 热度筛选 -->
+      <!-- 排序方式 -->
       <div class="filter-section">
         <h3 class="text-sm font-semibold text-[var(--text-light)] mb-3 flex items-center">
-          <span class="w-1 h-4 bg-gradient-to-b from-orange-400 to-red-500 rounded-full mr-2"></span>
-          🔥 最低热度 <span class="ml-auto text-xs text-orange-400 font-mono">{{ skillStore.minLikes }}</span>
+          <span class="w-1 h-4 bg-gradient-to-b from-[var(--neon-cyan)] to-[var(--neon-purple)] rounded-full mr-2"></span>
+          排序方式
         </h3>
-        <div class="px-1">
-          <el-slider 
-            :model-value="skillStore.minLikes"
-            @update:model-value="onLikesChange"
-            :min="0" 
-            :max="maxLikes" 
-            :step="1" 
-            size="small"
-          />
+        <div class="space-y-1">
+          <button
+            v-for="opt in sortOptions"
+            :key="opt.value"
+            @click="onSortChange(opt.value)"
+            class="w-full flex items-center justify-between py-2 px-3 rounded-lg transition-all duration-200 hover:bg-white/5"
+            :class="skillStore.sortBy === opt.value ? 'bg-[var(--neon-cyan)]/10 text-[var(--neon-cyan)]' : 'text-[var(--text-muted)]'"
+          >
+            <div class="flex items-center gap-2">
+              <span class="text-base">{{ opt.icon }}</span>
+              <span class="text-sm">{{ opt.label }}</span>
+            </div>
+            <span v-if="skillStore.sortBy === opt.value" class="text-xs text-[var(--neon-cyan)]">✓</span>
+          </button>
         </div>
       </div>
 
@@ -232,8 +237,19 @@ const displayedTags = computed(() => {
 })
 
 const hasActiveFilters = computed(() => {
-  return skillStore.selectedTags.length > 0 || skillStore.minLikes > 0 || skillStore.searchQuery !== ''
+  return skillStore.selectedTags.length > 0 || skillStore.searchQuery !== ''
 })
+
+const sortOptions = [
+  { value: 'updated', label: '最近更新', icon: '🕐' },
+  { value: 'likes', label: '最多点赞', icon: '🔥' },
+  { value: 'name', label: '名称排序', icon: '🔤' },
+  { value: 'files', label: '文件最多', icon: '📁' },
+]
+
+const onSortChange = (val: string) => {
+  skillStore.setSortBy(val)
+}
 
 const onSearchChange = (val: string) => {
   skillStore.setSearchQuery(val)
@@ -249,15 +265,6 @@ const onClearTags = () => {
 
 const onSourceChange = () => {
   skillStore.setSelectedSources([...localSources.value])
-}
-
-const maxLikes = computed(() => {
-  const max = Math.max(...skillStore.skills.map(s => s.likes || 0), 10)
-  return Math.ceil(max / 5) * 5
-})
-
-const onLikesChange = (val: number) => {
-  skillStore.setMinLikes(val)
 }
 
 const onResetAll = () => {

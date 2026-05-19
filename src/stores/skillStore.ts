@@ -17,7 +17,7 @@ export const useSkillStore = defineStore('skill', () => {
   const selectedTag = ref('')
   const selectedTags = ref<string[]>([])
   const selectedSources = ref<string[]>(['local', 'github'])
-  const minLikes = ref(0)
+  const sortBy = ref('updated')
   const loading = ref(false)
   const syncingSkillIds = ref<Set<string>>(new Set())
   const syncProgress = ref<Map<string, SyncProgress>>(new Map())
@@ -61,12 +61,6 @@ export const useSkillStore = defineStore('skill', () => {
       result = []
     }
 
-    if (minLikes.value > 0) {
-      result = result.filter(skill =>
-        (skill.likes || 0) >= minLikes.value
-      )
-    }
-    
     if (searchQuery.value) {
       const q = searchQuery.value.toLowerCase()
       result = result.filter(skill => 
@@ -74,6 +68,22 @@ export const useSkillStore = defineStore('skill', () => {
         skill.description.toLowerCase().includes(q) ||
         skill.tags.some(tag => tag.toLowerCase().includes(q))
       )
+    }
+
+    switch (sortBy.value) {
+      case 'likes':
+        result.sort((a, b) => (b.likes || 0) - (a.likes || 0))
+        break
+      case 'name':
+        result.sort((a, b) => a.name.localeCompare(b.name))
+        break
+      case 'files':
+        result.sort((a, b) => b.files.length - a.files.length)
+        break
+      case 'updated':
+      default:
+        result.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        break
     }
     
     return result
@@ -144,15 +154,15 @@ export const useSkillStore = defineStore('skill', () => {
     selectedSources.value = sources
   }
 
-  function setMinLikes(val: number) {
-    minLikes.value = val
+  function setSortBy(val: string) {
+    sortBy.value = val
   }
 
   function clearAllFilters() {
     selectedTag.value = ''
     selectedTags.value = []
     selectedSources.value = ['local', 'github']
-    minLikes.value = 0
+    sortBy.value = 'updated'
     searchQuery.value = ''
   }
 
@@ -452,7 +462,7 @@ export const useSkillStore = defineStore('skill', () => {
     selectedTag,
     selectedTags,
     selectedSources,
-    minLikes,
+    sortBy,
     loading,
     viewMode,
     syncingSkillIds,
@@ -469,7 +479,7 @@ export const useSkillStore = defineStore('skill', () => {
     setSelectedTags,
     toggleSelectedTag,
     setSelectedSources,
-    setMinLikes,
+    setSortBy,
     clearAllFilters,
     setViewMode,
     syncGitHubSkill,
