@@ -8,35 +8,43 @@
         <div>
           <div class="flex items-center gap-2 md:gap-4 mb-2 flex-wrap">
             <h1 class="text-xl md:text-3xl font-bold">{{ skill.name }}</h1>
-            <el-tag :type="skill.sourceType === 'github' ? 'primary' : 'success'">
-              {{ skill.sourceType === 'github' ? 'GitHub' : '本地' }}
+            <el-tag :type="skill.source?.type === 'github' ? 'primary' : 'success'">
+              {{ skill.source?.type === 'github' ? 'GitHub' : '本地' }}
             </el-tag>
             <span class="text-gray-500">v{{ skill.version }}</span>
           </div>
           <p class="text-gray-600 dark:text-gray-400 mb-3 md:mb-4">{{ skill.description }}</p>
           <div class="flex flex-wrap items-center gap-3 md:gap-6 text-sm text-gray-500">
-            <span class="flex items-center gap-1">
+            <span v-if="skill.author" class="flex items-center gap-1">
               <el-icon><User /></el-icon>
               {{ skill.author }}
             </span>
-            <span class="flex items-center gap-1">
-              <el-icon><Star /></el-icon>
-              {{ skill.rating }} 评分
-            </span>
-            <span class="flex items-center gap-1">
-              <el-icon><Download /></el-icon>
-              {{ formatDownloads(skill.downloadCount) }} 下载
-            </span>
+            <button
+              @click="handleLike"
+              class="flex items-center gap-1 cursor-pointer transition-all duration-300 hover:scale-110"
+              :class="liking ? 'text-orange-500' : 'text-gray-500 hover:text-orange-400'"
+            >
+              🔥 {{ skill.likes || 0 }} 热度
+            </button>
             <span class="flex items-center gap-1">
               <el-icon><Clock /></el-icon>
-              更新于 {{ skill.lastUpdated }}
+              更新于 {{ formatDate(skill.updatedAt) }}
             </span>
           </div>
         </div>
       </div>
       <div class="flex flex-row md:flex-col gap-3">
+        <button
+          @click="handleLike"
+          class="px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 flex items-center gap-2"
+          :class="liking
+            ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
+            : 'bg-gradient-to-r from-orange-500/10 to-red-500/10 text-orange-400 border border-orange-500/30 hover:from-orange-500/20 hover:to-red-500/20 hover:border-orange-500/50'"
+        >
+          🔥 {{ liking ? '已点赞' : '点赞' }}
+        </button>
         <ZipExportBtn :skill="skill" />
-        <el-button v-if="skill.githubUrl" type="success" :icon="Link" @click="openGithub">
+        <el-button v-if="skill.source?.githubMeta?.html_url" type="success" :icon="Link" @click="openGithub">
           GitHub 仓库
         </el-button>
       </div>
@@ -50,8 +58,10 @@
 </template>
 
 <script setup lang="ts">
-import { Link, User, Star, Download, Clock } from '@element-plus/icons-vue'
+import { ref } from 'vue'
+import { Link, User, Clock } from '@element-plus/icons-vue'
 import ZipExportBtn from '@/components/features/ZipExportBtn.vue'
+import { useSkillStore } from '@/stores/skillStore'
 import type { Skill } from '@/types'
 
 interface Props {
@@ -59,16 +69,31 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const skillStore = useSkillStore()
+const liking = ref(false)
 
 const openGithub = () => {
-  if (props.skill.githubUrl) {
-    window.open(props.skill.githubUrl, '_blank')
+  if (props.skill.source?.githubMeta?.html_url) {
+    window.open(props.skill.source.githubMeta.html_url, '_blank')
   }
 }
 
-const formatDownloads = (num: number): string => {
-  if (num >= 10000) return `${(num / 10000).toFixed(1)}万`
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}k`
-  return String(num)
+const formatDate = (date: Date | string) => {
+  const d = new Date(date)
+  const now = new Date()
+  const diff = now.getTime() - d.getTime()
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  if (days === 0) return '今天'
+  if (days === 1) return '昨天'
+  if (days < 7) return `${days} 天前`
+  if (days < 30) return `${Math.floor(days / 7)} 周前`
+  return d.toLocaleDateString('zh-CN')
+}
+
+const handleLike = async () => {
+  if (liking.value) return
+  liking.value = true
+  await skillStore.toggleLike(props.skill.id)
+  setTimeout(() => { liking.value = false }, 1500)
 }
 </script>

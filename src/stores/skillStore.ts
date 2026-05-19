@@ -17,7 +17,7 @@ export const useSkillStore = defineStore('skill', () => {
   const selectedTag = ref('')
   const selectedTags = ref<string[]>([])
   const selectedSources = ref<string[]>(['local', 'github'])
-  const minRating = ref(0)
+  const minLikes = ref(0)
   const loading = ref(false)
   const syncingSkillIds = ref<Set<string>>(new Set())
   const syncProgress = ref<Map<string, SyncProgress>>(new Map())
@@ -61,9 +61,9 @@ export const useSkillStore = defineStore('skill', () => {
       result = []
     }
 
-    if (minRating.value > 0) {
+    if (minLikes.value > 0) {
       result = result.filter(skill =>
-        (skill.rating || 0) >= minRating.value
+        (skill.likes || 0) >= minLikes.value
       )
     }
     
@@ -144,20 +144,40 @@ export const useSkillStore = defineStore('skill', () => {
     selectedSources.value = sources
   }
 
-  function setMinRating(rating: number) {
-    minRating.value = rating
+  function setMinLikes(val: number) {
+    minLikes.value = val
   }
 
   function clearAllFilters() {
     selectedTag.value = ''
     selectedTags.value = []
     selectedSources.value = ['local', 'github']
-    minRating.value = 0
+    minLikes.value = 0
     searchQuery.value = ''
   }
 
   function setViewMode(mode: 'grid' | 'list') {
     viewMode.value = mode
+  }
+
+  async function toggleLike(skillId: string): Promise<number> {
+    const skill = skills.value.find(s => s.id === skillId)
+    if (!skill) return 0
+    const newLikes = (skill.likes || 0) + 1
+    try {
+      const res = await fetch(`/api/skills/${skillId}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      })
+      if (res.ok) {
+        const data = await res.json()
+        skill.likes = data.likes
+        return data.likes
+      }
+    } catch {}
+    skill.likes = newLikes
+    return newLikes
   }
 
   function isSyncing(skillId: string): boolean {
@@ -432,7 +452,7 @@ export const useSkillStore = defineStore('skill', () => {
     selectedTag,
     selectedTags,
     selectedSources,
-    minRating,
+    minLikes,
     loading,
     viewMode,
     syncingSkillIds,
@@ -449,7 +469,7 @@ export const useSkillStore = defineStore('skill', () => {
     setSelectedTags,
     toggleSelectedTag,
     setSelectedSources,
-    setMinRating,
+    setMinLikes,
     clearAllFilters,
     setViewMode,
     syncGitHubSkill,
@@ -458,6 +478,7 @@ export const useSkillStore = defineStore('skill', () => {
     getSyncProgress,
     loadAndSelectSkill,
     startAutoSync,
-    stopAutoSync
+    stopAutoSync,
+    toggleLike
   }
 })

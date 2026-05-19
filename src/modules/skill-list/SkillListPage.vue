@@ -66,7 +66,7 @@ const mobileDrawerOpen = ref(false)
 const activeFilterCount = computed(() => {
     let count = 0
     if (skillStore.selectedTags.length > 0) count += skillStore.selectedTags.length
-    if (skillStore.minRating > 0) count += 1
+    if (skillStore.minLikes > 0) count += 1
     if (skillStore.searchQuery !== '') count += 1
     if (skillStore.selectedSources.length < 2) count += 1
     return count

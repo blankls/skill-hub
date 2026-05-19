@@ -47,6 +47,7 @@ export interface Skill {
   source: SkillSource
   files: SkillFile[]
   tools?: Tool[]
+  likes?: number
   createdAt: Date
   updatedAt: Date
 }

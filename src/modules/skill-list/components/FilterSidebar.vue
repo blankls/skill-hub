@@ -149,19 +149,19 @@
         </button>
       </div>
 
-      <!-- 评分筛选 -->
+      <!-- 热度筛选 -->
       <div class="filter-section">
         <h3 class="text-sm font-semibold text-[var(--text-light)] mb-3 flex items-center">
-          <span class="w-1 h-4 bg-gradient-to-b from-[var(--neon-cyan)] to-[var(--neon-purple)] rounded-full mr-2"></span>
-          最低评分 <span class="ml-auto text-xs text-[var(--neon-cyan)] font-mono">{{ skillStore.minRating }}</span>
+          <span class="w-1 h-4 bg-gradient-to-b from-orange-400 to-red-500 rounded-full mr-2"></span>
+          🔥 最低热度 <span class="ml-auto text-xs text-orange-400 font-mono">{{ skillStore.minLikes }}</span>
         </h3>
         <div class="px-1">
           <el-slider 
-            :model-value="skillStore.minRating"
-            @update:model-value="onRatingChange"
+            :model-value="skillStore.minLikes"
+            @update:model-value="onLikesChange"
             :min="0" 
-            :max="5" 
-            :step="0.5" 
+            :max="maxLikes" 
+            :step="1" 
             size="small"
           />
         </div>
@@ -232,7 +232,7 @@ const displayedTags = computed(() => {
 })
 
 const hasActiveFilters = computed(() => {
-  return skillStore.selectedTags.length > 0 || skillStore.minRating > 0 || skillStore.searchQuery !== ''
+  return skillStore.selectedTags.length > 0 || skillStore.minLikes > 0 || skillStore.searchQuery !== ''
 })
 
 const onSearchChange = (val: string) => {
@@ -251,8 +251,13 @@ const onSourceChange = () => {
   skillStore.setSelectedSources([...localSources.value])
 }
 
-const onRatingChange = (val: number) => {
-  skillStore.setMinRating(val)
+const maxLikes = computed(() => {
+  const max = Math.max(...skillStore.skills.map(s => s.likes || 0), 10)
+  return Math.ceil(max / 5) * 5
+})
+
+const onLikesChange = (val: number) => {
+  skillStore.setMinLikes(val)
 }
 
 const onResetAll = () => {

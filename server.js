@@ -184,6 +184,26 @@ app.delete('/api/skills/:id', (req, res) => {
     }
 })
 
+// POST /api/skills/:id/like - 点赞/取消点赞
+app.post('/api/skills/:id/like', (req, res) => {
+    try {
+        const skill = readSkillFile(req.params.id)
+        if (!skill) return res.status(404).json({ error: 'Skill not found' })
+        
+        const { unlike } = req.body
+        if (unlike) {
+            skill.likes = Math.max(0, (skill.likes || 1) - 1)
+        } else {
+            skill.likes = (skill.likes || 0) + 1
+        }
+        
+        writeSkillFile(req.params.id, skill)
+        res.json({ likes: skill.likes })
+    } catch (e) {
+        res.status(500).json({ error: e.message })
+    }
+})
+
 // POST /api/auth/verify - 校验管理员密码（带限流）
 app.post('/api/auth/verify', (req, res) => {
     try {
