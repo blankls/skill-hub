@@ -44,6 +44,7 @@ data/
 .claude/
 .docs/
 .trae/
+.gstack/
 docs/
 debug.js
 test-zip-import.ts

@@ -58,15 +58,14 @@
           v-for="(tag, index) in popularTags" 
           :key="tag" 
           :to="`/skills?tag=${tag}`"
-          class="tag-cloud-item px-5 py-2.5 rounded-full font-mono text-sm font-medium transition-all duration-300 ease-out"
+          class="tag-item relative px-5 py-2.5 rounded-full font-mono text-sm font-medium overflow-hidden transition-all duration-300 ease-out"
           :style="{
-            backgroundColor: getTagColor(tag, index).bg,
-            borderColor: getTagColor(tag, index).border,
-            color: getTagColor(tag, index).border.replace('0.5', '1'),
-            boxShadow: `0 0 10px ${getTagColor(tag, index).bg}`
+            background: `linear-gradient(135deg, ${getTagColor(tag, index).bg} 0%, ${getTagColor(tag, index).hover} 100%)`,
+            border: `1px solid ${getTagColor(tag, index).border}`,
+            color: getTagColor(tag, index).text
           }"
         >
-          #{{ tag }}
+          <span class="relative z-10">#{{ tag }}</span>
         </router-link>
       </div>
     </div>
@@ -78,6 +77,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search } from '@element-plus/icons-vue'
 import { useSkillStore } from '@/stores/skillStore'
+import { getTagColor } from '@/utils/tagColors'
 
 const router = useRouter()
 const searchQuery = ref('')
@@ -127,23 +127,6 @@ const colorBases = [
 const focalLength = 500
 const centerX = ref(0)
 const centerY = ref(0)
-
-const tagColors = [
-  { bg: 'rgba(14, 165, 233, 0.2)', border: 'rgba(14, 165, 233, 0.5)', hover: 'rgba(14, 165, 233, 0.4)' },
-  { bg: 'rgba(236, 72, 153, 0.2)', border: 'rgba(236, 72, 153, 0.5)', hover: 'rgba(236, 72, 153, 0.4)' },
-  { bg: 'rgba(139, 92, 246, 0.2)', border: 'rgba(139, 92, 246, 0.5)', hover: 'rgba(139, 92, 246, 0.4)' },
-  { bg: 'rgba(34, 197, 94, 0.2)', border: 'rgba(34, 197, 94, 0.5)', hover: 'rgba(34, 197, 94, 0.4)' },
-  { bg: 'rgba(251, 146, 60, 0.2)', border: 'rgba(251, 146, 60, 0.5)', hover: 'rgba(251, 146, 60, 0.4)' },
-  { bg: 'rgba(168, 85, 247, 0.2)', border: 'rgba(168, 85, 247, 0.5)', hover: 'rgba(168, 85, 247, 0.4)' },
-  { bg: 'rgba(20, 184, 166, 0.2)', border: 'rgba(20, 184, 166, 0.5)', hover: 'rgba(20, 184, 166, 0.4)' },
-  { bg: 'rgba(244, 63, 94, 0.2)', border: 'rgba(244, 63, 94, 0.5)', hover: 'rgba(244, 63, 94, 0.4)' }
-]
-
-function getTagColor(tag: string, index: number) {
-  const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  const colorIndex = (hash + index) % tagColors.length
-  return tagColors[colorIndex]
-}
 
 function handleSearch() {
   if (searchQuery.value.trim()) {
@@ -299,20 +282,37 @@ onUnmounted(() => {
   box-shadow: none !important;
 }
 
-/* Tag Cloud Hover Effects */
-.tag-cloud-item {
-  border-width: 1px;
-  border-style: solid;
-  transform: translateY(0);
+/* Tag Item with Ripple Effect */
+.tag-item {
+  cursor: pointer;
+  backdrop-filter: blur(10px);
 }
 
-.tag-cloud-item:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 4px 20px var(--neon-cyan) !important;
+.tag-item::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
 }
 
-.tag-cloud-item:active {
-  transform: translateY(0) scale(0.98);
+.tag-item:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.tag-item:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.tag-item:active {
+  transform: translateY(-1px) scale(1.02);
 }
 
 /* Mobile Responsive */
