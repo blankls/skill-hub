@@ -1,20 +1,20 @@
 <template>
-  <div class="bg-white dark:bg-dark-card rounded-2xl p-8 border border-gray-200 dark:border-dark-border">
-    <div class="flex items-start justify-between">
-      <div class="flex items-start gap-6">
-        <div class="w-20 h-20 rounded-2xl gradient-bg flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">
+  <div class="bg-white dark:bg-dark-card rounded-2xl p-4 md:p-8 border border-gray-200 dark:border-dark-border">
+    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+      <div class="flex items-start gap-3 md:gap-6">
+        <div class="w-14 h-14 md:w-20 md:h-20 rounded-2xl gradient-bg flex items-center justify-center text-white text-xl md:text-3xl font-bold flex-shrink-0">
           {{ skill.name.charAt(0).toUpperCase() }}
         </div>
         <div>
-          <div class="flex items-center gap-4 mb-2">
-            <h1 class="text-3xl font-bold">{{ skill.name }}</h1>
+          <div class="flex items-center gap-2 md:gap-4 mb-2 flex-wrap">
+            <h1 class="text-xl md:text-3xl font-bold">{{ skill.name }}</h1>
             <el-tag :type="skill.sourceType === 'github' ? 'primary' : 'success'">
               {{ skill.sourceType === 'github' ? 'GitHub' : '本地' }}
             </el-tag>
             <span class="text-gray-500">v{{ skill.version }}</span>
           </div>
-          <p class="text-gray-600 dark:text-gray-400 mb-4">{{ skill.description }}</p>
-          <div class="flex items-center gap-6 text-sm text-gray-500">
+          <p class="text-gray-600 dark:text-gray-400 mb-3 md:mb-4">{{ skill.description }}</p>
+          <div class="flex flex-wrap items-center gap-3 md:gap-6 text-sm text-gray-500">
             <span class="flex items-center gap-1">
               <el-icon><User /></el-icon>
               {{ skill.author }}
@@ -34,7 +34,7 @@
           </div>
         </div>
       </div>
-      <div class="flex flex-col gap-3">
+      <div class="flex flex-row md:flex-col gap-3">
         <ZipExportBtn :skill="skill" />
         <el-button v-if="skill.githubUrl" type="success" :icon="Link" @click="openGithub">
           GitHub 仓库

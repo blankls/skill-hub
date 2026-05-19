@@ -3,13 +3,14 @@
     <div
       v-for="skill in skills"
       :key="skill.id"
-      class="skill-card rounded-2xl p-6 flex items-center gap-6 cursor-pointer transition-all group"
+      class="skill-card rounded-2xl p-4 md:p-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-6 cursor-pointer transition-all group"
       @click="handleClick(skill)"
     >
-      <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-2xl font-black font-mono flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300">
-        {{ skill.name.charAt(0).toUpperCase() }}
-      </div>
-      <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-4 md:gap-6 w-full">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-2xl font-black font-mono flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300">
+          {{ skill.name.charAt(0).toUpperCase() }}
+        </div>
+        <div class="flex-1 min-w-0">
         <div class="flex items-center gap-3 mb-2">
           <h3 class="font-semibold text-lg truncate text-[var(--text-light)] font-mono group-hover:text-[var(--neon-cyan)] transition-colors">{{ skill.name }}</h3>
           <span class="text-[var(--neon-yellow)] text-xs font-mono uppercase">
@@ -41,8 +42,9 @@
           </div>
         </div>
       </div>
+      </div>
       <!-- 快速操作按钮 -->
-      <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0 transition-transform duration-300">
+      <div class="action-buttons flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0 transition-transform duration-300">
         <template v-if="showAdminActions">
           <el-tooltip content="编辑" placement="top">
             <el-button 
@@ -240,5 +242,12 @@ const getSourceLabel = (type: string) => {
   font-family: 'Courier New', monospace !important;
   font-size: 12px !important;
   padding: 6px 12px !important;
+}
+
+@media (max-width: 768px) {
+  .skill-card .action-buttons {
+    opacity: 1 !important;
+    transform: translateX(0) !important;
+  }
 }
 </style>

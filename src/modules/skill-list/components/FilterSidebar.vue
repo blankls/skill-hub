@@ -1,5 +1,15 @@
 <template>
-  <aside class="w-80 flex-shrink-0 bg-[var(--dark-card)] rounded-xl p-5 shadow-lg border border-white/5 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto">
+  <aside
+    class="filter-sidebar w-80 flex-shrink-0 bg-[var(--dark-card)] rounded-xl p-5 shadow-lg border border-white/5 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto"
+    :class="{ 'mobile-drawer-open': mobileOpen }"
+  >
+    <div class="mobile-drawer-header">
+      <h2 class="text-base font-semibold text-[var(--text-light)]">筛选条件</h2>
+      <button @click="emit('close')" class="mobile-drawer-close" aria-label="关闭">
+        <el-icon class="text-lg"><Close /></el-icon>
+      </button>
+    </div>
+
     <div class="space-y-5">
       <!-- 视图切换 - 第一个位置，紧凑 -->
       <div class="flex items-center justify-between">
@@ -173,7 +183,15 @@
 import { ref, computed } from 'vue'
 import { useSkillStore } from '@/stores/skillStore'
 import { getTagColor } from '@/utils/tagColors'
-import { Search, Grid, List } from '@element-plus/icons-vue'
+import { Search, Grid, List, Close } from '@element-plus/icons-vue'
+
+const props = defineProps<{
+    mobileOpen: boolean
+}>()
+
+const emit = defineEmits<{
+    close: []
+}>()
 
 const skillStore = useSkillStore()
 
@@ -244,6 +262,59 @@ const onResetAll = () => {
 </script>
 
 <style scoped>
+.mobile-drawer-header {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .filter-sidebar {
+        display: block !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 50;
+        width: 85vw;
+        max-width: 320px;
+        height: 100vh;
+        border-radius: 0;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        padding-top: 0;
+    }
+
+    .filter-sidebar.mobile-drawer-open {
+        transform: translateX(0);
+    }
+
+    .mobile-drawer-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 0;
+        margin-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .mobile-drawer-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.5rem;
+        color: var(--text-muted);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .mobile-drawer-close:hover {
+        color: var(--neon-cyan);
+        background: rgba(255, 255, 255, 0.05);
+    }
+}
+
 .tag-filter-btn {
   position: relative;
   overflow: hidden;

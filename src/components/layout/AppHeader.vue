@@ -1,14 +1,14 @@
 <template>
   <header class="sticky top-0 z-50 bg-[var(--dark-card)]/90 backdrop-blur-xl border-b border-[var(--neon-cyan)]/20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-20">
-        <div class="flex items-center gap-8">
-          <router-link to="/" class="flex items-center gap-3 group">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center shadow-lg group-hover:shadow-[0_0_20px_rgba(0,245,255,0.5)] transition-all duration-300">
-              <span class="text-white font-black text-2xl font-mono">S</span>
+      <div class="flex items-center justify-between h-16 md:h-20">
+        <div class="flex items-center gap-4 md:gap-8">
+          <router-link to="/" class="flex items-center gap-2 md:gap-3 group">
+            <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center shadow-lg group-hover:shadow-[0_0_20px_rgba(0,245,255,0.5)] transition-all duration-300">
+              <span class="text-white font-black text-lg md:text-2xl font-mono">S</span>
             </div>
-            <div class="leading-tight">
-              <span class="text-xl font-black text-[var(--text-light)]">SKILL</span>
+            <div class="leading-tight hidden sm:block">
+              <span class="text-base md:text-xl font-black text-[var(--text-light)]">SKILL</span>
               <span class="text-[var(--neon-cyan)]">HUB</span>
             </div>
           </router-link>
@@ -19,65 +19,97 @@
             <router-link to="/skills" class="text-[var(--text-muted)] hover:text-[var(--neon-cyan)] font-medium hover:border-b-2 hover:border-[var(--neon-cyan)] pb-1 transition-all">
               Skills
             </router-link>
-            <router-link 
+            <router-link
               v-if="authStore.isAuthenticated"
-              to="/admin" 
+              to="/admin"
               class="text-[var(--text-muted)] hover:text-[var(--neon-purple)] font-medium hover:border-b-2 hover:border-[var(--neon-purple)] pb-1 transition-all flex items-center gap-1">
               <el-icon><Setting /></el-icon>
               Admin
             </router-link>
           </nav>
         </div>
-        <div class="flex items-center">
+        <div class="flex items-center gap-3">
           <ThemeToggle />
+          <button
+            class="md:hidden flex items-center justify-center w-10 h-10 rounded-lg text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 transition-all"
+            @click="menuOpen = !menuOpen"
+            aria-label="菜单">
+            <svg v-if="!menuOpen" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>
+    <Transition name="fade">
+      <div
+        v-if="menuOpen"
+        class="fixed inset-0 top-16 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+        @click="menuOpen = false" />
+    </Transition>
+    <Transition name="slide">
+      <nav
+        v-if="menuOpen"
+        class="absolute left-0 right-0 top-16 z-50 bg-[var(--dark-card)] border-b border-[var(--neon-cyan)]/20 shadow-lg shadow-[var(--neon-cyan)]/5 md:hidden">
+        <div class="px-4 py-3 space-y-1">
+          <router-link
+            to="/"
+            class="block px-4 py-3 rounded-lg text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 font-medium transition-all"
+            @click="menuOpen = false">
+            Home
+          </router-link>
+          <router-link
+            to="/skills"
+            class="block px-4 py-3 rounded-lg text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 font-medium transition-all"
+            @click="menuOpen = false">
+            Skills
+          </router-link>
+          <router-link
+            v-if="authStore.isAuthenticated"
+            to="/admin"
+            class="block px-4 py-3 rounded-lg text-[var(--text-muted)] hover:text-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/10 font-medium transition-all"
+            @click="menuOpen = false">
+            <div class="flex items-center gap-2">
+              <el-icon><Setting /></el-icon>
+              Admin
+            </div>
+          </router-link>
+        </div>
+      </nav>
+    </Transition>
   </header>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import ThemeToggle from '@/components/features/ThemeToggle.vue'
 import { Setting } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/authStore'
 
 const authStore = useAuthStore()
+const menuOpen = ref(false)
 </script>
 
 <style scoped>
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .h-20 {
-    height: 64px !important;
-  }
-  
-  .w-12.h-12 {
-    width: 40px !important;
-    height: 40px !important;
-  }
-  
-  .w-12.h-12 span {
-    font-size: 1.25rem !important;
-  }
-  
-  .text-xl.font-black {
-    font-size: 1rem !important;
-  }
-  
-  .px-4.sm\:px-6.lg\:px-8 {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-  
-  .flex.items-center.gap-8 {
-    gap: 1rem !important;
-  }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
-@media (max-width: 640px) {
-  /* Hide text logo on very small screens */
-  .leading-tight {
-    display: none !important;
-  }
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateY(-8px);
+  opacity: 0;
 }
 </style>

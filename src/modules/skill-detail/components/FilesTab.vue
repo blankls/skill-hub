@@ -1,7 +1,7 @@
 <template>
-  <div class="grid grid-cols-4 gap-6">
-    <div class="col-span-1">
-      <div class="rounded-xl p-4 border border-[var(--neon-cyan)]/20" style="background: var(--dark-card)">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+    <div class="col-span-1 md:col-span-1">
+      <div class="rounded-xl p-4 border border-[var(--neon-cyan)]/20 max-h-[40vh] md:max-h-none overflow-y-auto" style="background: var(--dark-card)">
         <h3 class="font-semibold mb-4" style="color: var(--text-light)">
           📁 文件树 · {{ skill.files.length }}
         </h3>
@@ -40,7 +40,7 @@
         </div>
       </div>
     </div>
-    <div class="col-span-3">
+    <div class="col-span-1 md:col-span-3">
       <div v-if="selectedFile" class="rounded-xl overflow-hidden border border-[var(--neon-purple)]/20" style="background: var(--dark-card)">
         <div class="px-4 py-2.5 border-b" style="border-color: rgba(168,85,247,0.15); background: rgba(14,165,233,0.05); display: flex; align-items: center; gap: 8px;">
           <span style="color: var(--neon-cyan)">📄</span>

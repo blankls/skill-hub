@@ -218,6 +218,15 @@ onMounted(async () => {
   background-color: var(--neon-cyan) !important;
 }
 
+:deep(.el-tabs__nav-wrap) {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+:deep(.el-tabs__nav-wrap::-webkit-scrollbar) {
+  display: none;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .px-4.sm\:px-6.lg\:px-8 {
