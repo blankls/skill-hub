@@ -22,7 +22,7 @@
             </template>
           </EmptyState>
         </div>
-        <div v-else class="max-w-[80rem]">
+        <div v-else class="max-w-[80rem] mx-auto">
           <SkillGridView v-if="skillStore.viewMode === 'grid'" :skills="skillStore.filteredSkills" :showAdminActions="false" />
           <SkillListView v-else :skills="skillStore.filteredSkills" :showAdminActions="false" />
         </div>

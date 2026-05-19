@@ -25,30 +25,28 @@
           <span class="w-1 h-4 bg-gradient-to-b from-[var(--neon-cyan)] to-[var(--neon-purple)] rounded-full mr-2"></span>
           显示方式
         </h3>
-        <div class="flex items-center gap-1 p-1 bg-[var(--dark-bg)] border border-[var(--neon-cyan)]/20 rounded-lg">
+        <div class="flex items-center gap-1 p-0.5 bg-[var(--dark-bg)] border border-[var(--neon-cyan)]/20 rounded-lg">
           <button
             @click="skillStore.setViewMode('grid')"
             :class="[
-              'flex-1 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center gap-1.5 text-sm',
+              'flex-1 py-1 rounded transition-all duration-300 flex items-center justify-center',
               skillStore.viewMode === 'grid' 
-                ? 'bg-[var(--neon-cyan)] text-white shadow-[0_0_10px_rgba(0,245,255,0.4)]' 
+                ? 'bg-[var(--neon-cyan)] text-white' 
                 : 'text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10'
             ]"
           >
-            <el-icon><Grid /></el-icon>
-            网格
+            <el-icon class="text-base"><Grid /></el-icon>
           </button>
           <button
             @click="skillStore.setViewMode('list')"
             :class="[
-              'flex-1 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center gap-1.5 text-sm',
+              'flex-1 py-1 rounded transition-all duration-300 flex items-center justify-center',
               skillStore.viewMode === 'list' 
-                ? 'bg-[var(--neon-cyan)] text-white shadow-[0_0_10px_rgba(0,245,255,0.4)]' 
+                ? 'bg-[var(--neon-cyan)] text-white' 
                 : 'text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10'
             ]"
           >
-            <el-icon><List /></el-icon>
-            列表
+            <el-icon class="text-base"><List /></el-icon>
           </button>
         </div>
       </div>
@@ -145,7 +143,7 @@
       <div class="filter-section">
         <h3 class="text-sm font-semibold text-[var(--text-light)] mb-3 flex items-center">
           <span class="w-1 h-4 bg-gradient-to-b from-[var(--neon-cyan)] to-[var(--neon-purple)] rounded-full mr-2"></span>
-          最低评分
+          最低评分 <span class="ml-auto text-xs text-[var(--neon-cyan)] font-mono">{{ skillStore.minRating }}</span>
         </h3>
         <div class="px-1">
           <el-slider 
@@ -154,9 +152,7 @@
             :min="0" 
             :max="5" 
             :step="0.5" 
-            :show-input="true"
             size="small"
-            :show-stops="true"
           />
         </div>
       </div>
