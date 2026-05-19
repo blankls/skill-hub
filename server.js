@@ -101,14 +101,33 @@ function deleteSkillFile(id) {
     }
 }
 
-// GET /api/skills - 获取所有技能
+// GET /api/skills - 获取所有技能（支持标签过滤和搜索）
 app.get('/api/skills', (req, res) => {
     try {
+        const { tag, q } = req.query
         const files = fs.readdirSync(DATA_DIR).filter(f => f.endsWith('.json'))
-        const skills = files.map(f => {
+        let skills = files.map(f => {
             const raw = fs.readFileSync(path.join(DATA_DIR, f), 'utf-8')
             return JSON.parse(raw)
         })
+        
+        // 标签过滤
+        if (tag) {
+            skills = skills.filter(skill => 
+                skill.tags && skill.tags.includes(tag)
+            )
+        }
+        
+        // 关键词搜索
+        if (q) {
+            const query = q.toLowerCase()
+            skills = skills.filter(skill =>
+                skill.name.toLowerCase().includes(query) ||
+                (skill.description && skill.description.toLowerCase().includes(query)) ||
+                (skill.tags && skill.tags.some(t => t.toLowerCase().includes(query)))
+            )
+        }
+        
         skills.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
         res.json(skills)
     } catch (e) {
