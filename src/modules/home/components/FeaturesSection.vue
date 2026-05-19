@@ -1,19 +1,19 @@
 <template>
-  <section id="features" class="py-20 bg-[var(--dark-bg)]">
+  <section id="features" class="py-12 md:py-20 bg-[var(--dark-bg)]">
     <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-16">
-        <h2 class="text-4xl font-bold mb-4 text-[var(--text-light)]">平台特性</h2>
-        <p class="text-lg text-[var(--text-muted)] max-w-2xl mx-auto">
+      <div class="text-center mb-8 md:mb-16">
+        <h2 class="text-2xl md:text-4xl font-bold mb-3 md:mb-4 text-[var(--text-light)]">平台特性</h2>
+        <p class="text-sm md:text-lg text-[var(--text-muted)] max-w-2xl mx-auto">
           强大的功能，助你高效管理 AI Skills
         </p>
       </div>
-      <div class="grid md:grid-cols-3 gap-8">
-        <div v-for="feature in features" :key="feature.title" class="skill-card p-8 rounded-2xl">
-          <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-3xl mb-6">
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-8">
+        <div v-for="feature in features" :key="feature.title" class="skill-card p-3 md:p-8 rounded-xl md:rounded-2xl">
+          <div class="w-10 h-10 md:w-16 md:h-16 rounded-lg md:rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-xl md:text-3xl mb-3 md:mb-6">
             <el-icon><component :is="feature.icon" /></el-icon>
           </div>
-          <h3 class="text-2xl font-semibold mb-3 text-[var(--text-light)]">{{ feature.title }}</h3>
-          <p class="text-[var(--text-muted)]">{{ feature.description }}</p>
+          <h3 class="text-base md:text-2xl font-semibold mb-2 md:mb-3 text-[var(--text-light)]">{{ feature.title }}</h3>
+          <p class="text-xs md:text-base text-[var(--text-muted)] leading-relaxed">{{ feature.description }}</p>
         </div>
       </div>
     </div>
