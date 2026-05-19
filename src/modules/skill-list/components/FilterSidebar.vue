@@ -1,12 +1,37 @@
 <template>
-  <aside class="w-72 flex-shrink-0 bg-[var(--dark-card)] rounded-xl p-5 shadow-lg border border-white/5 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto">
-    <div class="space-y-6">
+  <aside class="w-80 flex-shrink-0 bg-[var(--dark-card)] rounded-xl p-5 shadow-lg border border-white/5 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto">
+    <div class="space-y-5">
+      <!-- 视图切换 - 第一个位置，紧凑 -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1 p-0.5 bg-[var(--dark-bg)] border border-[var(--neon-cyan)]/20 rounded-lg">
+          <button
+            @click="skillStore.setViewMode('grid')"
+            :class="[
+              'px-2.5 py-1 rounded transition-all duration-300 flex items-center justify-center',
+              skillStore.viewMode === 'grid' 
+                ? 'bg-[var(--neon-cyan)] text-white' 
+                : 'text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10'
+            ]"
+          >
+            <el-icon class="text-sm"><Grid /></el-icon>
+          </button>
+          <button
+            @click="skillStore.setViewMode('list')"
+            :class="[
+              'px-2.5 py-1 rounded transition-all duration-300 flex items-center justify-center',
+              skillStore.viewMode === 'list' 
+                ? 'bg-[var(--neon-cyan)] text-white' 
+                : 'text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10'
+            ]"
+          >
+            <el-icon class="text-sm"><List /></el-icon>
+          </button>
+        </div>
+        <span class="text-sm text-[var(--text-muted)]">{{ skillStore.filteredSkills.length }} / {{ skillStore.skills.length }}</span>
+      </div>
+
       <!-- 搜索框 -->
       <div class="filter-section">
-        <h3 class="text-sm font-semibold text-[var(--text-light)] mb-3 flex items-center">
-          <span class="w-1 h-4 bg-gradient-to-b from-[var(--neon-cyan)] to-[var(--neon-purple)] rounded-full mr-2"></span>
-          搜索
-        </h3>
         <div class="relative flex items-center bg-[var(--dark-bg)] border border-[var(--neon-cyan)]/30 rounded-lg p-1.5 transition-all hover:border-[var(--neon-cyan)]/50 focus-within:border-[var(--neon-cyan)]">
           <el-icon class="text-[var(--neon-cyan)] text-lg flex-shrink-0 ml-1"><Search /></el-icon>
           <el-input
@@ -16,38 +41,6 @@
             class="flex-1 bg-transparent no-input-border"
             clearable
           />
-        </div>
-      </div>
-
-      <!-- 视图切换 -->
-      <div class="filter-section">
-        <h3 class="text-sm font-semibold text-[var(--text-light)] mb-3 flex items-center">
-          <span class="w-1 h-4 bg-gradient-to-b from-[var(--neon-cyan)] to-[var(--neon-purple)] rounded-full mr-2"></span>
-          显示方式
-        </h3>
-        <div class="flex items-center gap-1 p-0.5 bg-[var(--dark-bg)] border border-[var(--neon-cyan)]/20 rounded-lg">
-          <button
-            @click="skillStore.setViewMode('grid')"
-            :class="[
-              'flex-1 py-1 rounded transition-all duration-300 flex items-center justify-center',
-              skillStore.viewMode === 'grid' 
-                ? 'bg-[var(--neon-cyan)] text-white' 
-                : 'text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10'
-            ]"
-          >
-            <el-icon class="text-base"><Grid /></el-icon>
-          </button>
-          <button
-            @click="skillStore.setViewMode('list')"
-            :class="[
-              'flex-1 py-1 rounded transition-all duration-300 flex items-center justify-center',
-              skillStore.viewMode === 'list' 
-                ? 'bg-[var(--neon-cyan)] text-white' 
-                : 'text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10'
-            ]"
-          >
-            <el-icon class="text-base"><List /></el-icon>
-          </button>
         </div>
       </div>
 
@@ -87,11 +80,18 @@
         <h3 class="text-sm font-semibold text-[var(--text-light)] mb-3 flex items-center">
           <span class="w-1 h-4 bg-gradient-to-b from-[var(--neon-cyan)] to-[var(--neon-purple)] rounded-full mr-2"></span>
           标签筛选
+          <button 
+            v-if="tagList.length > defaultTagLimit"
+            @click="showAllTags = !showAllTags"
+            class="ml-auto text-xs text-[var(--neon-cyan)] hover:underline"
+          >
+            {{ showAllTags ? '收起' : `+${tagList.length - defaultTagLimit} 更多` }}
+          </button>
         </h3>
         
         <div v-if="tagList.length > 0" class="space-y-1">
           <button
-            v-for="(tag, index) in tagList"
+            v-for="(tag, index) in displayedTags"
             :key="tag.name"
             @click="onToggleTag(tag.name)"
             class="tag-filter-btn w-full flex items-center justify-between py-2 px-3 rounded-lg transition-all duration-300 hover:scale-[1.02]"
@@ -178,15 +178,17 @@ import { Search, Grid, List } from '@element-plus/icons-vue'
 const skillStore = useSkillStore()
 
 const localSources = ref<string[]>([...skillStore.selectedSources])
+const showAllTags = ref(false)
+const defaultTagLimit = 8
 
 const sourceOptions = computed(() => [
   { 
-    label: '本地技能', 
+    label: 'ZIP / MD 导入', 
     value: 'local',
     count: skillStore.skills.filter(s => s.source.type === 'local').length
   },
   { 
-    label: 'GitHub 技能', 
+    label: 'GitHub 同步', 
     value: 'github',
     count: skillStore.skills.filter(s => s.source.type === 'github').length
   }
@@ -204,6 +206,11 @@ const tagList = computed(() => {
   return Object.entries(tagCount)
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count)
+})
+
+const displayedTags = computed(() => {
+  if (showAllTags.value) return tagList.value
+  return tagList.value.slice(0, defaultTagLimit)
 })
 
 const hasActiveFilters = computed(() => {
@@ -283,19 +290,26 @@ const onResetAll = () => {
 }
 
 :deep(.el-slider__runway) {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  height: 6px !important;
+  border-radius: 3px !important;
 }
 
 :deep(.el-slider__bar) {
-  background-color: var(--neon-cyan) !important;
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple)) !important;
+  height: 6px !important;
+  border-radius: 3px !important;
+}
+
+:deep(.el-slider__button-wrapper) {
+  top: -14px !important;
 }
 
 :deep(.el-slider__button) {
-  border-color: var(--neon-cyan) !important;
-}
-
-:deep(.el-slider__stop) {
-  background-color: rgba(255, 255, 255, 0.2) !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid var(--neon-cyan) !important;
+  background-color: var(--dark-card) !important;
 }
 
 aside::-webkit-scrollbar {
