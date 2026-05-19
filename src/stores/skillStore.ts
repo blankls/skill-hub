@@ -50,9 +50,13 @@ export const useSkillStore = defineStore('skill', () => {
     }
 
     if (selectedSources.value.length > 0) {
-      result = result.filter(skill =>
-        selectedSources.value.includes(skill.source.type)
-      )
+      result = result.filter(skill => {
+        const type = skill.source.type
+        if (selectedSources.value.includes('local') && ['zip', 'skillmd', 'local'].includes(type)) {
+          return true
+        }
+        return selectedSources.value.includes(type)
+      })
     }
 
     if (minRating.value > 0) {

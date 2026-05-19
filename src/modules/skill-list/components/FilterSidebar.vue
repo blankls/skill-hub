@@ -2,7 +2,7 @@
   <aside class="w-80 flex-shrink-0 bg-[var(--dark-card)] rounded-xl p-5 shadow-lg border border-white/5 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto">
     <div class="space-y-5">
       <!-- 视图切换 - 第一个位置，紧凑 -->
-      <div class="flex items-center gap-2">
+      <div class="flex items-center justify-between">
         <div class="flex items-center gap-1 p-0.5 bg-[var(--dark-bg)] border border-[var(--neon-cyan)]/20 rounded-lg">
           <button
             @click="skillStore.setViewMode('grid')"
@@ -185,7 +185,7 @@ const sourceOptions = computed(() => [
   { 
     label: 'ZIP / MD 导入', 
     value: 'local',
-    count: skillStore.skills.filter(s => s.source.type === 'local').length
+    count: skillStore.skills.filter(s => ['zip', 'skillmd', 'local'].includes(s.source.type)).length
   },
   { 
     label: 'GitHub 同步', 
