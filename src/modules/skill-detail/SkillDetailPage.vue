@@ -1,153 +1,286 @@
 <template>
-  <div class="bg-[var(--dark-bg)]">
-    <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div v-if="loading" class="flex items-center justify-center py-20">
-        <el-icon class="text-4xl text-[var(--neon-cyan)] animate-spin"><Loading /></el-icon>
-        <p class="ml-4 text-[var(--text-muted)]">加载技能中...</p>
-      </div>
-      <template v-else-if="skill">
-        <!-- Return Button & Header -->
-        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
-          <!-- 左侧：返回按钮 + 技能信息 -->
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-4 mb-4">
-              <el-button
-                @click="router.back()"
-                class="flex items-center gap-2 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 text-[var(--text-light)] rounded-xl transition-all"
-              >
-                <el-icon><ArrowLeft /></el-icon>
-                <span>返回</span>
-              </el-button>
-            </div>
-            <div class="min-w-0">
-              <h1 class="text-3xl font-bold mb-2 text-[var(--text-light)] truncate">{{ skill.name }}</h1>
-              <div class="flex flex-wrap items-center gap-3 mb-2 text-sm">
-                <span class="px-2 py-1 rounded-full bg-[var(--neon-yellow)]/10 text-[var(--neon-yellow)] border border-[var(--neon-yellow)]/30">
-                  {{ getSourceLabel(skill.source.type) }}
-                </span>
-                <span class="text-[var(--text-muted)] font-mono">v{{ skill.version }}</span>
-                <span v-if="skill.author" class="text-[var(--text-muted)]">
-                  <el-icon class="mr-1"><User /></el-icon>{{ skill.author }}
-                </span>
-                <span v-if="!isFromAdmin" class="flex items-center gap-1 text-orange-400 font-mono">
-                  🔥 {{ skill.likes || 0 }}
-                </span>
-              </div>
-              <el-tooltip placement="top" :disabled="!isDescriptionLong">
-                <template #content>
-                  <div class="max-w-lg whitespace-pre-line">{{ skill.description }}</div>
-                </template>
-                <p 
-                  class="text-[var(--text-muted)]"
-                  :class="{ 'line-clamp-3 hover:text-[var(--neon-cyan)]': isDescriptionLong }"
-                >
-                  {{ skill.description }}
-                </p>
-              </el-tooltip>
-            </div>
+  <div class="h-full bg-[var(--dark-bg)] overflow-hidden relative">
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <el-icon class="text-4xl text-[var(--neon-cyan)] animate-spin"><Loading /></el-icon>
+      <p class="ml-4 text-[var(--text-muted)]">加载技能中...</p>
+    </div>
+
+    <template v-else-if="skill">
+      <!-- 左侧浮动导航 -->
+      <div
+        class="fixed left-0 bottom-0 z-40 flex flex-col items-center py-6 px-2"
+        style="width: 56px; top: 4rem"
+      >
+        <div class="flex flex-col items-center gap-3 flex-1">
+          <button
+            @click="router.back()"
+            class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-white/10 group relative"
+            style="color: var(--text-muted); border: 1px solid rgba(0,245,255,0.15)"
+            title="返回"
+          >
+            <el-icon :size="18"><ArrowLeft /></el-icon>
+            <span
+              class="absolute left-full ml-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(0,245,255,0.2)"
+            >返回</span>
+          </button>
+
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-lg font-black font-mono shadow-lg">
+            {{ skill.name.charAt(0).toUpperCase() }}
           </div>
 
-          <!-- 右侧：操作按钮组 -->
-          <div class="flex flex-wrap gap-3 items-start">
-            <button
-              v-if="!isFromAdmin"
-              @click="handleLike"
-              class="px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 flex items-center gap-2"
-              :class="liking
-                ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-                : 'bg-gradient-to-r from-orange-500/10 to-red-500/10 text-orange-400 border border-orange-500/30 hover:from-orange-500/20 hover:to-red-500/20 hover:border-orange-500/50'"
-            >
-              🔥 {{ liking ? '已点赞' : '点赞' }}
-            </button>
-            <el-button 
-              v-if="isGitHubSkill && isFromAdmin" 
-              @click="handleSync"
-              :loading="syncing"
-              class="flex items-center gap-2 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/50 hover:border-[var(--neon-cyan)] text-[var(--text-light)] rounded-xl"
-            >
-              <el-icon><Refresh /></el-icon> 同步
-            </el-button>
-            <el-button v-if="isFromAdmin" @click="showEditor = true" class="flex items-center gap-2 bg-[var(--dark-card)] border border-[var(--neon-yellow)]/50 hover:border-[var(--neon-yellow)] text-[var(--text-light)] rounded-xl">
-              <el-icon><Edit /></el-icon> 编辑
-            </el-button>
-            <ZipExportBtn :skill="skill" />
-            <el-button v-if="isFromAdmin" type="danger" @click="handleDelete" class="flex items-center gap-2 rounded-xl">
-              <el-icon><Delete /></el-icon> 删除
-            </el-button>
+          <div class="w-6 h-px my-1" style="background: rgba(0,245,255,0.15)"></div>
+
+          <button
+            v-for="nav in navItems"
+            :key="nav.id"
+            @click="openOverlay(nav.id)"
+            class="w-10 h-10 rounded-xl flex items-center justify-center transition-all group relative"
+            :class="activeOverlay === nav.id ? 'bg-[var(--neon-cyan)]/15' : 'hover:bg-white/5'"
+            :title="nav.label"
+          >
+            <span class="text-lg">{{ nav.icon }}</span>
+            <span
+              class="absolute left-full ml-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(0,245,255,0.2)"
+            >{{ nav.label }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 右侧浮动操作栏 -->
+      <div
+        class="fixed right-0 bottom-0 z-40 flex flex-col items-center py-6 px-2"
+        style="width: 56px; top: 4rem"
+      >
+        <div class="flex flex-col items-center gap-2 flex-1">
+          <button
+            v-if="!isFromAdmin"
+            @click="handleLike"
+            class="action-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all group relative"
+            :class="liking ? 'bg-orange-500/15 border-orange-500/30' : 'hover:bg-white/5 border-[rgba(0,245,255,0.15)]'"
+            style="border-width: 1px; border-style: solid"
+            :title="liking ? '已点赞' : '点赞'"
+          >
+            <span class="text-lg">{{ liking ? '❤️' : '🤍' }}</span>
+            <span
+              class="absolute right-full mr-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(0,245,255,0.2)"
+            >{{ liking ? '已点赞' : '点赞' }}</span>
+          </button>
+          <button
+            v-if="isGitHubSkill && isFromAdmin"
+            @click="handleSync"
+            :disabled="syncing"
+            class="action-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-white/5 group relative border border-[rgba(0,245,255,0.15)]"
+            :class="{ 'opacity-50': syncing }"
+            title="同步"
+          >
+            <span class="text-lg">{{ syncing ? '🔄' : '🔁' }}</span>
+            <span
+              class="absolute right-full mr-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(0,245,255,0.2)"
+            >同步</span>
+          </button>
+          <button
+            v-if="isFromAdmin"
+            @click="showEditor = true"
+            class="action-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-white/5 group relative border border-[rgba(0,245,255,0.15)]"
+            title="编辑"
+          >
+            <span class="text-lg">✏️</span>
+            <span
+              class="absolute right-full mr-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(0,245,255,0.2)"
+            >编辑</span>
+          </button>
+          <ZipExportBtn :skill="skill" />
+          <button
+            v-if="isFromAdmin"
+            @click="handleDelete"
+            class="action-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-red-500/10 group relative border border-[rgba(0,245,255,0.15)]"
+            title="删除"
+          >
+            <span class="text-lg">🗑️</span>
+            <span
+              class="absolute right-full mr-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(0,245,255,0.2)"
+            >删除</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 主内容区 - 只有标题信息 -->
+      <div class="h-full overflow-y-auto scrollbar-auto">
+        <div class="mx-auto px-12 sm:px-16 lg:px-24 py-10 max-w-[90rem]">
+        <div class="rounded-xl overflow-hidden border border-[var(--neon-cyan)]/30 mb-6" style="background: var(--dark-card)">
+          <div class="px-5 py-3 border-b border-[var(--neon-cyan)]/15 flex items-center gap-2" style="background: rgba(0,245,255,0.05)">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-sm font-black font-mono shadow-lg">
+              {{ skill.name.charAt(0).toUpperCase() }}
+            </div>
+            <span class="font-semibold text-lg" style="color: var(--text-light)">{{ skill.name }}</span>
+            <span class="ml-auto text-[var(--neon-yellow)] font-mono text-sm font-semibold">v{{ skill.version }}</span>
+          </div>
+          <div class="p-5">
+            <div class="flex flex-wrap items-center gap-3 text-sm mb-4">
+              <span class="px-2.5 py-1 rounded-full bg-[var(--neon-yellow)]/10 text-[var(--neon-yellow)] border border-[var(--neon-yellow)]/30 text-xs font-mono uppercase tracking-wider">
+                {{ getSourceLabel(skill.source.type) }}
+              </span>
+              <span v-if="skill.author" class="flex items-center gap-1.5" style="color: var(--text-muted)">
+                <span>👤</span>
+                <span>{{ skill.author }}</span>
+              </span>
+              <span v-if="!isFromAdmin" class="flex items-center gap-1.5" style="color: var(--text-muted)">
+                <span class="text-orange-400">🔥</span>
+                <span class="font-mono font-bold" style="color: var(--text-light)">{{ skill.likes || 0 }}</span>
+              </span>
+            </div>
+            <p class="text-sm leading-relaxed" style="color: var(--text-muted)">{{ skill.description }}</p>
           </div>
         </div>
-        
+
         <!-- GitHub 同步状态提示 -->
-        <div v-if="isGitHubSkill && !skill.source.isContentCached" class="mb-4 p-4 bg-[var(--neon-yellow)]/10 border border-[var(--neon-yellow)]/30 rounded-xl">
+        <div v-if="isGitHubSkill && !skill.source.isContentCached" class="mb-6 p-4 bg-[var(--neon-yellow)]/10 border border-[var(--neon-yellow)]/30 rounded-xl">
           <p class="text-[var(--neon-yellow)] text-sm">
             <el-icon class="mr-1"><InfoFilled /></el-icon>
             此技能内容尚未完全加载，正在从 GitHub 获取完整内容...
           </p>
         </div>
-        
-        <!-- 同步中提示 -->
-        <div v-if="syncing && skill.source.isContentCached" class="mb-4 p-4 bg-[var(--neon-cyan)]/10 border border-[var(--neon-cyan)]/30 rounded-xl">
+        <div v-if="syncing && skill.source.isContentCached" class="mb-6 p-4 bg-[var(--neon-cyan)]/10 border border-[var(--neon-cyan)]/30 rounded-xl">
           <p class="text-[var(--neon-cyan)] text-sm flex items-center gap-2">
             <el-icon class="animate-spin"><Loading /></el-icon>
             正在从 GitHub 同步最新内容...
           </p>
         </div>
-        
-        <div class="mt-8">
-          <el-tabs v-model="activeTab">
-            <el-tab-pane label="概览" name="overview">
-              <OverviewTab :skill="skill" />
-            </el-tab-pane>
-            <el-tab-pane label="指导" name="guide">
-              <GuideTab :skill="skill" />
-            </el-tab-pane>
-            <el-tab-pane label="文件" name="files">
-              <FilesTab :skill="skill" />
-            </el-tab-pane>
-          </el-tabs>
-        </div>
-      </template>
-      <div v-else class="text-center py-20">
-        <h2 class="text-2xl font-bold mb-4 text-[var(--text-light)]">未找到技能</h2>
-        <router-link to="/skills">
-          <el-button type="primary" class="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold">
-            返回技能库
-          </el-button>
-        </router-link>
-      </div>
-    </div>
 
-    <SkillEditor v-model="showEditor" :skill="skill" @save="handleSave" />
+        <!-- GitHub 仓库信息 -->
+        <div v-if="githubMeta" class="rounded-xl overflow-hidden border border-[var(--neon-purple)]/30 mb-6" style="background: var(--dark-card)">
+          <div class="px-5 py-3 border-b border-[var(--neon-purple)]/15 flex items-center gap-2" style="background: rgba(168,85,247,0.05)">
+            <span class="text-base">🚀</span>
+            <span class="font-semibold text-sm" style="color: var(--neon-purple)">GitHub 仓库</span>
+          </div>
+          <div class="p-5">
+            <div class="flex items-start justify-between flex-wrap gap-4">
+              <div class="min-w-0">
+                <a :href="githubMeta.subfolderUrl || githubMeta.repoUrl" target="_blank" class="text-lg font-bold hover:underline transition-colors truncate block" style="color: var(--neon-cyan)">
+                  {{ githubMeta.full_name + (hasSubfolder ? '/' + subfolderRelative : '') }}
+                </a>
+                <el-tooltip placement="top" :disabled="!isGithubDescriptionLong">
+                  <template #content>
+                    <div class="max-w-lg whitespace-pre-line">{{ githubMeta.description }}</div>
+                  </template>
+                  <p
+                    v-if="githubMeta.description"
+                    class="text-sm mt-1.5 leading-relaxed max-w-2xl cursor-pointer hover:text-[var(--neon-cyan)]"
+                    :class="{ 'line-clamp-2': isGithubDescriptionLong }"
+                  >
+                    {{ githubMeta.description }}
+                  </p>
+                </el-tooltip>
+              </div>
+              <div class="flex items-center gap-4 text-sm shrink-0 flex-wrap">
+                <a :href="githubMeta.repoUrl" target="_blank" class="flex items-center gap-1.5 hover:opacity-80 transition-opacity" style="color: var(--text-muted)">
+                  <span class="text-base">🏠</span>
+                  <span class="font-mono text-xs" style="color: var(--neon-cyan)">{{ githubMeta.repoUrl.split('/').slice(-2).join('/') }}</span>
+                  <span class="text-[10px]" style="color: var(--text-muted)">↗</span>
+                </a>
+                <div class="flex items-center gap-1.5" style="color: var(--text-muted)">
+                  <span>🌿</span>
+                  <span class="font-mono px-1.5 py-0.5 text-xs rounded" style="background: rgba(0,245,255,0.08); color: var(--neon-cyan)">{{ githubMeta.branch }}</span>
+                </div>
+                <div class="flex items-center gap-1.5" style="color: var(--text-muted)">
+                  <span class="text-yellow-400 text-base">⭐</span>
+                  <span class="font-mono font-bold" style="color: var(--text-light)">{{ formatNumber(githubMeta.stars) }}</span>
+                </div>
+                <div class="flex items-center gap-1.5" style="color: var(--text-muted)">
+                  <span class="text-green-400 text-base">⑂</span>
+                  <span class="font-mono font-bold" style="color: var(--text-light)">{{ formatNumber(githubMeta.forks) }}</span>
+                </div>
+                <div class="flex items-center gap-1.5" style="color: var(--text-muted)">
+                  <span class="text-blue-400 text-base">👁</span>
+                  <span class="font-mono font-bold" style="color: var(--text-light)">{{ formatNumber(githubMeta.watchers) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t" style="border-color: rgba(168,85,247,0.1)">
+              <div v-if="githubMeta.language" class="flex items-center gap-1.5 text-xs">
+                <span class="w-2.5 h-2.5 rounded-full" :style="{ background: languageColor(githubMeta.language) }"></span>
+                <span style="color: var(--text-muted)">{{ githubMeta.language }}</span>
+              </div>
+              <div v-if="githubMeta.license" class="flex items-center gap-1.5 text-xs">
+                <span style="color: var(--text-muted)">📜</span>
+                <span class="font-mono px-2 py-0.5 rounded" style="color: var(--neon-yellow); background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.2)">{{ githubMeta.license }}</span>
+              </div>
+              <div class="flex items-center gap-1.5 text-xs" style="color: var(--text-muted)">
+                <span>📅</span>
+                <span>{{ formatDate(githubMeta.createdAt) }} 创建</span>
+              </div>
+              <div class="flex items-center gap-1.5 text-xs" style="color: var(--text-muted)">
+                <span>🔄</span>
+                <span>{{ formatDate(githubMeta.updatedAt) }} 更新</span>
+              </div>
+            </div>
+
+            <div v-if="githubMeta.topics.length > 0" class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t" style="border-color: rgba(168,85,247,0.1)">
+              <span v-for="topic in githubMeta.topics" :key="topic"
+                class="px-2.5 py-0.5 rounded-full text-xs transition-colors"
+                style="color: var(--neon-cyan); background: rgba(0,245,255,0.08); border: 1px solid rgba(0,245,255,0.15)">
+                {{ topic }}
+              </span>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <!-- 全屏覆盖层 -->
+      <OverviewOverlay v-model="showOverview" :skill="skill" @open="activeOverlay = 'overview'" @close="activeOverlay = ''" />
+      <GuideOverlay v-model="showGuide" :skill="skill" @open="activeOverlay = 'guide'" @close="activeOverlay = ''" />
+      <FileBrowserOverlay v-model="showFileBrowser" :skill="skill" @open="activeOverlay = 'files'" @close="activeOverlay = ''" />
+
+      <!-- 编辑器 -->
+      <SkillEditor v-model="showEditor" :skill="skill" @save="handleSave" />
+    </template>
+
+    <div v-else class="text-center py-20">
+      <h2 class="text-2xl font-bold mb-4 text-[var(--text-light)]">未找到技能</h2>
+      <router-link to="/skills">
+        <el-button type="primary" class="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] border-none text-white font-bold">
+          返回技能库
+        </el-button>
+      </router-link>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Loading, ArrowLeft, Edit, Delete, Refresh, InfoFilled, User } from '@element-plus/icons-vue'
+import { Loading, ArrowLeft, Edit, Delete, Refresh, InfoFilled, User, Star } from '@element-plus/icons-vue'
 import { useSkillStore } from '@/stores/skillStore'
+import type { GithubMeta } from '@/types'
 import SkillEditor from '@/components/features/SkillEditor.vue'
 import ZipExportBtn from '@/components/features/ZipExportBtn.vue'
-import OverviewTab from './components/OverviewTab.vue'
-import GuideTab from './components/GuideTab.vue'
-import FilesTab from './components/FilesTab.vue'
+import OverviewOverlay from './components/OverviewOverlay.vue'
+import GuideOverlay from './components/GuideOverlay.vue'
+import FileBrowserOverlay from './components/FileBrowserOverlay.vue'
 
 const route = useRoute()
 const router = useRouter()
 const skillStore = useSkillStore()
 const loading = ref(true)
 const syncing = ref(false)
-const activeTab = ref('overview')
 const showEditor = ref(false)
+const showOverview = ref(false)
+const showGuide = ref(false)
+const showFileBrowser = ref(false)
 const liking = ref(false)
+const activeOverlay = ref('')
 
 const skill = computed(() => {
   return skillStore.skills.find(s => s.id === route.params.id) || null
-})
-
-const isDescriptionLong = computed(() => {
-  return (skill.value?.description?.length || 0) > 150
 })
 
 const isGitHubSkill = computed(() => {
@@ -158,6 +291,14 @@ const isFromAdmin = computed(() => {
   return route.path.startsWith('/admin')
 })
 
+const navItems = computed(() => {
+  return [
+    { id: 'overview', icon: '📄', label: '概览' },
+    { id: 'guide', icon: '📘', label: '指导' },
+    { id: 'files', icon: '📂', label: '文件' },
+  ]
+})
+
 function getSourceLabel(type: string) {
   const labels: Record<string, string> = {
     local: '本地',
@@ -166,6 +307,70 @@ function getSourceLabel(type: string) {
     skillmd: 'Markdown'
   }
   return labels[type] || '本地'
+}
+
+const githubMeta = computed<GithubMeta | null>(() => {
+  return skill.value?.source?.githubMeta || null
+})
+
+const isGithubDescriptionLong = computed(() => {
+  return (githubMeta.value?.description?.length || 0) > 100
+})
+
+const hasSubfolder = computed(() => {
+  if (!githubMeta.value) return false
+  return githubMeta.value.subfolderUrl !== githubMeta.value.repoUrl
+})
+
+const subfolderRelative = computed(() => {
+  if (!githubMeta.value) return ''
+  return githubMeta.value.subfolderUrl
+    .replace(githubMeta.value.repoUrl + '/tree/' + githubMeta.value.branch + '/', '')
+})
+
+function formatNumber(n: number): string {
+  if (n >= 100000) return (n / 1000).toFixed(0) + 'k'
+  if (n >= 10000) return (n / 1000).toFixed(1) + 'k'
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
+  return n.toString()
+}
+
+function formatDate(d: string): string {
+  if (!d) return ''
+  const date = new Date(d)
+  return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+}
+
+function languageColor(lang: string): string {
+  const colors: Record<string, string> = {
+    TypeScript: '#3178c6',
+    JavaScript: '#f1e05a',
+    Python: '#3572a5',
+    Go: '#00add8',
+    Rust: '#dea584',
+    Java: '#b07219',
+    Ruby: '#701516',
+    C: '#555555',
+    'C++': '#f34b7d',
+    HTML: '#e34c26',
+    CSS: '#563d7c',
+    Shell: '#89e051',
+    Vue: '#41b883',
+    Svelte: '#ff3e00',
+    Lua: '#000080',
+    Swift: '#f05138',
+    Kotlin: '#a97bff',
+    Dart: '#00b4ab',
+    PHP: '#4f5d95'
+  }
+  return colors[lang] || '#8b8b8b'
+}
+
+function openOverlay(id: string) {
+  if (id === 'overview') showOverview.value = true
+  else if (id === 'guide') showGuide.value = true
+  else if (id === 'files') showFileBrowser.value = true
+  activeOverlay.value = id
 }
 
 const handleLike = async () => {
@@ -207,91 +412,36 @@ async function handleDelete() {
   }
 }
 
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    if (showFileBrowser.value) showFileBrowser.value = false
+    else if (showGuide.value) showGuide.value = false
+    else if (showOverview.value) showOverview.value = false
+  }
+}
+
+watch(showOverview, (v) => { if (!v) activeOverlay.value = '' })
+watch(showGuide, (v) => { if (!v) activeOverlay.value = '' })
+watch(showFileBrowser, (v) => { if (!v) activeOverlay.value = '' })
+
 onMounted(async () => {
   if (skillStore.skills.length === 0) {
     await skillStore.loadSkills()
   }
   loading.value = false
+  document.addEventListener('keydown', onKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', onKeydown)
 })
 </script>
 
 <style scoped>
-.line-clamp-3 {
+.line-clamp-2 {
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-:deep(.el-tabs__header) {
-  border-color: rgba(0,245,255,0.2) !important;
-}
-
-:deep(.el-tabs__item) {
-  color: var(--text-muted) !important;
-}
-
-:deep(.el-tabs__item.is-active) {
-  color: var(--neon-cyan) !important;
-}
-
-:deep(.el-tabs__active-bar) {
-  background-color: var(--neon-cyan) !important;
-}
-
-:deep(.el-tabs__nav-wrap) {
-  overflow-x: auto !important;
-  -webkit-overflow-scrolling: touch;
-}
-
-:deep(.el-tabs__nav-wrap::-webkit-scrollbar) {
-  display: none;
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .px-4.sm\:px-6.lg\:px-8 {
-    padding: 1rem !important;
-  }
-  
-  .py-12 {
-    padding-top: 2rem !important;
-    padding-bottom: 2rem !important;
-  }
-  
-  .flex.flex-col.sm\:flex-row {
-    flex-direction: column !important;
-    gap: 1rem !important;
-  }
-  
-  h1 {
-    font-size: 1.5rem !important;
-  }
-  
-  .flex.flex-wrap.gap-3.items-start {
-    width: 100% !important;
-  }
-  
-  .flex.flex-wrap.gap-3.items-start .el-button {
-    flex: 1 1 45% !important;
-  }
-  
-  :deep(.el-tabs__item) {
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
-    font-size: 0.875rem !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .flex.flex-wrap.gap-3.items-start .el-button {
-    flex: 1 1 100% !important;
-  }
-  
-  :deep(.el-tabs__item) {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-    font-size: 0.75rem !important;
-  }
 }
 </style>

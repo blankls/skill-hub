@@ -1,7 +1,16 @@
 <template>
-  <el-button type="primary" :icon="Download" @click="handleExport" :loading="loading">
-    导出 ZIP
-  </el-button>
+  <button
+    @click="handleExport"
+    :disabled="loading"
+    class="action-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-white/5 group relative border border-[rgba(0,245,255,0.15)]"
+    title="导出 ZIP"
+  >
+    <span class="text-lg">{{ loading ? '⏳' : '📥' }}</span>
+    <span
+      class="absolute right-full mr-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+      style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(0,245,255,0.2)"
+    >导出</span>
+  </button>
 </template>
 
 <script setup lang="ts">

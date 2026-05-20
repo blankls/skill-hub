@@ -19,7 +19,6 @@ const route = useRoute()
 const usePageScroll = computed(() => {
   const path = route.path
   if (path === '/') return true
-  if (path.startsWith('/skills/') && route.params.id) return true
   return false
 })
 
