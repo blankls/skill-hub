@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-[var(--dark-bg)]">
-    <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="h-full bg-[var(--dark-bg)] overflow-hidden">
+    <div class="h-full overflow-y-auto scrollbar-auto max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div v-if="loading" class="flex items-center justify-center py-20">
         <el-icon class="text-4xl text-[var(--neon-cyan)] animate-spin"><Loading /></el-icon>
         <p class="ml-4 text-[var(--text-muted)]">加载技能中...</p>
@@ -29,7 +29,7 @@
                 <span v-if="skill.author" class="text-[var(--text-muted)]">
                   <el-icon class="mr-1"><User /></el-icon>{{ skill.author }}
                 </span>
-                <span class="flex items-center gap-1 text-orange-400 font-mono">
+                <span v-if="!isFromAdmin" class="flex items-center gap-1 text-orange-400 font-mono">
                   🔥 {{ skill.likes || 0 }}
                 </span>
               </div>
@@ -50,6 +50,7 @@
           <!-- 右侧：操作按钮组 -->
           <div class="flex flex-wrap gap-3 items-start">
             <button
+              v-if="!isFromAdmin"
               @click="handleLike"
               class="px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 flex items-center gap-2"
               :class="liking

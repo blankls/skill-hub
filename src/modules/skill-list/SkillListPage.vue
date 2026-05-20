@@ -1,15 +1,15 @@
 <template>
-  <div class="min-h-screen bg-[var(--dark-bg)]">
+  <div class="h-full bg-[var(--dark-bg)] flex flex-col overflow-hidden">
     <SkillToolbar />
 
-    <div class="flex">
+    <div class="flex flex-1 min-h-0">
       <FilterSidebar
         v-if="skillStore.skills.length > 0"
         :mobileOpen="mobileDrawerOpen"
         @close="closeMobileDrawer"
       />
 
-      <div class="flex-1 min-w-0 p-6">
+      <div class="flex-1 min-w-0 p-6 overflow-y-auto scrollbar-auto">
         <div v-if="skillStore.loading" class="text-center py-20">
           <el-icon class="text-5xl text-[var(--neon-cyan)] animate-spin"><Loading /></el-icon>
           <p class="mt-6 text-[var(--text-muted)] text-lg">加载技能中...</p>
@@ -24,7 +24,7 @@
             </template>
           </EmptyState>
         </div>
-        <div v-else class="max-w-[80rem] mx-auto">
+        <div v-else>
           <SkillGridView v-if="skillStore.viewMode === 'grid'" :skills="skillStore.filteredSkills" :showAdminActions="false" />
           <SkillListView v-else :skills="skillStore.filteredSkills" :showAdminActions="false" />
         </div>

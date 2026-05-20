@@ -1,10 +1,10 @@
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="h-full flex flex-col" :class="{ 'overflow-hidden': !isHomePage }">
     <AppHeader />
-    <main class="flex-1">
+    <main class="flex-1" :class="{ 'min-h-0': !isHomePage }">
       <slot />
     </main>
-    <AppFooter v-if="!isDetailPage" />
+    <AppFooter v-if="showFooter" />
   </div>
 </template>
 
@@ -16,7 +16,11 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
-const isDetailPage = computed(() => {
-  return route.path.includes('/skills/') && route.path.split('/').length >= 3
+const isHomePage = computed(() => route.path === '/')
+
+const showFooter = computed(() => {
+  const path = route.path
+  if (path.startsWith('/skills') || path.startsWith('/admin')) return false
+  return true
 })
 </script>

@@ -114,7 +114,8 @@ const router = useRouter()
 const skillStore = useSkillStore()
 
 const handleClick = (skill: Skill) => {
-  router.push(`/skills/${skill.id}`)
+  const path = props.showAdminActions ? `/admin/skills/${skill.id}` : `/skills/${skill.id}`
+  router.push(path)
 }
 
 const handleEdit = (skill: Skill) => {

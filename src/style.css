@@ -39,6 +39,10 @@
   transition: all 0.2s ease;
 }
 
+html, body {
+    height: 100%;
+}
+
 body {
   background-color: var(--dark-bg);
   color: var(--text-light);
@@ -46,6 +50,30 @@ body {
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(14, 165, 233, 0.3) transparent;
+}
+
+body::-webkit-scrollbar {
+    width: 5px;
+}
+
+body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+body::-webkit-scrollbar-thumb {
+    background: rgba(14, 165, 233, 0.15);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+body:hover::-webkit-scrollbar-thumb {
+    background: rgba(14, 165, 233, 0.35);
+}
+
+body::-webkit-scrollbar-thumb:hover {
+    background: rgba(14, 165, 233, 0.55);
 }
 
 .gradient-bg {
@@ -161,6 +189,39 @@ a, .router-link {
 html {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
+}
+
+/* ==================== 自动隐藏滚动条 ==================== */
+.scrollbar-auto {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(14, 165, 233, 0.3) transparent;
+}
+
+.scrollbar-auto::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+.scrollbar-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-auto::-webkit-scrollbar-thumb {
+    background: rgba(14, 165, 233, 0.15);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+.scrollbar-auto:hover::-webkit-scrollbar-thumb {
+    background: rgba(14, 165, 233, 0.35);
+}
+
+.scrollbar-auto::-webkit-scrollbar-thumb:hover {
+    background: rgba(14, 165, 233, 0.55);
+}
+
+.scrollbar-auto::-webkit-scrollbar-corner {
+    background: transparent;
 }
 
 /* Better touch feedback */

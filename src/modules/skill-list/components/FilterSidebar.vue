@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="filter-sidebar w-80 flex-shrink-0 bg-[var(--dark-card)] rounded-xl p-5 shadow-lg border border-white/5 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto"
+    class="filter-sidebar w-80 flex-shrink-0 bg-[var(--dark-card)] rounded-xl p-5 shadow-lg border border-white/5 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto scrollbar-auto"
     :class="{ 'mobile-drawer-open': mobileOpen }"
   >
     <div class="mobile-drawer-header">
@@ -13,28 +13,18 @@
     <div class="space-y-5">
       <!-- 视图切换 - 第一个位置，紧凑 -->
       <div class="flex items-center justify-between">
-        <div class="flex items-center gap-1 p-0.5 bg-[var(--dark-bg)] border border-[var(--neon-cyan)]/20 rounded-lg">
+        <div class="view-toggle">
           <button
             @click="skillStore.setViewMode('grid')"
-            :class="[
-              'px-2.5 py-1 rounded transition-all duration-300 flex items-center justify-center',
-              skillStore.viewMode === 'grid' 
-                ? 'bg-[var(--neon-cyan)] text-white' 
-                : 'text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10'
-            ]"
+            :class="['view-toggle-btn', { active: skillStore.viewMode === 'grid' }]"
           >
-            <el-icon class="text-sm"><Grid /></el-icon>
+            <el-icon><Grid /></el-icon>
           </button>
           <button
             @click="skillStore.setViewMode('list')"
-            :class="[
-              'px-2.5 py-1 rounded transition-all duration-300 flex items-center justify-center',
-              skillStore.viewMode === 'list' 
-                ? 'bg-[var(--neon-cyan)] text-white' 
-                : 'text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10'
-            ]"
+            :class="['view-toggle-btn', { active: skillStore.viewMode === 'list' }]"
           >
-            <el-icon class="text-sm"><List /></el-icon>
+            <el-icon><List /></el-icon>
           </button>
         </div>
         <span class="text-sm text-[var(--text-muted)]">{{ skillStore.filteredSkills.length }} / {{ skillStore.skills.length }}</span>
@@ -167,7 +157,12 @@
               <span class="text-base">{{ opt.icon }}</span>
               <span class="text-sm">{{ opt.label }}</span>
             </div>
-            <span v-if="skillStore.sortBy === opt.value" class="text-xs text-[var(--neon-cyan)]">✓</span>
+            <span
+              v-if="skillStore.sortBy === opt.value"
+              class="text-xs text-[var(--neon-cyan)] px-1"
+            >
+              {{ skillStore.sortOrder === 'desc' ? '↓' : '↑' }}
+            </span>
           </button>
         </div>
       </div>
@@ -248,7 +243,12 @@ const sortOptions = [
 ]
 
 const onSortChange = (val: string) => {
-  skillStore.setSortBy(val)
+  if (skillStore.sortBy === val) {
+    skillStore.toggleSortOrder()
+  } else {
+    skillStore.setSortBy(val)
+    skillStore.setSortOrder('desc')
+  }
 }
 
 const onSearchChange = (val: string) => {
@@ -274,6 +274,43 @@ const onResetAll = () => {
 </script>
 
 <style scoped>
+.view-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: var(--dark-bg);
+    border: 1px solid rgba(0, 245, 255, 0.15);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+    height: 30px;
+}
+
+.view-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 24px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 14px;
+}
+
+.view-toggle-btn:hover {
+    color: var(--neon-cyan);
+    background: rgba(0, 245, 255, 0.08);
+}
+
+.view-toggle-btn.active {
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 245, 255, 0.3);
+}
+
 .mobile-drawer-header {
     display: none;
 }
@@ -393,22 +430,5 @@ const onResetAll = () => {
   height: 16px !important;
   border: 2px solid var(--neon-cyan) !important;
   background-color: var(--dark-card) !important;
-}
-
-aside::-webkit-scrollbar {
-  width: 4px;
-}
-
-aside::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-aside::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-}
-
-aside::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
 }
 </style>

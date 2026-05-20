@@ -1,12 +1,11 @@
 <template>
-  <div class="min-h-screen bg-[var(--dark-bg)]">
+  <div class="h-full bg-[var(--dark-bg)] flex flex-col overflow-hidden">
     <!-- 未登录状态：什么都不显示，只处理登录流程 -->
-    <div v-if="!isAuthenticated" class="min-h-screen flex items-center justify-center">
-      <!-- 登录过程在 script 中处理，不显示任何内容 -->
+    <div v-if="!isAuthenticated" class="h-full flex items-center justify-center">
     </div>
     
     <!-- 已登录状态：显示管理页面 -->
-    <div v-else class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div v-else class="flex-1 min-h-0 overflow-y-auto scrollbar-auto max-w-[95rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-12">
       <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
@@ -35,7 +34,7 @@
         </div>
       </div>
 
-      <!-- 统计卡片 + 视图切换 同行 -->
+      <!-- 统计卡片 -->
       <div class="flex items-center gap-6 mb-6 flex-wrap">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1 min-w-0">
           <div class="bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 rounded-xl p-4 flex items-center gap-4">
@@ -79,31 +78,6 @@
             </div>
           </div>
         </div>
-
-        <div class="flex flex-col items-center gap-1 p-1 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/20 rounded-lg shrink-0">
-          <button
-            @click="viewMode = 'grid'"
-            :class="[
-              'p-2 rounded-md transition-all duration-300 flex items-center justify-center',
-              viewMode === 'grid' 
-                ? 'bg-[var(--neon-cyan)] text-white shadow-[0_0_10px_rgba(0,245,255,0.4)]' 
-                : 'text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10'
-            ]"
-          >
-            <el-icon class="text-xl"><Grid /></el-icon>
-          </button>
-          <button
-            @click="viewMode = 'list'"
-            :class="[
-              'p-2 rounded-md transition-all duration-300 flex items-center justify-center',
-              viewMode === 'list' 
-                ? 'bg-[var(--neon-cyan)] text-white shadow-[0_0_10px_rgba(0,245,255,0.4)]' 
-                : 'text-[var(--text-muted)] hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10'
-            ]"
-          >
-            <el-icon class="text-xl"><List /></el-icon>
-          </button>
-        </div>
       </div>
 
       <!-- 同步进度提示 -->
@@ -131,14 +105,7 @@
         <p class="text-[var(--text-muted)]">暂无技能，点击上方「添加技能」开始</p>
       </div>
       <div v-else>
-        <SkillGridView 
-          v-if="viewMode === 'grid'" 
-          :skills="skillStore.skills" 
-          :showAdminActions="true" 
-          @edit="handleEdit"
-        />
         <SkillListView 
-          v-else 
           :skills="skillStore.skills" 
           :showAdminActions="true"
           @edit="handleEdit"
@@ -159,12 +126,11 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useSkillStore } from '@/stores/skillStore'
 import { useAuthStore } from '@/stores/authStore'
 import SkillImportModal from '@/components/features/SkillImportModal.vue'
-import SkillGridView from '@/modules/skill-list/components/SkillGridView.vue'
 import SkillListView from '@/modules/skill-list/components/SkillListView.vue'
 import SkillEditor from '@/components/features/SkillEditor.vue'
 import type { Skill } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Grid, List, Loading, SwitchButton } from '@element-plus/icons-vue'
+import { Plus, Loading, SwitchButton } from '@element-plus/icons-vue'
 
 import { useRouter } from 'vue-router'
 
@@ -173,7 +139,6 @@ const skillStore = useSkillStore()
 const authStore = useAuthStore()
 const isAuthenticated = ref(false)
 const showImport = ref(false)
-const viewMode = ref<'grid' | 'list'>('grid')
 const showEdit = ref(false)
 const editingSkill = ref<Skill | undefined>()
 

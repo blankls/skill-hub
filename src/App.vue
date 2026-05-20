@@ -64,7 +64,7 @@ onMounted(() => {
 
 <style scoped>
 #app {
-    min-height: 100vh;
+    height: 100vh;
 }
 
 .fade-slide-enter-active,

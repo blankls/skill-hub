@@ -1,5 +1,5 @@
 <template>
-  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <div class="skill-grid">
     <SkillCard 
       v-for="skill in skills" 
       :key="skill.id" 
@@ -29,11 +29,16 @@ defineEmits<{
 </script>
 
 <style scoped>
-/* Mobile Grid Responsive */
+.skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
 @media (max-width: 768px) {
-  .grid.md\:grid-cols-2.lg\:grid-cols-3.gap-6 {
-    grid-template-columns: 1fr !important;
-    gap: 1rem !important;
+  .skill-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 }
 </style>

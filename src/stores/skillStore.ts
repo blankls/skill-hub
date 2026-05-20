@@ -20,6 +20,7 @@ export const useSkillStore = defineStore('skill', () => {
   const selectedTags = ref<string[]>([])
   const selectedSources = ref<string[]>(['local', 'github'])
   const sortBy = ref('updated')
+  const sortOrder = ref<'asc' | 'desc'>('desc')
   const loading = ref(false)
   const syncingSkillIds = ref<Set<string>>(new Set())
   const syncProgress = ref<Map<string, SyncProgress>>(new Map())
@@ -76,19 +77,28 @@ export const useSkillStore = defineStore('skill', () => {
       case 'likes':
         result.sort((a, b) => {
           const diff = (b.likes || 0) - (a.likes || 0)
-          if (diff !== 0) return diff
+          if (diff !== 0) return sortOrder.value === 'desc' ? diff : -diff
           return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
         })
         break
       case 'name':
-        result.sort((a, b) => a.name.localeCompare(b.name))
+        result.sort((a, b) => {
+          const cmp = a.name.localeCompare(b.name)
+          return sortOrder.value === 'desc' ? -cmp : cmp
+        })
         break
       case 'files':
-        result.sort((a, b) => b.files.length - a.files.length)
+        result.sort((a, b) => {
+          const diff = b.files.length - a.files.length
+          return sortOrder.value === 'desc' ? diff : -diff
+        })
         break
       case 'updated':
       default:
-        result.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        result.sort((a, b) => {
+          const diff = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          return sortOrder.value === 'desc' ? diff : -diff
+        })
         break
     }
     
@@ -164,11 +174,20 @@ export const useSkillStore = defineStore('skill', () => {
     sortBy.value = val
   }
 
+  function setSortOrder(order: 'asc' | 'desc') {
+    sortOrder.value = order
+  }
+
+  function toggleSortOrder() {
+    sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc'
+  }
+
   function clearAllFilters() {
     selectedTag.value = ''
     selectedTags.value = []
     selectedSources.value = ['local', 'github']
     sortBy.value = 'updated'
+    sortOrder.value = 'desc'
     searchQuery.value = ''
   }
 
@@ -469,6 +488,7 @@ export const useSkillStore = defineStore('skill', () => {
     selectedTags,
     selectedSources,
     sortBy,
+    sortOrder,
     loading,
     viewMode,
     syncingSkillIds,
@@ -486,6 +506,8 @@ export const useSkillStore = defineStore('skill', () => {
     toggleSelectedTag,
     setSelectedSources,
     setSortBy,
+    setSortOrder,
+    toggleSortOrder,
     clearAllFilters,
     setViewMode,
     syncGitHubSkill,

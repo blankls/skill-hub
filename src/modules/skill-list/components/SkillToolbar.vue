@@ -3,7 +3,6 @@
     <div class="toolbar-top">
       <div class="flex flex-wrap gap-4 items-center justify-between">
         <h2 class="text-lg font-semibold text-[var(--text-light)]">技能列表</h2>
-        <span class="text-sm text-[var(--text-muted)]">{{ skillStore.filteredSkills.length }} / {{ skillStore.skills.length }} 个技能</span>
       </div>
     </div>
   </div>
