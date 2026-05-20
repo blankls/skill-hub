@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename)
 // 读取环境变量
 const PORT = process.env.PORT || 3001
 const HOST = process.env.HOST || 'localhost'
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
 // 配置数据目录：如果环境变量配置了则使用，否则使用默认的 data/skills
 const DATA_DIR = process.env.DATA_DIR 
   ? path.isAbsolute(process.env.DATA_DIR) 

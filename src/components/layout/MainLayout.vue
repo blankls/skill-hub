@@ -1,7 +1,7 @@
 <template>
-  <div class="h-full flex flex-col" :class="{ 'overflow-hidden': !isHomePage }">
+  <div class="h-full flex flex-col" :class="{ 'overflow-hidden': !usePageScroll }">
     <AppHeader />
-    <main class="flex-1" :class="{ 'min-h-0': !isHomePage }">
+    <main class="flex-1" :class="{ 'min-h-0': !usePageScroll }">
       <slot />
     </main>
     <AppFooter v-if="showFooter" />
@@ -16,7 +16,12 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
-const isHomePage = computed(() => route.path === '/')
+const usePageScroll = computed(() => {
+  const path = route.path
+  if (path === '/') return true
+  if (path.startsWith('/skills/') && route.params.id) return true
+  return false
+})
 
 const showFooter = computed(() => {
   const path = route.path
