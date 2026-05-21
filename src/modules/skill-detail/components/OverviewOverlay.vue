@@ -16,7 +16,7 @@
           </button>
         </div>
         <div class="flex-1 min-h-0 overflow-y-auto scrollbar-auto">
-          <div class="max-w-[90rem] mx-auto px-12 sm:px-16 lg:px-24 py-8">
+          <div class="max-w-[90rem] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-6 sm:py-8">
             <OverviewTab :skill="skill" />
           </div>
         </div>

@@ -151,23 +151,7 @@ body::-webkit-scrollbar-thumb:hover {
   border: 1px solid rgba(0, 245, 255, 0.1);
 }
 
-/* Mobile Responsive Styles */
-@media (max-width: 768px) {
-  body {
-    font-size: 14px;
-  }
-  
-  .code-block {
-    font-size: 0.75rem;
-    padding: 0.75rem;
-  }
-}
-
-@media (max-width: 640px) {
-  body {
-    font-size: 13px;
-  }
-}
+/* Mobile Responsive Styles - 仅组件级控制，不缩放 body 基准 */
 
 /* Touch-Friendly Improvements */
 * {

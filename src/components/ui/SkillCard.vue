@@ -43,7 +43,7 @@
       
       <div class="flex items-start justify-between mb-4">
         <div class="flex items-center gap-3">
-          <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-2xl font-black font-mono shadow-lg group-hover:scale-110 transition-transform duration-300">
+          <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-14 md:h-14 2xl:w-16 2xl:h-16 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-2xl sm:text-2xl md:text-2xl 2xl:text-3xl font-black font-mono shadow-lg group-hover:scale-110 transition-transform duration-300">
             {{ skill.name.charAt(0).toUpperCase() }}
           </div>
           <div>
@@ -54,7 +54,7 @@
         </div>
       </div>
       
-      <h3 class="text-xl font-bold mb-3 text-[var(--text-light)] group-hover:text-[var(--neon-cyan)] transition-colors">
+      <h3 class="text-lg sm:text-xl md:text-xl 2xl:text-2xl font-bold mb-3 text-[var(--text-light)] group-hover:text-[var(--neon-cyan)] transition-colors">
         {{ skill.name }}
       </h3>
       
@@ -280,41 +280,17 @@ const formatDate = (date: Date | string) => {
   .skill-card {
     border-radius: 1rem !important;
   }
-  
-  .skill-card .p-6 {
-    padding: 1.25rem !important;
-  }
-  
-  .w-14.h-14 {
-    width: 2.5rem !important;
-    height: 2.5rem !important;
-    font-size: 1.25rem !important;
-  }
-  
-  h3 {
-    font-size: 1.125rem !important;
-  }
-  
-  p {
-    font-size: 0.875rem !important;
-  }
-  
+
   .absolute.top-4.right-4 {
     opacity: 1 !important;
     transform: translateX(0) !important;
     position: static !important;
   }
-  
-  .flex.items-center.justify-between {
+
+  .flex.items-start.justify-between {
     flex-direction: column !important;
     align-items: flex-start !important;
     gap: 0.75rem !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .skill-card .p-6 {
-    padding: 1rem !important;
   }
 }
 
@@ -325,14 +301,9 @@ const formatDate = (date: Date | string) => {
     min-height: 44px !important;
     padding: 10px !important;
   }
-  
+
   .skill-card {
     touch-action: manipulation;
-  }
-  
-  /* Ensure the whole card is touchable */
-  .group.skill-card {
-    cursor: pointer;
   }
 }
 </style>

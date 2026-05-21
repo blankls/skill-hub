@@ -18,16 +18,16 @@
     </div>
 
     <!-- Main Content -->
-    <div class="relative z-10 w-full max-w-[95rem] px-6 text-center">
+    <div class="relative z-10 w-full max-w-[100rem] px-6 lg:px-12 2xl:px-20 text-center">
       <!-- Logo Text - simplified -->
-      <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight">
+      <h1 class="text-5xl md:text-7xl 2xl:text-8xl font-extrabold mb-6 tracking-tight">
         SKILL HUB
-        <span class="block text-base md:text-xl text-[var(--neon-yellow)] mt-2 font-mono">
+        <span class="block text-base md:text-xl 2xl:text-2xl text-[var(--neon-yellow)] mt-2 font-mono">
           // AI Skills Manager v2.0
         </span>
       </h1>
-      
-      <p class="text-lg md:text-xl text-[var(--text-muted)] mb-10 max-w-2xl mx-auto leading-relaxed">
+
+      <p class="text-lg md:text-xl 2xl:text-2xl text-[var(--text-muted)] mb-10 max-w-2xl mx-auto leading-relaxed">
         Discover · Share · Manage your AI Skills
       </p>
 

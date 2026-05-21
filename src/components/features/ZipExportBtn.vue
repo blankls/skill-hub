@@ -2,7 +2,8 @@
   <button
     @click="handleExport"
     :disabled="loading"
-    class="action-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-white/5 group relative border border-[rgba(0,245,255,0.15)]"
+    class="action-btn rounded-xl flex items-center justify-center transition-all hover:bg-white/5 group relative border border-[rgba(0,245,255,0.15)] w-9 h-9 lg:w-10 lg:h-10"
+    :class="$attrs.class"
     title="导出 ZIP"
   >
     <span class="text-lg">{{ loading ? '⏳' : '📥' }}</span>

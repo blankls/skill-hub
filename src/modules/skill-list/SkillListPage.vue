@@ -9,7 +9,7 @@
         @close="closeMobileDrawer"
       />
 
-      <div class="flex-1 min-w-0 p-6 overflow-y-auto scrollbar-auto">
+      <div class="flex-1 min-w-0 p-3 sm:p-4 lg:p-6 overflow-y-auto scrollbar-auto">
         <div v-if="skillStore.loading" class="text-center py-20">
           <el-icon class="text-5xl text-[var(--neon-cyan)] animate-spin"><Loading /></el-icon>
           <p class="mt-6 text-[var(--text-muted)] text-lg">加载技能中...</p>

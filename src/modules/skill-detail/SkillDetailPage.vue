@@ -6,9 +6,48 @@
     </div>
 
     <template v-else-if="skill">
-      <!-- 左侧浮动导航 -->
+      <!-- 手机端顶部工具栏 -->
+      <div class="lg:hidden fixed top-16 left-0 right-0 z-40 bg-[var(--dark-card)] border-b border-[rgba(0,245,255,0.15)] px-4 py-3">
+        <div class="flex items-center gap-3">
+          <button
+            @click="router.back()"
+            class="w-9 h-9 rounded-lg flex items-center justify-center transition-all flex-shrink-0"
+            style="color: var(--text-muted); border: 1px solid rgba(0,245,255,0.15)"
+          >
+            <el-icon :size="16"><ArrowLeft /></el-icon>
+          </button>
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-sm font-black font-mono flex-shrink-0">
+            {{ skill.name.charAt(0).toUpperCase() }}
+          </div>
+          <button
+            v-for="nav in navItems"
+            :key="nav.id"
+            @click="openOverlay(nav.id)"
+            class="w-9 h-9 rounded-lg flex items-center justify-center transition-all flex-shrink-0"
+            :class="activeOverlay === nav.id ? 'bg-[var(--neon-cyan)]/15' : 'hover:bg-white/5'"
+          >
+            <span class="text-base">{{ nav.icon }}</span>
+          </button>
+          <div class="flex-1"></div>
+          <button v-if="!isFromAdmin" @click="handleLike" :disabled="likeDisabled" :title="likeDisabled ? '请稍候...' : (liking ? '已点赞' : '点赞')" class="w-9 h-9 rounded-lg flex items-center justify-center transition-all flex-shrink-0" :class="[likeDisabled ? 'opacity-40 cursor-not-allowed' : (liking ? 'bg-orange-500/15' : 'hover:bg-white/5')]">
+            <span class="text-base">{{ liking ? '❤️' : '🤍' }}</span>
+          </button>
+          <button v-if="isGitHubSkill && isFromAdmin" @click="handleSync" :disabled="syncing" class="w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:bg-white/5 flex-shrink-0">
+            <span class="text-base">{{ syncing ? '🔄' : '🔁' }}</span>
+          </button>
+          <button v-if="isFromAdmin" @click="showEditor = true" class="w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:bg-white/5 flex-shrink-0">
+            <span class="text-base">✏️</span>
+          </button>
+          <ZipExportBtn :skill="skill" class="flex-shrink-0" />
+          <button v-if="isFromAdmin" @click="handleDelete" class="w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:bg-red-500/10 flex-shrink-0">
+            <span class="text-base">🗑️</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 桌面端左侧浮动导航 -->
       <div
-        class="fixed left-0 bottom-0 z-40 flex flex-col items-center py-6 px-2"
+        class="hidden lg:flex fixed left-0 bottom-0 z-40 flex-col items-center py-6 px-2"
         style="width: 56px; top: 4rem"
       >
         <div class="flex flex-col items-center gap-3 flex-1">
@@ -48,19 +87,20 @@
         </div>
       </div>
 
-      <!-- 右侧浮动操作栏 -->
+      <!-- 桌面端右侧浮动操作栏 -->
       <div
-        class="fixed right-0 bottom-0 z-40 flex flex-col items-center py-6 px-2"
+        class="hidden lg:flex fixed right-0 bottom-0 z-40 flex-col items-center py-6 px-2"
         style="width: 56px; top: 4rem"
       >
         <div class="flex flex-col items-center gap-2 flex-1">
           <button
             v-if="!isFromAdmin"
             @click="handleLike"
+            :disabled="likeDisabled"
             class="action-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all group relative"
-            :class="liking ? 'bg-orange-500/15 border-orange-500/30' : 'hover:bg-white/5 border-[rgba(0,245,255,0.15)]'"
+            :class="[likeDisabled ? 'opacity-40 cursor-not-allowed' : (liking ? 'bg-orange-500/15 border-orange-500/30' : 'hover:bg-white/5 border-[rgba(0,245,255,0.15)]')]"
             style="border-width: 1px; border-style: solid"
-            :title="liking ? '已点赞' : '点赞'"
+            :title="likeDisabled ? '请稍候...' : (liking ? '已点赞' : '点赞')"
           >
             <span class="text-lg">{{ liking ? '❤️' : '🤍' }}</span>
             <span
@@ -112,7 +152,7 @@
 
       <!-- 主内容区 - 只有标题信息 -->
       <div class="h-full overflow-y-auto scrollbar-auto">
-        <div class="mx-auto px-12 sm:px-16 lg:px-24 py-10 max-w-[90rem]">
+        <div class="mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-6 sm:py-8 lg:py-10 2xl:py-12 pt-24 lg:pt-10 max-w-[90rem]">
         <div class="rounded-xl overflow-hidden border border-[var(--neon-cyan)]/30 mb-6" style="background: var(--dark-card)">
           <div class="px-5 py-3 border-b border-[var(--neon-cyan)]/15 flex items-center gap-2" style="background: rgba(0,245,255,0.05)">
             <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-sm font-black font-mono shadow-lg">
@@ -277,10 +317,32 @@ const showOverview = ref(false)
 const showGuide = ref(false)
 const showFileBrowser = ref(false)
 const liking = ref(false)
+const likeDisabled = ref(false)
 const activeOverlay = ref('')
 
+const LIKED_SKILLS_KEY = 'skill-hub-liked-skills'
+
+const getLikedSkills = (): Set<string> => {
+  try {
+    const stored = localStorage.getItem(LIKED_SKILLS_KEY)
+    return stored ? new Set(JSON.parse(stored)) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+const saveLikedSkill = (skillId: string) => {
+  const liked = getLikedSkills()
+  liked.add(skillId)
+  localStorage.setItem(LIKED_SKILLS_KEY, JSON.stringify([...liked]))
+}
+
 const skill = computed(() => {
-  return skillStore.skills.find(s => s.id === route.params.id) || null
+  const s = skillStore.skills.find(sk => sk.id === route.params.id) || null
+  if (s) {
+    liking.value = getLikedSkills().has(s.id)
+  }
+  return s
 })
 
 const isGitHubSkill = computed(() => {
@@ -374,10 +436,12 @@ function openOverlay(id: string) {
 }
 
 const handleLike = async () => {
-  if (!skill.value || liking.value) return
+  if (!skill.value || liking.value || likeDisabled.value) return
+  likeDisabled.value = true
   liking.value = true
+  saveLikedSkill(skill.value.id)
   await skillStore.toggleLike(skill.value.id)
-  setTimeout(() => { liking.value = false }, 1500)
+  setTimeout(() => { likeDisabled.value = false }, 2000)
 }
 
 async function handleSync() {
