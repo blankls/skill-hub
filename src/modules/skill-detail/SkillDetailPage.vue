@@ -152,30 +152,30 @@
 
       <!-- 主内容区 - 只有标题信息 -->
       <div class="h-full overflow-y-auto scrollbar-auto">
-        <div class="mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-6 sm:py-8 lg:py-10 2xl:py-12 pt-24 lg:pt-10 max-w-[90rem]">
+        <div class="mx-auto px-6 sm:px-8 lg:px-12 xl:px-16 2xl:px-28 py-6 sm:py-8 lg:py-10 2xl:py-14 pt-24 lg:pt-10 max-w-[100rem]">
         <div class="rounded-xl overflow-hidden border border-[var(--neon-cyan)]/30 mb-6" style="background: var(--dark-card)">
-          <div class="px-5 py-3 border-b border-[var(--neon-cyan)]/15 flex items-center gap-2" style="background: rgba(0,245,255,0.05)">
-            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-sm font-black font-mono shadow-lg">
+          <div class="px-6 py-4 border-b border-[var(--neon-cyan)]/15 flex items-center gap-3" style="background: rgba(0,245,255,0.05)">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 2xl:w-14 2xl:h-14 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-lg sm:text-xl 2xl:text-2xl font-black font-mono shadow-lg">
               {{ skill.name.charAt(0).toUpperCase() }}
             </div>
-            <span class="font-semibold text-lg" style="color: var(--text-light)">{{ skill.name }}</span>
-            <span class="ml-auto text-[var(--neon-yellow)] font-mono text-sm font-semibold">v{{ skill.version }}</span>
+            <span class="font-semibold text-xl sm:text-2xl 2xl:text-3xl" style="color: var(--text-light)">{{ skill.name }}</span>
+            <span class="ml-auto text-[var(--neon-yellow)] font-mono text-base 2xl:text-lg font-semibold">v{{ skill.version }}</span>
           </div>
-          <div class="p-5">
+          <div class="p-6">
             <div class="flex flex-wrap items-center gap-3 text-sm mb-4">
-              <span class="px-2.5 py-1 rounded-full bg-[var(--neon-yellow)]/10 text-[var(--neon-yellow)] border border-[var(--neon-yellow)]/30 text-xs font-mono uppercase tracking-wider">
+              <span class="px-3 py-1.5 rounded-full bg-[var(--neon-yellow)]/10 text-[var(--neon-yellow)] border border-[var(--neon-yellow)]/30 text-xs 2xl:text-sm font-mono uppercase tracking-wider">
                 {{ getSourceLabel(skill.source.type) }}
               </span>
-              <span v-if="skill.author" class="flex items-center gap-1.5" style="color: var(--text-muted)">
+              <span v-if="skill.author" class="flex items-center gap-1.5 text-sm 2xl:text-base" style="color: var(--text-muted)">
                 <span>👤</span>
                 <span>{{ skill.author }}</span>
               </span>
-              <span v-if="!isFromAdmin" class="flex items-center gap-1.5" style="color: var(--text-muted)">
+              <span v-if="!isFromAdmin" class="flex items-center gap-1.5 text-sm 2xl:text-base" style="color: var(--text-muted)">
                 <span class="text-orange-400">🔥</span>
                 <span class="font-mono font-bold" style="color: var(--text-light)">{{ skill.likes || 0 }}</span>
               </span>
             </div>
-            <p class="text-sm leading-relaxed" style="color: var(--text-muted)">{{ skill.description }}</p>
+            <p class="text-base 2xl:text-lg leading-relaxed" style="color: var(--text-muted)">{{ skill.description }}</p>
           </div>
         </div>
 
@@ -195,14 +195,14 @@
 
         <!-- GitHub 仓库信息 -->
         <div v-if="githubMeta" class="rounded-xl overflow-hidden border border-[var(--neon-purple)]/30 mb-6" style="background: var(--dark-card)">
-          <div class="px-5 py-3 border-b border-[var(--neon-purple)]/15 flex items-center gap-2" style="background: rgba(168,85,247,0.05)">
-            <span class="text-base">🚀</span>
-            <span class="font-semibold text-sm" style="color: var(--neon-purple)">GitHub 仓库</span>
+          <div class="px-6 py-4 border-b border-[var(--neon-purple)]/15 flex items-center gap-2" style="background: rgba(168,85,247,0.05)">
+            <span class="text-xl">🚀</span>
+            <span class="font-semibold text-base 2xl:text-lg" style="color: var(--neon-purple)">GitHub 仓库</span>
           </div>
-          <div class="p-5">
+          <div class="p-6">
             <div class="flex items-start justify-between flex-wrap gap-4">
               <div class="min-w-0">
-                <a :href="githubMeta.subfolderUrl || githubMeta.repoUrl" target="_blank" class="text-lg font-bold hover:underline transition-colors truncate block" style="color: var(--neon-cyan)">
+                <a :href="githubMeta.subfolderUrl || githubMeta.repoUrl" target="_blank" class="text-xl 2xl:text-2xl font-bold hover:underline transition-colors truncate block" style="color: var(--neon-cyan)">
                   {{ githubMeta.full_name + (hasSubfolder ? '/' + subfolderRelative : '') }}
                 </a>
                 <el-tooltip placement="top" :disabled="!isGithubDescriptionLong">
@@ -211,14 +211,14 @@
                   </template>
                   <p
                     v-if="githubMeta.description"
-                    class="text-sm mt-1.5 leading-relaxed max-w-2xl cursor-pointer hover:text-[var(--neon-cyan)]"
+                    class="text-sm 2xl:text-base mt-1.5 leading-relaxed max-w-2xl cursor-pointer hover:text-[var(--neon-cyan)]"
                     :class="{ 'line-clamp-2': isGithubDescriptionLong }"
                   >
                     {{ githubMeta.description }}
                   </p>
                 </el-tooltip>
               </div>
-              <div class="flex items-center gap-4 text-sm shrink-0 flex-wrap">
+              <div class="flex items-center gap-4 text-base 2xl:text-lg shrink-0 flex-wrap">
                 <a :href="githubMeta.repoUrl" target="_blank" class="flex items-center gap-1.5 hover:opacity-80 transition-opacity" style="color: var(--text-muted)">
                   <span class="text-base">🏠</span>
                   <span class="font-mono text-xs" style="color: var(--neon-cyan)">{{ githubMeta.repoUrl.split('/').slice(-2).join('/') }}</span>
@@ -243,8 +243,8 @@
               </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t" style="border-color: rgba(168,85,247,0.1)">
-              <div v-if="githubMeta.language" class="flex items-center gap-1.5 text-xs">
+            <div class="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t 2xl:text-base" style="border-color: rgba(168,85,247,0.1)">
+              <div v-if="githubMeta.language" class="flex items-center gap-1.5 text-xs 2xl:text-sm">
                 <span class="w-2.5 h-2.5 rounded-full" :style="{ background: languageColor(githubMeta.language) }"></span>
                 <span style="color: var(--text-muted)">{{ githubMeta.language }}</span>
               </div>
