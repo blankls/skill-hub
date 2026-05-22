@@ -89,7 +89,7 @@
               <div class="max-h-52 overflow-y-auto space-y-1 custom-scroll">
                 <div v-for="file in zipPreview.files" :key="file.path"
                   class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-[var(--neon-cyan)]/8 transition-colors group">
-                  <span class="text-sm">📄</span>
+                  <FileIcon :filename="file.path" type="file" :size="16" />
                   <span class="font-mono text-sm text-[var(--text-muted)] flex-1 truncate group-hover:text-[var(--text-light)] transition-colors">{{ file.path }}</span>
                   <span class="text-xs text-[var(--text-muted)] font-mono opacity-0 group-hover:opacity-100 transition-opacity">{{ formatBytes(file.content.length) }}</span>
                 </div>
@@ -131,7 +131,7 @@
 
           <div v-if="mdFileName" class="mb-4 flex items-center justify-between px-4 py-2.5 bg-[var(--neon-cyan)]/5 border border-[var(--neon-cyan)]/20 rounded-lg">
             <div class="flex items-center gap-2 text-sm">
-              <span>📄</span>
+              <FileIcon :filename="mdFileName" type="file" :size="16" />
               <span class="text-[var(--neon-cyan)] font-bold">{{ mdFileName }}</span>
               <span class="text-xs text-[var(--text-muted)]">已导入，将放入同名文件夹</span>
             </div>
@@ -299,7 +299,7 @@
                 <div v-for="folder in githubFolders" :key="folder.path"
                   @click="navigateToFolder(folder.path)"
                   class="flex items-center gap-2.5 p-3 bg-[var(--dark-bg)] border border-[var(--neon-yellow)]/20 hover:border-[var(--neon-yellow)] hover:bg-[var(--neon-yellow)]/8 rounded-lg cursor-pointer transition-all group">
-                  <span class="text-lg group-hover:scale-110 transition-transform">📁</span>
+                  <FileIcon filename="folder" type="folder" :size="20" />
                   <span class="text-sm text-[var(--text-light)] truncate flex-1 group-hover:text-[var(--neon-yellow)] transition-colors">{{ folder.name }}</span>
                   <span class="text-xs text-[var(--neon-yellow)] opacity-0 group-hover:opacity-100 transition-opacity">进入 →</span>
                 </div>
@@ -308,15 +308,15 @@
 
             <div class="p-4 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/20 rounded-xl">
               <div class="flex items-center gap-2 mb-3">
-                <span class="text-sm">📄</span>
-                <span class="font-bold text-sm text-[var(--text-light)]">
-                  文件列表 · {{ githubFiles.length > 20 ? '20+' : githubFiles.length }}
-                </span>
-              </div>
+                  <FileIcon filename="files" type="file" :size="16" />
+                  <span class="font-bold text-sm text-[var(--text-light)]">
+                    文件列表 · {{ githubFiles.length > 20 ? '20+' : githubFiles.length }}
+                  </span>
+                </div>
               <div v-if="githubFiles.length > 0" class="max-h-52 overflow-y-auto space-y-1 custom-scroll">
                 <div v-for="file in githubFiles" :key="file.path"
                   class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-[var(--neon-cyan)]/8 transition-colors group">
-                  <span class="text-sm">📄</span>
+                  <FileIcon :filename="file.name" type="file" :size="16" />
                   <span class="font-mono text-sm text-[var(--text-muted)] flex-1 truncate group-hover:text-[var(--text-light)] transition-colors">{{ file.name }}</span>
                 </div>
               </div>
@@ -366,6 +366,7 @@ import { ElMessage } from 'element-plus'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css'
+import FileIcon from '@/components/ui/FileIcon.vue'
 
 function escapeHtml(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')

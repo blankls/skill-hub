@@ -1,92 +1,9 @@
 <template>
   <div class="h-full min-h-0 flex flex-col rounded-xl overflow-hidden border border-[var(--neon-cyan)]/20" style="background: var(--dark-card)">
-    <div class="flex-shrink-0 px-3 py-2.5 border-b flex items-center gap-1.5 flex-wrap" style="border-color: rgba(0,245,255,0.15)">
+    <div class="flex-shrink-0 px-3 py-2.5 border-b flex items-center gap-1.5" style="border-color: rgba(0,245,255,0.15)">
       <span class="font-semibold text-sm" style="color: var(--text-light)">
         📁 文件树 · {{ activeFileCount }}
       </span>
-      <div class="flex-1"></div>
-      <template v-if="isAdmin">
-        <el-popover
-          v-model:visible="filePopoverVisible"
-          :width="260"
-          placement="bottom"
-          trigger="click"
-        >
-          <template #reference>
-            <button
-              class="toolbar-btn text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1"
-              style="color: var(--neon-cyan)"
-              @click="openPopover('file')"
-            >
-              <el-icon :size="14"><Plus /></el-icon> 文件
-            </button>
-          </template>
-          <div class="flex flex-col gap-2">
-            <span class="text-xs" style="color: var(--text-muted)">新建路径：{{ newItemParentPath || '根目录' }}</span>
-            <el-input
-              v-model="newItemName"
-              placeholder="index.ts"
-              size="small"
-              @keyup.enter="handleCreateItem('file')"
-            />
-            <div class="flex justify-end gap-2">
-              <el-button size="small" @click="filePopoverVisible = false">取消</el-button>
-              <el-button size="small" type="primary" @click="handleCreateItem('file')" :disabled="!newItemName.trim()">创建</el-button>
-            </div>
-          </div>
-        </el-popover>
-        <el-popover
-          v-model:visible="folderPopoverVisible"
-          :width="260"
-          placement="bottom"
-          trigger="click"
-        >
-          <template #reference>
-            <button
-              class="toolbar-btn text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1"
-              style="color: var(--neon-purple)"
-              @click="openPopover('folder')"
-            >
-              <el-icon :size="14"><Plus /></el-icon> 文件夹
-            </button>
-          </template>
-          <div class="flex flex-col gap-2">
-            <span class="text-xs" style="color: var(--text-muted)">新建路径：{{ newItemParentPath || '根目录' }}</span>
-            <el-input
-              v-model="newItemName"
-              placeholder="components"
-              size="small"
-              @keyup.enter="handleCreateItem('folder')"
-            />
-            <div class="flex justify-end gap-2">
-              <el-button size="small" @click="folderPopoverVisible = false">取消</el-button>
-              <el-button size="small" type="primary" @click="handleCreateItem('folder')" :disabled="!newItemName.trim()">创建</el-button>
-            </div>
-          </div>
-        </el-popover>
-        <button
-          class="toolbar-btn text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1"
-          style="color: var(--neon-yellow)"
-          @click="triggerImport"
-        >
-          <el-icon :size="14"><Upload /></el-icon> 导入
-        </button>
-        <input
-          ref="fileInputRef"
-          type="file"
-          multiple
-          class="hidden"
-          @change="handleImport"
-        />
-        <button
-          v-if="selectedNodePath"
-          class="toolbar-btn text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1"
-          style="color: #ef4444"
-          @click="handleDelete"
-        >
-          <el-icon :size="14"><Delete /></el-icon> 删除
-        </button>
-      </template>
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto custom-scroll p-2">
       <el-tree
@@ -94,30 +11,88 @@
         :data="treeData"
         :props="{ label: 'label', children: 'children' }"
         node-key="id"
-        default-expand-all
+        :default-expanded-keys="expandedKeys"
         highlight-current
         :expand-on-click-node="false"
         :draggable="isAdmin"
         :allow-drop="handleAllowDrop"
         :allow-drag="handleAllowDrag"
         @node-click="handleNodeClick"
+        @node-expand="onNodeExpand"
+        @node-collapse="onNodeCollapse"
         @node-drop="handleNodeDrop"
+        @node-contextmenu="handleContextMenu"
       >
         <template #default="{ data }">
           <span class="tree-node-content flex items-center gap-1.5" :class="{ 'is-selected': data.id === selectedNodePath }">
-            <span class="tree-icon text-xs flex-shrink-0">{{ getFileIcon(data) }}</span>
+            <span class="tree-icon flex-shrink-0"><FileIcon :filename="data.label" :type="data._type" :size="16" /></span>
             <span class="tree-label text-sm truncate">{{ data.label }}</span>
           </span>
         </template>
       </el-tree>
     </div>
+
+    <teleport to="body">
+      <transition name="ctx-fade">
+        <div
+          v-if="ctxMenu.visible && isAdmin"
+          class="ctx-menu"
+          :style="{ left: ctxMenu.x + 'px', top: ctxMenu.y + 'px' }"
+          @click="ctxMenu.visible = false"
+          @contextmenu.prevent="ctxMenu.visible = false"
+        >
+          <div class="ctx-item" @click="ctxAction('new-file')">
+            <span class="ctx-icon">📄</span> 新建文件
+          </div>
+          <div class="ctx-item" @click="ctxAction('new-folder')">
+            <span class="ctx-icon">📁</span> 新建文件夹
+          </div>
+          <div class="ctx-item" @click="ctxAction('import')">
+            <span class="ctx-icon">📥</span> 导入文件
+          </div>
+          <div v-if="ctxMenu.nodePath" class="ctx-divider"></div>
+          <div v-if="ctxMenu.nodePath" class="ctx-item ctx-danger" @click="ctxAction('delete')">
+            <span class="ctx-icon">🗑️</span> 删除
+          </div>
+        </div>
+      </transition>
+    </teleport>
+
+    <el-dialog
+      v-model="createDialogVisible"
+      :title="createDialogType === 'file' ? '新建文件' : '新建文件夹'"
+      width="360px"
+      :append-to-body="true"
+      class="create-dialog"
+    >
+      <div class="flex flex-col gap-3">
+        <span class="text-xs" style="color: var(--text-muted)">路径：{{ createDialogParent || '根目录' }}</span>
+        <el-input
+          v-model="createDialogName"
+          :placeholder="createDialogType === 'file' ? 'index.ts' : 'components'"
+          @keyup.enter="confirmCreate"
+        />
+      </div>
+      <template #footer>
+        <el-button @click="createDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmCreate" :disabled="!createDialogName.trim()">创建</el-button>
+      </template>
+    </el-dialog>
+
+    <input
+      ref="fileInputRef"
+      type="file"
+      multiple
+      class="hidden"
+      @change="handleImport"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Plus, Delete, Upload } from '@element-plus/icons-vue'
+import { ref, computed, onMounted, onUnmounted, reactive } from 'vue'
 import type { SkillFile } from '@/types'
+import FileIcon from '@/components/ui/FileIcon.vue'
 
 interface TreeNode {
   id: string
@@ -142,47 +117,23 @@ const emit = defineEmits<{
 const treeRef = ref()
 const selectedNodePath = ref<string | null>(null)
 const emptyFolders = ref<Set<string>>(new Set())
-const filePopoverVisible = ref(false)
-const folderPopoverVisible = ref(false)
-const newItemName = ref('')
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
-const activeFileCount = computed(() => props.files.length)
+const createDialogVisible = ref(false)
+const createDialogType = ref<'file' | 'folder'>('file')
+const createDialogName = ref('')
+const createDialogParent = ref('')
+const expandedKeys = ref<string[]>([])
 
-const newItemParentPath = computed(() => {
-  if (!selectedNodePath.value) return ''
-  const node = findNode(treeData.value, selectedNodePath.value)
-  if (!node) return ''
-  if (node._type === 'folder') return selectedNodePath.value
-  const parts = selectedNodePath.value.split('/')
-  parts.pop()
-  return parts.join('/')
+const ctxMenu = reactive({
+  visible: false,
+  x: 0,
+  y: 0,
+  nodePath: '' as string,
+  nodeType: '' as 'file' | 'folder' | '',
 })
 
-const fileIcons: Record<string, string> = {
-  '.ts': '🔷',
-  '.vue': '💚',
-  '.md': '📝',
-  '.json': '📋',
-  '.js': '🟨',
-  '.css': '🎨',
-  '.html': '🧡',
-  '.yaml': '⚙️',
-  '.yml': '⚙️',
-  '.py': '🐍',
-}
-
-function getFileIcon(data: TreeNode): string {
-  if (data._type === 'folder') return '📁'
-  if (data._type === 'file') {
-    const name = data.label
-    for (const [ext, icon] of Object.entries(fileIcons)) {
-      if (name.endsWith(ext)) return icon
-    }
-    return '📄'
-  }
-  return '📄'
-}
+const activeFileCount = computed(() => props.files.length)
 
 function buildTreeData(files: SkillFile[]): TreeNode[] {
   const root: Record<string, { _children: Record<string, any>; _file?: SkillFile; _type?: string }> = {}
@@ -269,25 +220,81 @@ function handleNodeClick(data: TreeNode) {
   }
 }
 
-function openPopover(type: 'file' | 'folder') {
-  newItemName.value = ''
-  if (type === 'file') {
-    filePopoverVisible.value = true
-    folderPopoverVisible.value = false
-  } else {
-    folderPopoverVisible.value = true
-    filePopoverVisible.value = false
+function onNodeExpand(data: TreeNode) {
+  if (!expandedKeys.value.includes(data.id)) {
+    expandedKeys.value = [...expandedKeys.value, data.id]
   }
 }
 
-function handleCreateItem(type: 'file' | 'folder') {
-  const name = newItemName.value.trim()
+function onNodeCollapse(data: TreeNode) {
+  const keysToRemove = new Set<string>()
+  keysToRemove.add(data.id)
+  if (data.children) {
+    collectChildKeys(data.children, keysToRemove)
+  }
+  expandedKeys.value = expandedKeys.value.filter(k => !keysToRemove.has(k))
+}
+
+function collectChildKeys(nodes: TreeNode[], keys: Set<string>) {
+  for (const node of nodes) {
+    keys.add(node.id)
+    if (node.children) collectChildKeys(node.children, keys)
+  }
+}
+
+function handleContextMenu(event: MouseEvent, data: TreeNode) {
+  event.preventDefault()
+  event.stopPropagation()
+  selectedNodePath.value = data.id
+  ctxMenu.visible = true
+  ctxMenu.x = event.clientX
+  ctxMenu.y = event.clientY
+  ctxMenu.nodePath = data.id
+  ctxMenu.nodeType = data._type
+}
+
+function closeCtxMenu() {
+  ctxMenu.visible = false
+}
+
+function ctxAction(action: string) {
+  closeCtxMenu()
+  const node = ctxMenu.nodePath ? findNode(treeData.value, ctxMenu.nodePath) : null
+  const parentPath = node
+    ? (node._type === 'folder' ? node.id : node.id.split('/').slice(0, -1).join('/'))
+    : ''
+
+  switch (action) {
+    case 'new-file':
+      createDialogType.value = 'file'
+      createDialogName.value = ''
+      createDialogParent.value = parentPath
+      createDialogVisible.value = true
+      break
+    case 'new-folder':
+      createDialogType.value = 'folder'
+      createDialogName.value = ''
+      createDialogParent.value = parentPath
+      createDialogVisible.value = true
+      break
+    case 'import':
+      createDialogParent.value = parentPath
+      triggerImport()
+      break
+    case 'delete':
+      handleDelete(ctxMenu.nodePath)
+      break
+  }
+}
+
+function confirmCreate() {
+  const name = createDialogName.value.trim()
   if (!name) return
 
-  const parentPath = newItemParentPath.value
+  const parentPath = createDialogParent.value
   const fullPath = parentPath ? `${parentPath}/${name}` : name
 
-  if (type === 'file') {
+  if (createDialogType.value === 'file') {
     const exists = props.files.some(f => f.path === fullPath)
     if (!exists) {
       const newFile: SkillFile = {
@@ -298,7 +305,7 @@ function handleCreateItem(type: 'file' | 'folder') {
       }
       const newFiles = [...props.files, newFile]
       emit('files-update', newFiles)
-      filePopoverVisible.value = false
+      createDialogVisible.value = false
       setTimeout(() => {
         selectedNodePath.value = fullPath
         emit('select', fullPath)
@@ -311,11 +318,11 @@ function handleCreateItem(type: 'file' | 'folder') {
       newSet.add(fullPath)
       emptyFolders.value = newSet
     }
-    folderPopoverVisible.value = false
+    createDialogVisible.value = false
     selectedNodePath.value = fullPath
   }
 
-  newItemName.value = ''
+  createDialogName.value = ''
 }
 
 function detectLanguage(filename: string): string | undefined {
@@ -335,12 +342,10 @@ function detectLanguage(filename: string): string | undefined {
   return ext ? langMap[ext] : undefined
 }
 
-function handleDelete() {
-  if (!selectedNodePath.value) return
+function handleDelete(pathToDelete: string) {
+  if (!pathToDelete) return
 
-  const pathToDelete = selectedNodePath.value
   const node = findNode(treeData.value, pathToDelete)
-
   if (!node) return
 
   if (node._type === 'folder') {
@@ -364,7 +369,7 @@ async function handleImport(event: Event) {
   const input = event.target as HTMLInputElement
   if (!input.files?.length) return
 
-  const parentPath = newItemParentPath.value
+  const parentPath = createDialogParent.value
   const newFiles: SkillFile[] = []
 
   for (const file of Array.from(input.files)) {
@@ -466,6 +471,13 @@ function handleNodeDrop(draggingNode: any, dropNode: any, dropType: string) {
     }, 0)
   }
 }
+
+function onGlobalClick() {
+  if (ctxMenu.visible) closeCtxMenu()
+}
+
+onMounted(() => document.addEventListener('click', onGlobalClick))
+onUnmounted(() => document.removeEventListener('click', onGlobalClick))
 </script>
 
 <style scoped>
@@ -483,15 +495,57 @@ function handleNodeDrop(draggingNode: any, dropNode: any, dropType: string) {
   background: rgba(14, 165, 233, 0.4);
 }
 
-.toolbar-btn {
-  background: rgba(14, 165, 233, 0.06);
-  border: 1px solid rgba(0, 245, 255, 0.15);
-  transition: all 0.2s ease;
+.ctx-menu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 160px;
+  padding: 4px 0;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 245, 255, 0.2);
+  background: var(--dark-card);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 245, 255, 0.08);
 }
-.toolbar-btn:hover {
-  background: rgba(14, 165, 233, 0.12);
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 8px rgba(0, 245, 255, 0.15);
+
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ctx-item:hover {
+  background: rgba(0, 245, 255, 0.1);
+  color: var(--neon-cyan);
+}
+
+.ctx-item.ctx-danger:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.ctx-icon {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+}
+
+.ctx-divider {
+  height: 1px;
+  margin: 4px 8px;
+  background: rgba(0, 245, 255, 0.12);
+}
+
+.ctx-fade-enter-active,
+.ctx-fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+.ctx-fade-enter-from,
+.ctx-fade-leave-to {
+  opacity: 0;
 }
 
 :deep(.el-tree) {
@@ -541,9 +595,5 @@ function handleNodeDrop(draggingNode: any, dropNode: any, dropType: string) {
 
 .tree-icon {
   line-height: 1;
-}
-
-.tree-label {
-  line-height: 1.5;
 }
 </style>
