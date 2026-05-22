@@ -45,114 +45,74 @@
         </div>
       </div>
 
-      <!-- 桌面端左侧浮动导航 -->
-      <div
-        class="hidden lg:flex fixed left-0 bottom-0 z-40 flex-col items-center py-6 px-2"
-        style="width: 56px; top: 4rem"
+      <!-- 桌面端侧边栏 -->
+      <DetailSidebar
+        :nav-items="navItems"
+        top-offset="4rem"
+        @back="router.back()"
+        @navigate="openOverlay"
       >
-        <div class="flex flex-col items-center gap-3 flex-1">
-          <button
-            @click="router.back()"
-            class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-white/10 group relative"
-            style="color: var(--text-muted); border: 1px solid rgba(0,245,255,0.15)"
-            title="返回"
-          >
-            <el-icon :size="18"><ArrowLeft /></el-icon>
-            <span
-              class="absolute left-full ml-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(0,245,255,0.2)"
-            >返回</span>
-          </button>
-
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-lg font-black font-mono shadow-lg">
-            {{ skill.name.charAt(0).toUpperCase() }}
-          </div>
-
-          <div class="w-6 h-px my-1" style="background: rgba(0,245,255,0.15)"></div>
-
-          <button
-            v-for="nav in navItems"
-            :key="nav.id"
-            @click="openOverlay(nav.id)"
-            class="w-10 h-10 rounded-xl flex items-center justify-center transition-all group relative"
-            :class="activeOverlay === nav.id ? 'bg-[var(--neon-cyan)]/15' : 'hover:bg-white/5'"
-            :title="nav.label"
-          >
-            <span class="text-lg">{{ nav.icon }}</span>
-            <span
-              class="absolute left-full ml-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(0,245,255,0.2)"
-            >{{ nav.label }}</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 桌面端右侧浮动操作栏 -->
-      <div
-        class="hidden lg:flex fixed right-0 bottom-0 z-40 flex-col items-center py-6 px-2"
-        style="width: 56px; top: 4rem"
-      >
-        <div class="flex flex-col items-center gap-2 flex-1">
+        <template #right-actions>
           <button
             v-if="!isFromAdmin"
             @click="handleLike"
             :disabled="likeDisabled"
-            class="action-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all group relative"
-            :class="[likeDisabled ? 'opacity-40 cursor-not-allowed' : (liking ? 'bg-orange-500/15 border-orange-500/30' : 'hover:bg-white/5 border-[rgba(0,245,255,0.15)]')]"
+            class="sidebar-btn action-btn w-12 h-12 xl:w-14 xl:h-14 rounded-xl flex items-center justify-center transition-all duration-200 group relative"
+            :class="[likeDisabled ? 'opacity-40 cursor-not-allowed' : (liking ? 'bg-orange-500/15 border-orange-500/30 hover:scale-115' : 'hover:bg-[var(--neon-cyan)]/10 hover:scale-115 border-[rgba(14,165,233,0.15)]')]"
             style="border-width: 1px; border-style: solid"
             :title="likeDisabled ? '请稍候...' : (liking ? '已点赞' : '点赞')"
           >
-            <span class="text-lg">{{ liking ? '❤️' : '🤍' }}</span>
+            <span class="text-xl xl:text-2xl">{{ liking ? '❤️' : '🤍' }}</span>
             <span
               class="absolute right-full mr-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(0,245,255,0.2)"
+              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(14,165,233,0.2)"
             >{{ liking ? '已点赞' : '点赞' }}</span>
           </button>
           <button
             v-if="isGitHubSkill && isFromAdmin"
             @click="handleSync"
             :disabled="syncing"
-            class="action-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-white/5 group relative border border-[rgba(0,245,255,0.15)]"
+            class="sidebar-btn action-btn w-12 h-12 xl:w-14 xl:h-14 rounded-xl flex items-center justify-center transition-all duration-200 hover:bg-[var(--neon-cyan)]/10 hover:scale-115 group relative border border-[rgba(14,165,233,0.15)]"
             :class="{ 'opacity-50': syncing }"
             title="同步"
           >
-            <span class="text-lg">{{ syncing ? '🔄' : '🔁' }}</span>
+            <span class="text-xl xl:text-2xl">{{ syncing ? '🔄' : '🔁' }}</span>
             <span
               class="absolute right-full mr-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(0,245,255,0.2)"
+              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(14,165,233,0.2)"
             >同步</span>
           </button>
           <button
             v-if="isFromAdmin"
             @click="showEditor = true"
-            class="action-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-white/5 group relative border border-[rgba(0,245,255,0.15)]"
+            class="sidebar-btn action-btn w-12 h-12 xl:w-14 xl:h-14 rounded-xl flex items-center justify-center transition-all duration-200 hover:bg-[var(--neon-cyan)]/10 hover:scale-115 group relative border border-[rgba(14,165,233,0.15)]"
             title="编辑"
           >
-            <span class="text-lg">✏️</span>
+            <span class="text-xl xl:text-2xl">✏️</span>
             <span
               class="absolute right-full mr-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(0,245,255,0.2)"
+              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(14,165,233,0.2)"
             >编辑</span>
           </button>
-          <ZipExportBtn :skill="skill" />
+          <ZipExportBtn :skill="skill" class="w-12 h-12 xl:w-14 xl:h-14" />
           <button
             v-if="isFromAdmin"
             @click="handleDelete"
-            class="action-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-red-500/10 group relative border border-[rgba(0,245,255,0.15)]"
+            class="sidebar-btn action-btn w-12 h-12 xl:w-14 xl:h-14 rounded-xl flex items-center justify-center transition-all duration-200 hover:bg-red-500/10 hover:scale-115 group relative border border-[rgba(14,165,233,0.15)]"
             title="删除"
           >
-            <span class="text-lg">🗑️</span>
+            <span class="text-xl xl:text-2xl">🗑️</span>
             <span
               class="absolute right-full mr-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(0,245,255,0.2)"
+              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(14,165,233,0.2)"
             >删除</span>
           </button>
-        </div>
-      </div>
+        </template>
+      </DetailSidebar>
 
-      <!-- 主内容区 - 只有标题信息 -->
+      <!-- 主内容区 - 占满全宽 -->
       <div class="h-full overflow-y-auto scrollbar-auto">
-        <div class="mx-auto px-6 sm:px-8 lg:px-12 xl:px-16 2xl:px-28 py-6 sm:py-8 lg:py-10 2xl:py-14 pt-24 lg:pt-10 max-w-[100rem]">
+        <div class="mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-28 py-6 sm:py-8 lg:py-10 2xl:py-14 pt-20 lg:pt-10 max-w-[100rem]">
         <div class="rounded-xl overflow-hidden border border-[var(--neon-cyan)]/30 mb-6" style="background: var(--dark-card)">
           <div class="px-6 py-4 border-b border-[var(--neon-cyan)]/15 flex items-center gap-3" style="background: rgba(0,245,255,0.05)">
             <div class="w-10 h-10 sm:w-12 sm:h-12 2xl:w-14 2xl:h-14 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-lg sm:text-xl 2xl:text-2xl font-black font-mono shadow-lg">
@@ -275,9 +235,9 @@
       </div>
 
       <!-- 全屏覆盖层 -->
-      <OverviewOverlay v-model="showOverview" :skill="skill" @open="activeOverlay = 'overview'" @close="activeOverlay = ''" />
-      <GuideOverlay v-model="showGuide" :skill="skill" @open="activeOverlay = 'guide'" @close="activeOverlay = ''" />
-      <FileBrowserOverlay v-model="showFileBrowser" :skill="skill" @open="activeOverlay = 'files'" @close="activeOverlay = ''" />
+      <OverviewOverlay v-model="showOverview" :skill="skill" @open="activeOverlay = 'overview'" @close="activeOverlay = ''" @navigate="handleOverlayNavigate" />
+      <GuideOverlay v-model="showGuide" :skill="skill" @open="activeOverlay = 'guide'" @close="activeOverlay = ''" @navigate="handleOverlayNavigate" />
+      <FileBrowserOverlay v-model="showFileBrowser" :skill="skill" :is-admin="isFromAdmin" @open="activeOverlay = 'files'" @close="activeOverlay = ''" @navigate="handleOverlayNavigate" @files-update="handleFilesUpdate" />
 
       <!-- 编辑器 -->
       <SkillEditor v-model="showEditor" :skill="skill" @save="handleSave" />
@@ -300,9 +260,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading, ArrowLeft, Edit, Delete, Refresh, InfoFilled, User, Star } from '@element-plus/icons-vue'
 import { useSkillStore } from '@/stores/skillStore'
-import type { GithubMeta } from '@/types'
+import type { GithubMeta, SkillFile } from '@/types'
 import SkillEditor from '@/components/features/SkillEditor.vue'
 import ZipExportBtn from '@/components/features/ZipExportBtn.vue'
+import DetailSidebar from '@/components/features/DetailSidebar.vue'
 import OverviewOverlay from './components/OverviewOverlay.vue'
 import GuideOverlay from './components/GuideOverlay.vue'
 import FileBrowserOverlay from './components/FileBrowserOverlay.vue'
@@ -355,7 +316,7 @@ const isFromAdmin = computed(() => {
 
 const navItems = computed(() => {
   return [
-    { id: 'overview', icon: '📄', label: '概览' },
+    { id: 'overview', icon: '📄', label: '简介' },
     { id: 'guide', icon: '📘', label: '指导' },
     { id: 'files', icon: '📂', label: '文件' },
   ]
@@ -435,6 +396,14 @@ function openOverlay(id: string) {
   activeOverlay.value = id
 }
 
+function handleOverlayNavigate(id: string) {
+  showOverview.value = false
+  showGuide.value = false
+  showFileBrowser.value = false
+  activeOverlay.value = ''
+  openOverlay(id)
+}
+
 const handleLike = async () => {
   if (!skill.value || liking.value || likeDisabled.value) return
   likeDisabled.value = true
@@ -476,6 +445,11 @@ async function handleDelete() {
   }
 }
 
+async function handleFilesUpdate(files: SkillFile[]) {
+  if (!skill.value) return
+  await skillStore.updateSkill({ ...skill.value, files })
+}
+
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     if (showFileBrowser.value) showFileBrowser.value = false
@@ -507,5 +481,18 @@ onUnmounted(() => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.sidebar-btn {
+  transform-origin: center;
+}
+
+.sidebar-btn:hover {
+  box-shadow: 0 0 12px rgba(14, 165, 233, 0.2), 0 0 4px rgba(14, 165, 233, 0.1);
+}
+
+.sidebar-btn:active {
+  transform: scale(0.95);
+  box-shadow: none;
 }
 </style>

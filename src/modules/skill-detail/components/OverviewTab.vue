@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Markdown Content - README.md 优先，其次 SKILL.md -->
     <div v-if="overviewFile" class="rounded-xl p-6 border border-[var(--neon-purple)]/20" style="background: var(--dark-card)">
       <div class="flex items-center gap-2 mb-4">
         <span class="text-sm">📄</span>
@@ -10,23 +9,8 @@
       <div class="markdown-container">
         <div 
           class="markdown-body" 
-          :class="{ 'content-collapsed': !isExpanded && isContentLong }"
           v-html="renderedContent"
         ></div>
-        <div 
-          v-if="isContentLong" 
-          class="expand-toggle flex justify-center mt-4"
-        >
-          <button 
-            @click="isExpanded = !isExpanded"
-            class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:opacity-80"
-            style="color: var(--neon-cyan); background: rgba(0,245,255,0.1); border: 1px solid rgba(0,245,255,0.3)"
-          >
-            <el-icon v-if="!isExpanded"><ArrowDown /></el-icon>
-            <el-icon v-else><ArrowUp /></el-icon>
-            {{ isExpanded ? '收起' : '展开' }}
-          </button>
-        </div>
       </div>
     </div>
 
@@ -39,10 +23,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
-import { ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 import type { Skill } from '@/types'
 
 interface Props {
@@ -50,11 +33,6 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const isExpanded = ref(false)
-
-watch(() => props.skill, () => {
-  isExpanded.value = false
-}, { immediate: true })
 
 function escapeHtml(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -84,41 +62,11 @@ const renderedContent = computed(() => {
   }
   return ''
 })
-
-const isContentLong = computed(() => {
-  if (!overviewFile.value) return false
-  return overviewFile.value.content.length > 500
-})
 </script>
 
 <style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
 .markdown-container {
   position: relative;
-}
-
-.content-collapsed {
-  max-height: 300px !important;
-  overflow: hidden;
-  position: relative;
-}
-
-.content-collapsed::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 100px;
-  background: linear-gradient(to bottom, transparent, var(--dark-card));
-  pointer-events: none;
-  z-index: 10;
 }
 </style>
 

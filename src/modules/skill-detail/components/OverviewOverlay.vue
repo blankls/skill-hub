@@ -1,11 +1,11 @@
 <template>
   <Teleport to="body">
     <Transition name="overlay">
-      <div v-if="modelValue" class="fixed inset-0 z-50 flex flex-col" style="background: var(--dark-bg)">
-        <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color: rgba(0,245,255,0.15); background: var(--dark-card)">
+      <div v-if="modelValue" class="fixed inset-0 z-50 flex flex-col overflow-hidden" style="background: var(--dark-bg)">
+        <div class="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style="border-color: rgba(0,245,255,0.15); background: var(--dark-card)">
           <div class="flex items-center gap-3">
             <span class="text-lg">📄</span>
-            <span class="font-semibold text-lg" style="color: var(--text-light)">{{ skill.name }} · 概览</span>
+            <span class="font-semibold text-lg" style="color: var(--text-light)">{{ skill.name }} · 简介</span>
           </div>
           <button
             @click="$emit('update:modelValue', false)"
@@ -15,11 +15,15 @@
             <el-icon :size="20"><Close /></el-icon>
           </button>
         </div>
-        <div class="flex-1 min-h-0 overflow-y-auto scrollbar-auto">
-          <div class="max-w-[90rem] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-6 sm:py-8">
-            <OverviewTab :skill="skill" />
-          </div>
+        <div class="flex-1 min-h-0 overflow-y-auto custom-scroll px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 py-6 sm:py-8">
+          <OverviewTab :skill="skill" />
         </div>
+        <DetailSidebar
+          :nav-items="navItems"
+          top-offset="0px"
+          @back="$emit('update:modelValue', false)"
+          @navigate="(id) => $emit('navigate', id)"
+        />
       </div>
     </Transition>
   </Teleport>
@@ -28,6 +32,7 @@
 <script setup lang="ts">
 import { Close } from '@element-plus/icons-vue'
 import OverviewTab from '@/modules/skill-detail/components/OverviewTab.vue'
+import DetailSidebar from '@/components/features/DetailSidebar.vue'
 import type { Skill } from '@/types'
 
 defineProps<{
@@ -37,7 +42,14 @@ defineProps<{
 
 defineEmits<{
   'update:modelValue': [value: boolean]
+  navigate: [id: string]
 }>()
+
+const navItems = [
+  { id: 'overview', icon: '📄', label: '简介' },
+  { id: 'guide', icon: '📘', label: '指导' },
+  { id: 'files', icon: '📂', label: '文件' },
+]
 </script>
 
 <style scoped>
