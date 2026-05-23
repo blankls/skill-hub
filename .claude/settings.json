@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "Bash(npm run dev)",
+      "Bash(npm run build)",
+      "Bash(npm run test:*)",
+      "Bash(npm run test)",
+      "Bash(npm run server)",
+      "Bash(npx vitest:*)",
+      "Bash(git:*)",
+      "Bash(ls:*)",
+      "Bash(node:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)"
+    ]
+  },
+  "model": "claude-opus-4-7",
+  "enableAllProjectMcpServers": true,
+  "enableAllProjectTools": true
+}

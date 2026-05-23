@@ -41,7 +41,10 @@ coverage/
 data/
 
 # 项目特定 - 配置和工具
-.claude/
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/agents/
+.claude/skills/
 .docs/
 .trae/
 .gstack/
