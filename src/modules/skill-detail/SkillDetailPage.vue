@@ -260,6 +260,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading, ArrowLeft, Edit, Delete, Refresh, InfoFilled, User, Star } from '@element-plus/icons-vue'
 import { useSkillStore } from '@/stores/skillStore'
+import { useAuthStore } from '@/stores/authStore'
 import type { GithubMeta, SkillFile } from '@/types'
 import SkillEditor from '@/components/features/SkillEditor.vue'
 import ZipExportBtn from '@/components/features/ZipExportBtn.vue'
@@ -271,6 +272,7 @@ import FileBrowserOverlay from './components/FileBrowserOverlay.vue'
 const route = useRoute()
 const router = useRouter()
 const skillStore = useSkillStore()
+const authStore = useAuthStore()
 const loading = ref(true)
 const syncing = ref(false)
 const showEditor = ref(false)
@@ -311,7 +313,7 @@ const isGitHubSkill = computed(() => {
 })
 
 const isFromAdmin = computed(() => {
-  return route.path.startsWith('/admin')
+  return route.path.startsWith('/admin') && authStore.isAuthenticated
 })
 
 const navItems = computed(() => {
@@ -414,7 +416,7 @@ const handleLike = async () => {
 }
 
 async function handleSync() {
-  if (!skill.value) return
+  if (!skill.value || !isFromAdmin.value) return
   syncing.value = true
   try {
     await skillStore.syncGitHubSkill(skill.value.id, true)
@@ -427,11 +429,13 @@ async function handleSync() {
 }
 
 async function handleSave(updatedSkill: any) {
+  if (!isFromAdmin.value) return
   await skillStore.updateSkill(updatedSkill)
   ElMessage.success('技能更新成功')
 }
 
 async function handleDelete() {
+  if (!isFromAdmin.value) return
   try {
     await ElMessageBox.confirm('确定要删除这个技能吗？', '确认删除', {
       type: 'warning'
@@ -439,14 +443,14 @@ async function handleDelete() {
     if (skill.value) {
       await skillStore.deleteSkill(skill.value.id)
       ElMessage.success('技能删除成功')
-      router.push(isFromAdmin.value ? '/admin' : '/skills')
+      router.push('/admin')
     }
   } catch (e) {
   }
 }
 
 async function handleFilesUpdate(files: SkillFile[]) {
-  if (!skill.value) return
+  if (!skill.value || !isFromAdmin.value) return
   await skillStore.updateSkill({ ...skill.value, files })
 }
 

@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import fs from 'fs'
+import crypto from 'crypto'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import dotenv from 'dotenv'
@@ -10,37 +11,33 @@ dotenv.config()
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// 读取环境变量
 const PORT = process.env.PORT || 3001
 const HOST = process.env.HOST || 'localhost'
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
-// 配置数据目录：如果环境变量配置了则使用，否则使用默认的 data/skills
 const DATA_DIR = process.env.DATA_DIR 
   ? path.isAbsolute(process.env.DATA_DIR) 
     ? process.env.DATA_DIR 
     : path.join(__dirname, process.env.DATA_DIR)
   : path.join(__dirname, 'data', 'skills')
 
-// ==================== 登录限流配置 ====================
 const LOGIN_RATE_LIMIT = {
-    MAX_ATTEMPTS: 5,              // 最大失败次数
-    WINDOW_MS: 5 * 60 * 1000,     // 5 分钟窗口
-    LOCK_MS: 15 * 60 * 1000       // 锁定 15 分钟
+    MAX_ATTEMPTS: 5,
+    WINDOW_MS: 5 * 60 * 1000,
+    LOCK_MS: 15 * 60 * 1000
 }
 
-// 内存存储：IP -> { count, firstAttempt, lockedUntil }
-const loginAttempts = new Map()
+const SESSION_TIMEOUT = 30 * 60 * 1000
 
-// 日志文件路径
+const loginAttempts = new Map()
+const activeTokens = new Map()
+
 const LOG_DIR = path.join(__dirname, 'logs')
 const AUTH_LOG_FILE = path.join(LOG_DIR, 'auth.log')
 
-// 确保日志目录存在
 if (!fs.existsSync(LOG_DIR)) {
     fs.mkdirSync(LOG_DIR, { recursive: true })
 }
 
-// 写入认证日志
 function logAuthEvent(ip, event, details = {}) {
     const timestamp = new Date().toISOString()
     const logLine = JSON.stringify({ timestamp, ip, event, ...details }) + '\n'
@@ -49,7 +46,6 @@ function logAuthEvent(ip, event, details = {}) {
     })
 }
 
-// 获取客户端真实 IP
 function getClientIP(req) {
     return req.headers['x-forwarded-for']?.split(',')[0]?.trim() 
         || req.headers['x-real-ip'] 
@@ -58,20 +54,59 @@ function getClientIP(req) {
         || 'unknown'
 }
 
-// 定期清理过期记录（每 10 分钟）
 setInterval(() => {
     const now = Date.now()
     for (const [ip, record] of loginAttempts) {
-        // 锁定已过期
         if (record.lockedUntil && now > record.lockedUntil) {
             loginAttempts.delete(ip)
         }
-        // 窗口已过期
         else if (!record.lockedUntil && now - record.firstAttempt > LOGIN_RATE_LIMIT.WINDOW_MS) {
             loginAttempts.delete(ip)
         }
     }
+    for (const [token, info] of activeTokens) {
+        if (now - info.createdAt > SESSION_TIMEOUT) {
+            activeTokens.delete(token)
+        }
+    }
 }, 10 * 60 * 1000)
+
+function requireAuth(req, res, next) {
+    const token = req.headers['x-auth-token']
+    if (!token) {
+        return res.status(401).json({ error: '未提供认证令牌' })
+    }
+    const session = activeTokens.get(token)
+    if (!session) {
+        return res.status(401).json({ error: '认证令牌无效或已过期' })
+    }
+    if (Date.now() - session.createdAt > SESSION_TIMEOUT) {
+        activeTokens.delete(token)
+        return res.status(401).json({ error: '认证令牌已过期，请重新登录' })
+    }
+    next()
+}
+
+const LIKE_RATE_LIMIT = {
+    MAX_PER_MINUTE: 10,
+    WINDOW_MS: 60 * 1000
+}
+const likeAttempts = new Map()
+
+function rateLimitLikes(req, res, next) {
+    const ip = getClientIP(req)
+    const now = Date.now()
+    let record = likeAttempts.get(ip)
+    if (!record || now - record.firstAttempt > LIKE_RATE_LIMIT.WINDOW_MS) {
+        record = { count: 0, firstAttempt: now }
+    }
+    record.count++
+    likeAttempts.set(ip, record)
+    if (record.count > LIKE_RATE_LIMIT.MAX_PER_MINUTE) {
+        return res.status(429).json({ error: '操作过于频繁，请稍后再试' })
+    }
+    next()
+}
 
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true })
@@ -147,7 +182,7 @@ app.get('/api/skills/:id', (req, res) => {
 })
 
 // POST /api/skills - 创建技能
-app.post('/api/skills', (req, res) => {
+app.post('/api/skills', requireAuth, (req, res) => {
     try {
         const skill = req.body
         if (!skill.id) {
@@ -161,7 +196,7 @@ app.post('/api/skills', (req, res) => {
 })
 
 // PUT /api/skills/:id - 更新技能
-app.put('/api/skills/:id', (req, res) => {
+app.put('/api/skills/:id', requireAuth, (req, res) => {
     try {
         const existing = readSkillFile(req.params.id)
         if (!existing) return res.status(404).json({ error: 'Skill not found' })
@@ -173,7 +208,7 @@ app.put('/api/skills/:id', (req, res) => {
 })
 
 // DELETE /api/skills/:id - 删除技能
-app.delete('/api/skills/:id', (req, res) => {
+app.delete('/api/skills/:id', requireAuth, (req, res) => {
     try {
         const existing = readSkillFile(req.params.id)
         if (!existing) return res.status(404).json({ error: 'Skill not found' })
@@ -185,7 +220,7 @@ app.delete('/api/skills/:id', (req, res) => {
 })
 
 // POST /api/skills/:id/like - 点赞/取消点赞
-app.post('/api/skills/:id/like', (req, res) => {
+app.post('/api/skills/:id/like', rateLimitLikes, (req, res) => {
     try {
         const skill = readSkillFile(req.params.id)
         if (!skill) return res.status(404).json({ error: 'Skill not found' })
@@ -231,10 +266,11 @@ app.post('/api/auth/verify', (req, res) => {
         
         // 验证密码
         if (password === ADMIN_PASSWORD) {
-            // 登录成功，清除失败记录
             loginAttempts.delete(ip)
+            const token = crypto.randomBytes(32).toString('hex')
+            activeTokens.set(token, { createdAt: Date.now(), ip })
             logAuthEvent(ip, 'login_success')
-            return res.json({ success: true })
+            return res.json({ success: true, token })
         }
         
         // 登录失败，更新记录
@@ -272,4 +308,7 @@ app.post('/api/auth/verify', (req, res) => {
 app.listen(PORT, HOST, () => {
     console.log(`📦 SkillHub Storage API running at http://${HOST}:${PORT}`)
     console.log(`📁 Data directory: ${DATA_DIR}`)
+    if (!process.env.ADMIN_PASSWORD) {
+        console.log(`⚠️  ADMIN_PASSWORD 未设置，使用默认密码，请在 .env 中配置自定义密码`)
+    }
 })

@@ -137,7 +137,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const skillStore = useSkillStore()
 const authStore = useAuthStore()
-const isAuthenticated = ref(false)
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 const showImport = ref(false)
 const showEdit = ref(false)
 const editingSkill = ref<Skill | undefined>()
@@ -187,7 +187,6 @@ async function handleLogout() {
       type: 'warning'
     })
     authStore.logout()
-    isAuthenticated.value = false
     skillStore.stopAutoSync()
     router.replace('/')
     ElMessage.success('已安全登出')
@@ -204,8 +203,6 @@ async function handleQuickSync() {
 onMounted(async () => {
   if (!authStore.checkSession()) {
     await promptPassword()
-  } else {
-    isAuthenticated.value = true
   }
   if (!isAuthenticated.value) return
   await skillStore.loadSkills()
@@ -235,7 +232,6 @@ async function promptPassword() {
       const result = await authStore.login(value!)
       
       if (result.success) {
-        isAuthenticated.value = true
         return
       }
       

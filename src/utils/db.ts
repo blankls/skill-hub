@@ -11,6 +11,20 @@ function restoreDates(skill: Skill): Skill {
     return skill
 }
 
+function getAuthHeaders(): Record<string, string> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    try {
+        const stored = sessionStorage.getItem('skh_auth')
+        if (stored) {
+            const data = JSON.parse(stored)
+            if (data.token) {
+                headers['X-Auth-Token'] = data.token
+            }
+        }
+    } catch { /* empty */ }
+    return headers
+}
+
 export const db = {
     async getAll(): Promise<Skill[]> {
         const res = await fetch(`${API_BASE}/skills`)
@@ -36,16 +50,19 @@ export const db = {
 
         const res = await fetch(url, {
             method,
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(skill)
         })
+        if (res.status === 401) throw new Error('认证已过期，请重新登录')
         if (!res.ok) throw new Error(`Failed to save skill: ${res.status}`)
     },
 
     async delete(id: string): Promise<void> {
         const res = await fetch(`${API_BASE}/skills/${encodeURIComponent(id)}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeaders()
         })
+        if (res.status === 401) throw new Error('认证已过期，请重新登录')
         if (!res.ok) throw new Error(`Failed to delete skill: ${res.status}`)
     },
 
