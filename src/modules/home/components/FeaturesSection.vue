@@ -28,32 +28,32 @@ const features = [
   {
     icon: markRaw(Search),
     title: '智能搜索',
-    description: '快速找到你需要的 Skill，支持关键词、标签筛选'
-  },
-  {
-    icon: markRaw(Folder),
-    title: '双重来源',
-    description: '支持本地 Skill 和 GitHub 热门 Skill 两种来源'
-  },
-  {
-    icon: markRaw(Download),
-    title: '一键导出',
-    description: '支持 ZIP 格式导出，方便分享和迁移'
+    description: '关键词 + 标签双维度筛选，毫秒级定位目标 Skill'
   },
   {
     icon: markRaw(Link),
-    title: 'GitHub 集成',
-    description: '直接跳转原始仓库，查看完整源代码'
+    title: 'GitHub 同步',
+    description: '一键导入 GitHub 仓库 Skill，自动同步最新版本'
+  },
+  {
+    icon: markRaw(Folder),
+    title: '文件浏览',
+    description: '内置代码查看器，语法高亮、Markdown 渲染、图片预览'
+  },
+  {
+    icon: markRaw(Download),
+    title: 'ZIP 导出',
+    description: '一键打包导出 Skill，离线分享即开即用'
   },
   {
     icon: markRaw(MagicStick),
-    title: '工具详情',
-    description: '详细展示每个工具的参数、示例和使用方法'
+    title: '在线编辑',
+    description: '管理员模式下直接编辑文件内容，实时保存生效'
   },
   {
     icon: markRaw(Monitor),
-    title: '主题切换',
-    description: '支持深色/浅色主题，保护你的眼睛'
+    title: '安全管控',
+    description: 'Session Token 认证 + 限流防护，管理操作安全可靠'
   }
 ]
 </script>
