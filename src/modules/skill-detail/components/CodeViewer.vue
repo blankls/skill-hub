@@ -14,6 +14,15 @@
 
         <div class="ml-auto flex items-center gap-1">
           <button
+            v-if="!isEditing && previewMode === 'code'"
+            @click="toggleCodeTheme"
+            class="w-7 h-7 flex items-center justify-center rounded transition-all hover:bg-white/10"
+            style="color: var(--text-muted)"
+            :title="isLightCodeTheme ? '切换深色代码' : '切换浅色代码'"
+          >
+            {{ isLightCodeTheme ? '☀️' : '🌙' }}
+          </button>
+          <button
             v-if="!isEditing && isAdmin && previewMode !== 'image'"
             @click="enterEdit"
             class="w-7 h-7 flex items-center justify-center rounded transition-all hover:bg-white/10"
@@ -59,7 +68,7 @@
             v-model="editedContent"
             @input="hasUnsavedChanges = true"
             class="w-full h-full p-4 font-mono text-sm leading-relaxed resize-none border-0 outline-none"
-            style="background: var(--dark-bg); color: var(--text-light); font-family: var(--font-mono)"
+            :style="{ background: codeBg, color: codeFg, fontFamily: 'var(--font-mono)' }"
             spellcheck="false"
           ></textarea>
         </template>
@@ -80,7 +89,7 @@
         </template>
 
         <template v-else>
-          <div class="code-table-wrapper flex-1 min-h-0 overflow-y-auto custom-scroll" style="background: var(--dark-bg)">
+          <div class="code-table-wrapper flex-1 min-h-0 overflow-y-auto custom-scroll" :class="isLightCodeTheme ? 'code-light' : 'code-dark'" :style="{ background: codeBg }">
             <table class="code-table">
               <tbody v-html="highlightedResult"></tbody>
             </table>
@@ -101,9 +110,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import hljs from 'highlight.js'
-import 'highlight.js/styles/github-dark.css'
 import MarkdownIt from 'markdown-it'
 import type { SkillFile } from '@/types'
 import FileIcon from '@/components/ui/FileIcon.vue'
@@ -125,6 +133,46 @@ const editedContent = ref('')
 const hasUnsavedChanges = ref(false)
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const isRendering = ref(false)
+
+const CODE_THEME_KEY = 'skill-hub-code-theme'
+const isLightCodeTheme = ref(false)
+
+const codeBg = computed(() => isLightCodeTheme.value ? '#fafafa' : 'var(--dark-bg)')
+const codeFg = computed(() => isLightCodeTheme.value ? '#1f2937' : 'var(--text-light)')
+
+let themeLink: HTMLLinkElement | null = null
+
+function loadCodeTheme() {
+  if (themeLink) {
+    themeLink.href = isLightCodeTheme.value
+      ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css'
+      : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
+  }
+}
+
+function toggleCodeTheme() {
+  isLightCodeTheme.value = !isLightCodeTheme.value
+  loadCodeTheme()
+  localStorage.setItem(CODE_THEME_KEY, isLightCodeTheme.value ? 'light' : 'dark')
+}
+
+onMounted(() => {
+  const saved = localStorage.getItem(CODE_THEME_KEY)
+  isLightCodeTheme.value = saved === 'light'
+
+  const existing = document.getElementById('hljs-theme-css')
+  if (existing) {
+    themeLink = existing as HTMLLinkElement
+  } else {
+    themeLink = document.createElement('link')
+    themeLink.rel = 'stylesheet'
+    themeLink.id = 'hljs-theme-css'
+    document.head.appendChild(themeLink)
+  }
+  loadCodeTheme()
+})
+
+
 
 const extToHljs: Record<string, string> = {
   ts: 'typescript',
@@ -415,6 +463,11 @@ button:hover {
   color: var(--text-light);
 }
 
+.markdown-body pre code.hljs {
+  background: transparent !important;
+  color: var(--text-light) !important;
+}
+
 .markdown-body a {
   color: var(--neon-purple);
   text-decoration: underline;
@@ -506,8 +559,15 @@ button:hover {
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.6;
-  color: var(--text-light);
   table-layout: fixed;
+}
+
+.code-dark .code-table {
+  color: var(--text-light);
+}
+
+.code-light .code-table {
+  color: #1f2937;
 }
 
 .code-table .line-num {
@@ -516,12 +576,20 @@ button:hover {
   max-width: 52px;
   padding: 0 12px 0 0;
   text-align: right;
-  color: rgba(14, 165, 233, 0.35);
   user-select: none;
   font-size: 0.85em;
   vertical-align: top;
   white-space: nowrap;
+}
+
+.code-dark .line-num {
+  color: rgba(14, 165, 233, 0.35);
   border-right: 1px solid rgba(14, 165, 233, 0.1);
+}
+
+.code-light .line-num {
+  color: rgba(0, 0, 0, 0.25);
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .code-table .line-content {
@@ -531,11 +599,31 @@ button:hover {
   overflow: visible;
 }
 
-.code-table .code-row:hover .line-num {
+.code-dark .code-row:hover .line-num {
   color: rgba(14, 165, 233, 0.7);
 }
 
-.code-table .code-row:hover .line-content {
+.code-light .code-row:hover .line-num {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.code-dark .code-row:hover .line-content {
   background: rgba(14, 165, 233, 0.04);
+}
+
+.code-light .code-row:hover .line-content {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.code-light {
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+.code-light::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.code-light::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
 </style>

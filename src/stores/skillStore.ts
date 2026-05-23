@@ -196,23 +196,15 @@ export const useSkillStore = defineStore('skill', () => {
   async function toggleLike(skillId: string, unlike: boolean = false): Promise<number> {
     const skill = skills.value.find(s => s.id === skillId)
     if (!skill) return 0
-    try {
-      const res = await fetch(`${API_BASE}/skills/${skillId}/like`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ unlike })
-      })
-      if (res.ok) {
-        const data = await res.json()
-        skill.likes = data.likes
-        return data.likes
-      }
-    } catch {}
-    const newLikes = unlike
-      ? Math.max(0, (skill.likes || 0) - 1)
-      : (skill.likes || 0) + 1
-    skill.likes = newLikes
-    return newLikes
+    const res = await fetch(`${API_BASE}/skills/${skillId}/like`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ unlike })
+    })
+    if (!res.ok) throw new Error(`Like request failed: ${res.status}`)
+    const data = await res.json()
+    skill.likes = data.likes
+    return data.likes
   }
 
   function isSyncing(skillId: string): boolean {

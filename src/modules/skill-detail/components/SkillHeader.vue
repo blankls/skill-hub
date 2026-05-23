@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { Link, User, Clock } from '@element-plus/icons-vue'
 import ZipExportBtn from '@/components/features/ZipExportBtn.vue'
 import { useSkillStore } from '@/stores/skillStore'
@@ -70,7 +70,36 @@ interface Props {
 
 const props = defineProps<Props>()
 const skillStore = useSkillStore()
-const liking = ref(false)
+
+const LIKED_SKILLS_KEY = 'skill-hub-liked-skills'
+
+const getLikedSkills = (): Set<string> => {
+  try {
+    const stored = localStorage.getItem(LIKED_SKILLS_KEY)
+    return stored ? new Set(JSON.parse(stored)) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+const saveLikedSkill = (skillId: string) => {
+  const liked = getLikedSkills()
+  liked.add(skillId)
+  localStorage.setItem(LIKED_SKILLS_KEY, JSON.stringify([...liked]))
+}
+
+const removeLikedSkill = (skillId: string) => {
+  const liked = getLikedSkills()
+  liked.delete(skillId)
+  localStorage.setItem(LIKED_SKILLS_KEY, JSON.stringify([...liked]))
+}
+
+const liking = ref(getLikedSkills().has(props.skill.id))
+const likeDisabled = ref(false)
+
+watch(() => props.skill.id, (id) => {
+  liking.value = getLikedSkills().has(id)
+})
 
 const openGithub = () => {
   if (props.skill.source?.githubMeta?.html_url) {
@@ -91,9 +120,17 @@ const formatDate = (date: Date | string) => {
 }
 
 const handleLike = async () => {
-  if (liking.value) return
-  liking.value = true
-  await skillStore.toggleLike(props.skill.id)
-  setTimeout(() => { liking.value = false }, 1500)
+  if (likeDisabled.value) return
+  likeDisabled.value = true
+  if (liking.value) {
+    liking.value = false
+    removeLikedSkill(props.skill.id)
+    await skillStore.toggleLike(props.skill.id, true)
+  } else {
+    liking.value = true
+    saveLikedSkill(props.skill.id)
+    await skillStore.toggleLike(props.skill.id, false)
+  }
+  setTimeout(() => { likeDisabled.value = false }, 2000)
 }
 </script>

@@ -406,16 +406,21 @@ function handleOverlayNavigate(id: string) {
 const handleLike = async () => {
   if (!skill.value || likeDisabled.value) return
   likeDisabled.value = true
-  if (liking.value) {
-    liking.value = false
-    removeLikedSkill(skill.value.id)
-    await skillStore.toggleLike(skill.value.id, true)
-  } else {
-    liking.value = true
-    saveLikedSkill(skill.value.id)
-    await skillStore.toggleLike(skill.value.id, false)
+  try {
+    if (liking.value) {
+      await skillStore.toggleLike(skill.value.id, true)
+      liking.value = false
+      removeLikedSkill(skill.value.id)
+    } else {
+      await skillStore.toggleLike(skill.value.id, false)
+      liking.value = true
+      saveLikedSkill(skill.value.id)
+    }
+  } catch {
+    // API 失败，不修改本地状态
+  } finally {
+    likeDisabled.value = false
   }
-  setTimeout(() => { likeDisabled.value = false }, 2000)
 }
 
 async function handleSync() {

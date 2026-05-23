@@ -62,7 +62,12 @@ export const db = {
     },
 
     async put(skill: Skill): Promise<void> {
-        await this.create(skill)
+        const existing = await this.get(skill.id)
+        if (existing) {
+            await this.update(skill)
+        } else {
+            await this.create(skill)
+        }
     },
 
     async delete(id: string): Promise<void> {

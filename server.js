@@ -120,10 +120,9 @@ const corsOptions = {
             'https://blankls.xyz',
             'https://www.blankls.xyz',
             'http://localhost:5173',
-            'http://localhost:5174',
-            'http://localhost:3001'
+            'http://localhost:5174'
         ]
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (allowedOrigins.includes(origin || '')) {
             callback(null, true)
         } else {
             callback(new Error('Not allowed by CORS'))
@@ -255,7 +254,10 @@ app.post('/api/skills/:id/like', rateLimitLikes, (req, res) => {
         
         const { unlike } = req.body
         if (unlike) {
-            skill.likes = Math.max(0, (skill.likes || 1) - 1)
+            if ((skill.likes || 0) <= 0) {
+                return res.json({ likes: 0 })
+            }
+            skill.likes = (skill.likes || 0) - 1
         } else {
             skill.likes = (skill.likes || 0) + 1
         }
