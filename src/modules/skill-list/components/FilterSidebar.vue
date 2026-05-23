@@ -104,7 +104,6 @@
               backgroundColor: skillStore.selectedTags.includes(tag.name) 
                 ? getTagColor(tag.name, index).bg 
                 : 'transparent',
-              ringColor: getTagColor(tag.name, index).border,
               borderLeft: `3px solid ${getTagColor(tag.name, index).border}`
             }"
           >
@@ -185,9 +184,7 @@ import { useSkillStore } from '@/stores/skillStore'
 import { getTagColor } from '@/utils/tagColors'
 import { Search, Grid, List, Close } from '@element-plus/icons-vue'
 
-const props = defineProps<{
-    mobileOpen: boolean
-}>()
+defineProps<{ mobileOpen: boolean }>()
 
 const emit = defineEmits<{
     close: []

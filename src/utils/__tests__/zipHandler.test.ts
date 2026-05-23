@@ -21,7 +21,7 @@ describe('zipHandler', () => {
     expect(result).toBeInstanceOf(Blob)
   })
 
-  it('should add README if present', async () => {
+  it('should add skill files when present', async () => {
     const skill = mockSkills[0]
     const zipInstance = {
       file: vi.fn(),
@@ -31,6 +31,22 @@ describe('zipHandler', () => {
     
     await exportSkillToZip(skill)
     
+    expect(zipInstance.file).toHaveBeenCalledWith('skill.json', expect.any(String))
+    expect(zipInstance.file).toHaveBeenCalledWith('main.py', expect.any(String))
+    expect(zipInstance.file).toHaveBeenCalledWith('requirements.txt', expect.any(String))
+  })
+
+  it('should add README when no files present', async () => {
+    const skill = { ...mockSkills[1], files: [] }
+    const zipInstance = {
+      file: vi.fn(),
+      generateAsync: vi.fn().mockResolvedValue(new Blob())
+    }
+    JSZipMock.mockImplementation(() => zipInstance as any)
+    
+    await exportSkillToZip(skill)
+    
+    expect(zipInstance.file).toHaveBeenCalledWith('skill.json', expect.any(String))
     expect(zipInstance.file).toHaveBeenCalledWith('README.md', expect.any(String))
   })
 

@@ -16,7 +16,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Download } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { exportSkillToZip, downloadBlob } from '@/utils/zipHandler'
 import type { Skill } from '@/types'

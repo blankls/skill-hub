@@ -34,12 +34,15 @@ describe('themeStore', () => {
     expect(store.isDark).toBe(false)
   })
 
-  it('should set theme explicitly', () => {
+  it('should set theme via toggleTheme', () => {
     const store = useThemeStore()
-    store.setTheme(true)
-    expect(store.isDark).toBe(true)
-    store.setTheme(false)
     expect(store.isDark).toBe(false)
+    store.toggleTheme()
+    expect(store.isDark).toBe(true)
+    store.toggleTheme()
+    expect(store.isDark).toBe(false)
+    store.toggleTheme()
+    expect(store.isDark).toBe(true)
   })
 
   it('should load saved theme from localStorage', () => {

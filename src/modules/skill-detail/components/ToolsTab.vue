@@ -45,7 +45,7 @@
         </div>
       </div>
     </div>
-    <div v-if="skill.tools.length === 0" class="text-center py-20" style="color: var(--text-muted)">
+    <div v-if="!skill.tools || skill.tools.length === 0" class="text-center py-20" style="color: var(--text-muted)">
       暂无工具信息
     </div>
   </div>

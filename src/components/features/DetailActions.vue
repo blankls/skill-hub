@@ -12,7 +12,7 @@
     <span
       class="absolute right-full mr-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
       style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(14,165,233,0.2)"
-    >{{ liking ? '已点赞' : '点赞' }}</span>
+    >{{ liking ? '取消点赞' : '点赞' }}</span>
   </button>
   <button
     v-if="isGitHubSkill && isAdmin"

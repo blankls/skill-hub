@@ -1,13 +1,14 @@
-
+/// <reference types="vitest/globals" />
 import JSZip from 'jszip'
 import { parseSkillFromZip } from '../skillParser'
 import { exportSkillToZip } from '../zipHandler'
 import { v4 as uuidv4 } from 'uuid'
+import type { Skill } from '@/types'
 
 describe('Tab Character Handling', () => {
   it('should preserve tabs during import-export cycle', async () => {
     // Step 1: Create a test skill with tab characters
-    const testSkill = {
+    const testSkill: Skill = {
       id: uuidv4(),
       name: 'Tab Test Skill',
       description: 'Test skill with tab characters',

@@ -9,9 +9,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSkillStore } from '@/stores/skillStore'
-
-const skillStore = useSkillStore()
 </script>
 
 <style scoped>

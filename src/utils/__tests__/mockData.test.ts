@@ -14,14 +14,15 @@ describe('mockData', () => {
       expect(skill.description).toBeDefined()
       expect(skill.version).toBeDefined()
       expect(skill.author).toBeDefined()
-      expect(skill.sourceType).toBeDefined()
+      expect(skill.source).toBeDefined()
+      expect(skill.source.type).toBeDefined()
       expect(Array.isArray(skill.tags)).toBe(true)
     })
   })
 
   it('should have valid source types', () => {
     mockSkills.forEach(skill => {
-      expect(['local', 'github']).toContain(skill.sourceType)
+      expect(['local', 'zip', 'github', 'skillmd']).toContain(skill.source.type)
     })
   })
 })

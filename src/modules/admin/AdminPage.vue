@@ -1,7 +1,12 @@
 <template>
   <div class="h-full bg-[var(--dark-bg)] flex flex-col overflow-hidden">
-    <!-- 未登录状态：什么都不显示，只处理登录流程 -->
+    <!-- 未登录状态：显示提示信息 -->
     <div v-if="!isAuthenticated" class="h-full flex items-center justify-center">
+      <div class="text-center">
+        <div class="text-6xl mb-6">🔒</div>
+        <h2 class="text-2xl font-bold text-[var(--text-light)] mb-3">需要身份验证</h2>
+        <p class="text-[var(--text-muted)] mb-6">正在跳转到登录...</p>
+      </div>
     </div>
     
     <!-- 已登录状态：显示管理页面 -->
@@ -122,12 +127,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { useSkillStore } from '@/stores/skillStore'
 import { useAuthStore } from '@/stores/authStore'
 import SkillImportModal from '@/components/features/SkillImportModal.vue'
 import SkillListView from '@/modules/skill-list/components/SkillListView.vue'
-import SkillEditor from '@/components/features/SkillEditor.vue'
+const SkillEditor = defineAsyncComponent(() => import('@/components/features/SkillEditor.vue'))
 import type { Skill } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Loading, SwitchButton } from '@element-plus/icons-vue'

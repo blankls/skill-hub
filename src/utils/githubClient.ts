@@ -278,16 +278,14 @@ function getLanguageFromFilename(filename: string): string {
   return map[ext] || 'text'
 }
 
-// 构建本地文件 SHA 映射
-function buildLocalShaMap(files: SkillFile[]): FileShaMap {
-  const map: FileShaMap = {}
-  for (const file of files) {
-    // 注意：这里我们没有实际计算 SHA，只是用路径做占位符
-    // 真正的实现需要计算文件内容的 SHA-1
-    map[file.path] = (file as any).sha || ''
-  }
-  return map
-}
+// 构建本地文件 SHA 映射（预留，后续增量同步使用）
+// function buildLocalShaMap(files: SkillFile[]): FileShaMap {
+//   const map: FileShaMap = {}
+//   for (const file of files) {
+//     map[file.path] = (file as any).sha || ''
+//   }
+//   return map
+// }
 
 // ==================== 并发控制下载 ====================
 
@@ -296,13 +294,13 @@ async function fetchFilesWithConcurrency(
   branch: string,
   files: GitHubTreeItem[],
   onProgress?: (current: number, total: number) => void,
-  existingFiles?: SkillFile[]
+  _existingFiles?: SkillFile[]
 ): Promise<SkillFile[]> {
   const results: SkillFile[] = []
-  const concurrency = CONFIG.CONCURRENT_REQUESTS
   let index = 0
   let downloaded = 0
   let skipped = 0
+  const concurrency = CONFIG.CONCURRENT_REQUESTS
   
   async function worker() {
     while (index < files.length && results.length < CONFIG.MAX_FILES) {
@@ -556,8 +554,9 @@ export async function fetchSkillsFromSameRepo(
     
     // 检查是否需要更新（非强制模式）
     if (!config.force) {
-      const lastRemoteUpdate = new Date(repoMeta.pushed_at)
-      const now = Date.now()
+      // 预留：后续可基于 push 时间做精细判断
+      // const lastRemoteUpdate = new Date(repoMeta.pushed_at)
+      // const now = Date.now()
       // 如果 push 时间没变，说明仓库没更新
       // 注意：这里不逐个 skill 判断，统一用仓库 push 时间
       if (repoMeta.pushed_at) {

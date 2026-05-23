@@ -1,5 +1,5 @@
 import JSZip from 'jszip'
-import type { Skill, SkillFile, SkillSource } from '@/types'
+import type { Skill, SkillFile } from '@/types'
 import { v4 as uuidv4 } from 'uuid'
 
 /**
@@ -37,7 +37,7 @@ export async function parseSkillFromZip(zipBlob: Blob, zipFileName?: string): Pr
   let skillMdTags: string[] = []
   let skillMdVersion: string | null = null
   let skillMdAuthor: string | null = null
-  let skillMdTools: string[] = []
+  // let skillMdTools: string[] = [] // 预留：后续解析 tools 字段
 
   // 优先找 SKILL.md 和 skill.json（支持任意目录）
   let skillJsonPath: string | null = null
@@ -140,7 +140,7 @@ export async function parseSkillFromZip(zipBlob: Blob, zipFileName?: string): Pr
                       skillMdTags = value.split(',').map(t => t.trim()).filter(Boolean)
                       break
                     case 'tools':
-                      skillMdTools = value.split(',').map(t => t.trim()).filter(Boolean)
+                      // skillMdTools = value.split(',').map(t => t.trim()).filter(Boolean) // 预留
                       break
                   }
                 }
@@ -148,8 +148,6 @@ export async function parseSkillFromZip(zipBlob: Blob, zipFileName?: string): Pr
             }
             
             for (const line of frontmatterLines) {
-              const trimmedLine = line.trim()
-              
               // 检查是不是新的 key
               const keyMatch = line.match(/^(\w[\w-]*)\s*:\s*(.*)$/)
               if (keyMatch) {

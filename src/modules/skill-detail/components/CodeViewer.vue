@@ -242,6 +242,8 @@ const imageDataUrl = computed(() => {
 })
 
 const md = new MarkdownIt({
+  html: false,
+  linkify: true,
   highlight: function (str: string, lang: string) {
     if (lang && hljs.getLanguage(lang)) {
       try {

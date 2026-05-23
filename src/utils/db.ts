@@ -41,20 +41,28 @@ export const db = {
         return restoreDates(skill)
     },
 
-    async put(skill: Skill): Promise<void> {
-        const check = await fetch(`${API_BASE}/skills/${encodeURIComponent(skill.id)}`)
-        const method = check.status === 404 ? 'POST' : 'PUT'
-        const url = method === 'POST'
-            ? `${API_BASE}/skills`
-            : `${API_BASE}/skills/${encodeURIComponent(skill.id)}`
-
-        const res = await fetch(url, {
-            method,
+    async create(skill: Skill): Promise<void> {
+        const res = await fetch(`${API_BASE}/skills`, {
+            method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify(skill)
         })
         if (res.status === 401) throw new Error('认证已过期，请重新登录')
-        if (!res.ok) throw new Error(`Failed to save skill: ${res.status}`)
+        if (!res.ok) throw new Error(`Failed to create skill: ${res.status}`)
+    },
+
+    async update(skill: Skill): Promise<void> {
+        const res = await fetch(`${API_BASE}/skills/${encodeURIComponent(skill.id)}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(skill)
+        })
+        if (res.status === 401) throw new Error('认证已过期，请重新登录')
+        if (!res.ok) throw new Error(`Failed to update skill: ${res.status}`)
+    },
+
+    async put(skill: Skill): Promise<void> {
+        await this.create(skill)
     },
 
     async delete(id: string): Promise<void> {

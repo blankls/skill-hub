@@ -273,7 +273,7 @@
               </div>
               <button
                 :disabled="githubFilesLoading"
-                @click="loadGitHubFiles"
+                @click="loadGitHubFiles()"
                 class="px-3 py-1.5 bg-[var(--dark-card)] border border-[var(--neon-yellow)]/40 hover:border-[var(--neon-yellow)] text-[var(--text-light)] text-xs rounded-lg transition-all disabled:opacity-50">
                 {{ githubFilesLoading ? '加载中...' : '🔄 刷新文件' }}
               </button>
@@ -359,8 +359,8 @@
 import { ref, computed, watch } from 'vue'
 import { useSkillStore } from '@/stores/skillStore'
 import { parseSkillFromZip, parseSkillFromMarkdown } from '@/utils/skillParser'
-import { fetchGitHubRepo, fetchGitHubRepoFiles, fetchGitHubFileContent, toGithubMeta, fetchFullSkillFromGitHub } from '@/utils/githubClient'
-import type { Skill, SkillFile } from '@/types'
+import { fetchGitHubRepo, fetchGitHubRepoFiles, fetchFullSkillFromGitHub } from '@/utils/githubClient'
+import type { Skill } from '@/types'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import MarkdownIt from 'markdown-it'
@@ -373,6 +373,8 @@ function escapeHtml(str: string): string {
 }
 
 const md = MarkdownIt({
+  html: false,
+  linkify: true,
   highlight: function (str, lang) {
     if (lang && hljs.getLanguage(lang)) {
       try {

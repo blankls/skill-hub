@@ -160,7 +160,7 @@ function buildTreeData(files: SkillFile[]): TreeNode[] {
     const parts = folderPath.split('/').filter(Boolean)
     if (parts.length === 0) return
     let current = root
-    parts.forEach((part, i) => {
+    parts.forEach((part) => {
       if (!current[part]) {
         current[part] = { _children: {} }
       }

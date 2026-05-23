@@ -22,8 +22,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-
 interface Props {
   title?: string
   description?: string
@@ -31,7 +29,7 @@ interface Props {
   showDefaultAction?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   title: '暂无内容',
   description: '开始创建或导入你的第一个项目吧',
   actionText: '开始使用',

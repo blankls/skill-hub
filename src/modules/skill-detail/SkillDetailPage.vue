@@ -29,7 +29,7 @@
             <span class="text-base">{{ nav.icon }}</span>
           </button>
           <div class="flex-1"></div>
-          <button v-if="!isFromAdmin" @click="handleLike" :disabled="likeDisabled" :title="likeDisabled ? '请稍候...' : (liking ? '已点赞' : '点赞')" class="w-9 h-9 rounded-lg flex items-center justify-center transition-all flex-shrink-0" :class="[likeDisabled ? 'opacity-40 cursor-not-allowed' : (liking ? 'bg-orange-500/15' : 'hover:bg-white/5')]">
+          <button v-if="!isFromAdmin" @click="handleLike" :disabled="likeDisabled" :title="likeDisabled ? '请稍候...' : (liking ? '取消点赞' : '点赞')" class="w-9 h-9 rounded-lg flex items-center justify-center transition-all flex-shrink-0" :class="[likeDisabled ? 'opacity-40 cursor-not-allowed' : (liking ? 'bg-orange-500/15' : 'hover:bg-white/5')]">
             <span class="text-base">{{ liking ? '❤️' : '🤍' }}</span>
           </button>
           <button v-if="isGitHubSkill && isFromAdmin" @click="handleSync" :disabled="syncing" class="w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:bg-white/5 flex-shrink-0">
@@ -243,14 +243,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Loading, ArrowLeft, Edit, Delete, Refresh, InfoFilled, User, Star } from '@element-plus/icons-vue'
+import { Loading, ArrowLeft, InfoFilled } from '@element-plus/icons-vue'
 import { useSkillStore } from '@/stores/skillStore'
 import { useAuthStore } from '@/stores/authStore'
 import type { GithubMeta, SkillFile } from '@/types'
-import SkillEditor from '@/components/features/SkillEditor.vue'
+const SkillEditor = defineAsyncComponent(() => import('@/components/features/SkillEditor.vue'))
 import DetailActions from '@/components/features/DetailActions.vue'
 import ZipExportBtn from '@/components/features/ZipExportBtn.vue'
 import DetailSidebar from '@/components/features/DetailSidebar.vue'
@@ -289,13 +289,21 @@ const saveLikedSkill = (skillId: string) => {
   localStorage.setItem(LIKED_SKILLS_KEY, JSON.stringify([...liked]))
 }
 
+const removeLikedSkill = (skillId: string) => {
+  const liked = getLikedSkills()
+  liked.delete(skillId)
+  localStorage.setItem(LIKED_SKILLS_KEY, JSON.stringify([...liked]))
+}
+
 const skill = computed(() => {
-  const s = skillStore.skills.find(sk => sk.id === route.params.id) || null
+  return skillStore.skills.find(sk => sk.id === route.params.id) || null
+})
+
+watch(skill, (s) => {
   if (s) {
     liking.value = getLikedSkills().has(s.id)
   }
-  return s
-})
+}, { immediate: true })
 
 const isGitHubSkill = computed(() => {
   return skill.value?.source.type === 'github'
@@ -396,11 +404,17 @@ function handleOverlayNavigate(id: string) {
 }
 
 const handleLike = async () => {
-  if (!skill.value || liking.value || likeDisabled.value) return
+  if (!skill.value || likeDisabled.value) return
   likeDisabled.value = true
-  liking.value = true
-  saveLikedSkill(skill.value.id)
-  await skillStore.toggleLike(skill.value.id)
+  if (liking.value) {
+    liking.value = false
+    removeLikedSkill(skill.value.id)
+    await skillStore.toggleLike(skill.value.id, true)
+  } else {
+    liking.value = true
+    saveLikedSkill(skill.value.id)
+    await skillStore.toggleLike(skill.value.id, false)
+  }
   setTimeout(() => { likeDisabled.value = false }, 2000)
 }
 

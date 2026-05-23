@@ -114,23 +114,51 @@ if (!fs.existsSync(DATA_DIR)) {
 
 const app = express()
 
-app.use(cors())
+const corsOptions = {
+    origin: function (origin, callback) {
+        const allowedOrigins = [
+            'https://blankls.xyz',
+            'https://www.blankls.xyz',
+            'http://localhost:5173',
+            'http://localhost:5174',
+            'http://localhost:3001'
+        ]
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true)
+        } else {
+            callback(new Error('Not allowed by CORS'))
+        }
+    }
+}
+app.use(cors(corsOptions))
 app.use(express.json({ limit: '50mb' }))
 
+function sanitizeId(id) {
+    if (!id || typeof id !== 'string') return null
+    if (id.includes('..') || id.includes('/') || id.includes('\\') || id.includes('\0')) return null
+    return id
+}
+
 function readSkillFile(id) {
-    const filePath = path.join(DATA_DIR, `${id}.json`)
+    const safeId = sanitizeId(id)
+    if (!safeId) return null
+    const filePath = path.join(DATA_DIR, `${safeId}.json`)
     if (!fs.existsSync(filePath)) return null
     const raw = fs.readFileSync(filePath, 'utf-8')
     return JSON.parse(raw)
 }
 
 function writeSkillFile(id, data) {
-    const filePath = path.join(DATA_DIR, `${id}.json`)
+    const safeId = sanitizeId(id)
+    if (!safeId) throw new Error('Invalid skill ID')
+    const filePath = path.join(DATA_DIR, `${safeId}.json`)
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8')
 }
 
 function deleteSkillFile(id) {
-    const filePath = path.join(DATA_DIR, `${id}.json`)
+    const safeId = sanitizeId(id)
+    if (!safeId) return
+    const filePath = path.join(DATA_DIR, `${safeId}.json`)
     if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath)
     }
@@ -309,6 +337,6 @@ app.listen(PORT, HOST, () => {
     console.log(`📦 SkillHub Storage API running at http://${HOST}:${PORT}`)
     console.log(`📁 Data directory: ${DATA_DIR}`)
     if (!process.env.ADMIN_PASSWORD) {
-        console.log(`⚠️  ADMIN_PASSWORD 未设置，使用默认密码，请在 .env 中配置自定义密码`)
+        console.log(`⚠️  ADMIN_PASSWORD 未设置，管理功能不可用，请在 .env 中配置自定义密码`)
     }
 })

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed, toRaw, onUnmounted } from 'vue'
+import { ref, computed, toRaw } from 'vue'
 import type { Skill } from '@/types'
 import { db } from '@/utils/db'
 import { fetchFullSkillFromGitHub, fetchSkillsFromSameRepo, fetchGitHubRepo, clearRepoCache, type SyncProgress } from '@/utils/githubClient'
@@ -8,9 +8,7 @@ import { ElMessage } from 'element-plus'
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
 // 定时任务配置
-const SYNC_INTERVAL_HOURS = 24 // 每天同步一次
-const BATCH_SIZE = 3 // 每批同步 3 个技能
-const SYNC_DELAY_MS = 2000 // 每个技能之间间隔 2 秒
+const SYNC_INTERVAL_HOURS = 24
 
 export const useSkillStore = defineStore('skill', () => {
   const skills = ref<Skill[]>([])
@@ -120,14 +118,14 @@ export const useSkillStore = defineStore('skill', () => {
 
   async function addSkill(skill: Skill) {
     const plain = JSON.parse(JSON.stringify(toRaw(skill)))
-    await db.put(plain)
+    await db.create(plain)
     skills.value.unshift(skill)
   }
 
   async function updateSkill(skill: Skill) {
     skill.updatedAt = new Date()
     const plain = JSON.parse(JSON.stringify(toRaw(skill)))
-    await db.put(plain)
+    await db.update(plain)
     const index = skills.value.findIndex(s => s.id === skill.id)
     if (index !== -1) skills.value[index] = skill
   }
@@ -195,15 +193,14 @@ export const useSkillStore = defineStore('skill', () => {
     viewMode.value = mode
   }
 
-  async function toggleLike(skillId: string): Promise<number> {
+  async function toggleLike(skillId: string, unlike: boolean = false): Promise<number> {
     const skill = skills.value.find(s => s.id === skillId)
     if (!skill) return 0
-    const newLikes = (skill.likes || 0) + 1
     try {
       const res = await fetch(`${API_BASE}/skills/${skillId}/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
+        body: JSON.stringify({ unlike })
       })
       if (res.ok) {
         const data = await res.json()
@@ -211,6 +208,9 @@ export const useSkillStore = defineStore('skill', () => {
         return data.likes
       }
     } catch {}
+    const newLikes = unlike
+      ? Math.max(0, (skill.likes || 0) - 1)
+      : (skill.likes || 0) + 1
     skill.likes = newLikes
     return newLikes
   }
@@ -473,10 +473,6 @@ export const useSkillStore = defineStore('skill', () => {
       syncTimer = null
     }
   }
-
-  onUnmounted(() => {
-    stopAutoSync()
-  })
 
   return {
     skills,

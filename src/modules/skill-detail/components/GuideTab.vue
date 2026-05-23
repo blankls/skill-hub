@@ -35,6 +35,8 @@ function escapeHtml(str: string): string {
 }
 
 const md = new MarkdownIt({
+  html: false,
+  linkify: true,
   highlight: function (str, lang) {
     if (lang && hljs.getLanguage(lang)) {
       try {
