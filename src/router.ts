@@ -20,8 +20,7 @@ const routes = [
   {
     path: '/admin',
     name: 'admin',
-    component: () => import('@/modules/admin/AdminPage.vue'),
-    meta: { requiresAuth: true }
+    component: () => import('@/modules/admin/AdminPage.vue')
   },
   {
     path: '/admin/skills/:id',
