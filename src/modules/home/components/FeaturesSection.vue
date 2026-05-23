@@ -4,7 +4,7 @@
       <div class="text-center mb-8 md:mb-16">
         <h2 class="text-2xl md:text-4xl 2xl:text-5xl font-bold mb-3 md:mb-4 text-[var(--text-light)]">平台特性</h2>
         <p class="text-sm md:text-lg 2xl:text-xl text-[var(--text-muted)] max-w-2xl mx-auto">
-          强大的功能，助你高效管理 AI Skills
+          强大的功能，助你高效发现与分享 AI Skills
         </p>
       </div>
       <div ref="gridRef" class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 2xl:gap-8">
@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import { markRaw, ref, onMounted, onUnmounted } from 'vue'
-import { Search, Folder, Download, Link, MagicStick, Monitor } from '@element-plus/icons-vue'
+import { Search, Folder, Download, Link } from '@element-plus/icons-vue'
 
 const features = [
   {
@@ -51,16 +51,6 @@ const features = [
     icon: markRaw(Download),
     title: 'ZIP 导出',
     description: '一键打包导出 Skill，离线分享即开即用'
-  },
-  {
-    icon: markRaw(MagicStick),
-    title: '在线编辑',
-    description: '管理员模式下直接编辑文件内容，实时保存生效'
-  },
-  {
-    icon: markRaw(Monitor),
-    title: '安全管控',
-    description: 'Session Token 认证 + 限流防护，管理操作安全可靠'
   }
 ]
 
@@ -76,7 +66,6 @@ onMounted(() => {
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          const idx = Number((entry.target as HTMLElement).dataset.index)
           const el = entry.target as HTMLElement
           const cardIndex = Array.from(cards).indexOf(el)
           if (cardIndex >= 0) {

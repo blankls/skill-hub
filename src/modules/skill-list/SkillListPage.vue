@@ -17,7 +17,7 @@
         <div v-else-if="skillStore.filteredSkills.length === 0">
           <EmptyState
             title="技能仓库为空"
-            description="技能库中暂无技能，等待管理员添加技能"
+            description="技能库中暂无技能，请稍后再来探索"
           >
             <template #icon>
               <span class="text-7xl">💻</span>

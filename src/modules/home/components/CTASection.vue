@@ -12,10 +12,11 @@
           加入数千名开发者，分享你的 AI 技能，让更多人受益于你的创造力。
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <router-link to="/skills" class="px-8 py-3.5 md:px-10 md:py-4 rounded-full text-white font-bold text-base md:text-lg 2xl:text-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
-               :style="{ background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))' }">
+          <button class="px-8 py-3.5 md:px-10 md:py-4 rounded-full text-white font-bold text-base md:text-lg 2xl:text-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
+               :style="{ background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))' }"
+               @click="showModal = true">
             立即创建你的第一个 Skill
-          </router-link>
+          </button>
           <a href="#features" class="px-8 py-3.5 md:px-10 md:py-4 rounded-full font-bold text-base md:text-lg 2xl:text-xl border transition-all duration-300 hover:-translate-y-0.5"
                :style="{ borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', background: 'transparent' }">
             了解平台特性
@@ -23,14 +24,17 @@
         </div>
       </div>
     </div>
+    <SkillCreationModal v-model:visible="showModal" />
   </section>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import SkillCreationModal from '@/components/features/SkillCreationModal.vue'
 
 const sectionRef = ref<HTMLElement | null>(null)
 const isRevealed = ref(false)
+const showModal = ref(false)
 
 let observer: IntersectionObserver | null = null
 

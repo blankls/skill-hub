@@ -10,7 +10,7 @@ export function useScrollReveal(
 ) {
     const isRevealed = ref(false)
     const revealedItems = ref<Set<number>>(new Set())
-    const { threshold = 0.1, rootMargin = '0px 0px -50px 0px', staggerDelay = 100 } = options || {}
+    const { threshold = 0.1, rootMargin = '0px 0px -50px 0px' } = options || {}
 
     let observer: IntersectionObserver | null = null
 
