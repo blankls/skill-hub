@@ -25,7 +25,7 @@
     </div>
     <!-- Knob -->
     <div
-      class="absolute top-1 w-10 h-10 rounded-full transition-all duration-500 ease-out flex items-center justify-center shadow-lg"
+      class="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full transition-all duration-500 ease-out flex items-center justify-center shadow-lg"
       :class="themeStore.isDark ? 'left-auto right-1' : 'left-1'"
       :style="{
         background: themeStore.isDark

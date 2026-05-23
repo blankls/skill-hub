@@ -7,7 +7,9 @@
       @click="handleClick(skill)"
     >
       <div class="flex items-center gap-4 md:gap-6 w-full">
-        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-2xl font-black font-mono flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center text-white text-2xl font-black font-mono flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300"
+             :style="{ background: `linear-gradient(to bottom right, ${skill.iconColor || 'var(--neon-cyan),var(--neon-purple)'})` }"
+        >
           {{ skill.name.charAt(0).toUpperCase() }}
         </div>
         <div class="flex-1 min-w-0">

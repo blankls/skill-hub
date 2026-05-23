@@ -2,7 +2,9 @@
   <div class="bg-white dark:bg-dark-card rounded-2xl p-4 md:p-8 border border-gray-200 dark:border-dark-border">
     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
       <div class="flex items-start gap-3 md:gap-6">
-        <div class="w-14 h-14 md:w-20 md:h-20 rounded-2xl gradient-bg flex items-center justify-center text-white text-xl md:text-3xl font-bold flex-shrink-0">
+        <div class="w-14 h-14 md:w-20 md:h-20 rounded-2xl flex items-center justify-center text-white text-xl md:text-3xl font-bold flex-shrink-0"
+             :style="{ background: `linear-gradient(to bottom right, ${skill.iconColor || 'var(--neon-cyan),var(--neon-purple)'})` }"
+        >
           {{ skill.name.charAt(0).toUpperCase() }}
         </div>
         <div>

@@ -2,7 +2,9 @@
   <div class="skill-card-compact group rounded-xl md:rounded-2xl overflow-hidden cursor-pointer" @click="handleClick">
     <div class="p-3 sm:p-4 md:p-6 2xl:p-8 relative">
       <div class="flex items-start gap-2 md:gap-3 mb-2 md:mb-4">
-        <div class="w-8 sm:w-10 md:w-14 md:h-14 2xl:w-16 2xl:h-16 rounded-lg md:rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-sm md:text-2xl 2xl:text-3xl font-black font-mono shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+        <div class="w-8 sm:w-10 md:w-14 md:h-14 2xl:w-16 2xl:h-16 rounded-lg md:rounded-xl flex items-center justify-center text-white text-sm md:text-2xl 2xl:text-3xl font-black font-mono shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0"
+             :style="{ background: `linear-gradient(to bottom right, ${skill.iconColor || 'var(--neon-cyan),var(--neon-purple)'})` }"
+        >
           {{ skill.name.charAt(0).toUpperCase() }}
         </div>
         <div class="flex-1 min-w-0">

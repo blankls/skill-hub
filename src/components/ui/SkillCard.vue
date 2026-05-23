@@ -43,7 +43,9 @@
       
       <div class="flex items-start justify-between mb-4">
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-14 md:h-14 2xl:w-16 2xl:h-16 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-2xl sm:text-2xl md:text-2xl 2xl:text-3xl font-black font-mono shadow-lg group-hover:scale-110 transition-transform duration-300">
+          <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-14 md:h-14 2xl:w-16 2xl:h-16 rounded-xl flex items-center justify-center text-white text-2xl sm:text-2xl md:text-2xl 2xl:text-3xl font-black font-mono shadow-lg group-hover:scale-110 transition-transform duration-300"
+               :style="{ background: `linear-gradient(to bottom right, ${skill.iconColor || 'var(--neon-cyan),var(--neon-purple)'})` }"
+          >
             {{ skill.name.charAt(0).toUpperCase() }}
           </div>
           <div>

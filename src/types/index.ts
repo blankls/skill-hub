@@ -48,6 +48,7 @@ export interface Skill {
   files: SkillFile[]
   tools?: Tool[]
   likes?: number
+  iconColor?: string
   createdAt: Date
   updatedAt: Date
 }

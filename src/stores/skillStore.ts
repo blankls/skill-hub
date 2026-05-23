@@ -111,12 +111,46 @@ export const useSkillStore = defineStore('skill', () => {
     loading.value = true
     try {
       skills.value = await db.getAll()
+      const toUpdate: Skill[] = []
+      for (const skill of skills.value) {
+        if (!skill.iconColor) {
+          skill.iconColor = randomIconColor()
+          toUpdate.push(skill)
+        }
+      }
+      if (toUpdate.length > 0) {
+        for (const skill of toUpdate) {
+          db.update(JSON.parse(JSON.stringify(toRaw(skill)))).catch(() => {})
+        }
+      }
     } finally {
       loading.value = false
     }
   }
 
+  const ICON_COLORS = [
+    ['#f43f5e', '#e11d48'],
+    ['#8b5cf6', '#7c3aed'],
+    ['#3b82f6', '#2563eb'],
+    ['#06b6d4', '#0891b2'],
+    ['#10b981', '#059669'],
+    ['#f59e0b', '#d97706'],
+    ['#ec4899', '#db2777'],
+    ['#6366f1', '#4f46e5'],
+    ['#14b8a6', '#0d9488'],
+    ['#f97316', '#ea580c'],
+    ['#a855f7', '#9333ea'],
+    ['#22d3ee', '#06b6d4'],
+  ]
+
+  function randomIconColor(): string {
+    return ICON_COLORS[Math.floor(Math.random() * ICON_COLORS.length)].join(',')
+  }
+
   async function addSkill(skill: Skill) {
+    if (!skill.iconColor) {
+      skill.iconColor = randomIconColor()
+    }
     const plain = JSON.parse(JSON.stringify(toRaw(skill)))
     await db.create(plain)
     skills.value.unshift(skill)

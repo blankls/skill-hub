@@ -13,7 +13,7 @@
         node-key="id"
         :default-expanded-keys="expandedKeys"
         highlight-current
-        :expand-on-click-node="false"
+        :expand-on-click-node="true"
         :draggable="isAdmin"
         :allow-drop="handleAllowDrop"
         :allow-drag="handleAllowDrag"

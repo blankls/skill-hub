@@ -16,7 +16,9 @@
           >
             <el-icon :size="16"><ArrowLeft /></el-icon>
           </button>
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-sm font-black font-mono flex-shrink-0">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-black font-mono flex-shrink-0"
+               :style="{ background: `linear-gradient(to bottom right, ${skill.iconColor || 'var(--neon-cyan),var(--neon-purple)'})` }"
+          >
             {{ skill.name.charAt(0).toUpperCase() }}
           </div>
           <button
@@ -73,7 +75,9 @@
         <div class="mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-28 py-6 sm:py-8 lg:py-10 2xl:py-14 pt-24 lg:pt-12 max-w-[100rem]">
         <div class="rounded-xl overflow-hidden border border-[var(--neon-cyan)]/30 mb-6" style="background: var(--dark-card)">
           <div class="px-6 py-4 border-b border-[var(--neon-cyan)]/15 flex items-center gap-3" style="background: rgba(0,245,255,0.05)">
-            <div class="w-10 h-10 sm:w-12 sm:h-12 2xl:w-14 2xl:h-14 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-lg sm:text-xl 2xl:text-2xl font-black font-mono shadow-lg">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 2xl:w-14 2xl:h-14 rounded-xl flex items-center justify-center text-white text-lg sm:text-xl 2xl:text-2xl font-black font-mono shadow-lg"
+                 :style="{ background: `linear-gradient(to bottom right, ${skill.iconColor || 'var(--neon-cyan),var(--neon-purple)'})` }"
+            >
               {{ skill.name.charAt(0).toUpperCase() }}
             </div>
             <span class="font-semibold text-xl sm:text-2xl 2xl:text-3xl" style="color: var(--text-light)">{{ skill.name }}</span>

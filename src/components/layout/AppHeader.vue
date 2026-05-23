@@ -4,8 +4,20 @@
       <div class="flex items-center justify-between h-16 md:h-20 2xl:h-24">
         <div class="flex items-center gap-4 md:gap-8">
           <router-link to="/" class="flex items-center gap-2 md:gap-3 group">
-            <div class="w-10 h-10 md:w-12 md:h-12 2xl:w-14 2xl:h-14 rounded-xl bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center shadow-lg group-hover:shadow-[0_0_20px_rgba(0,245,255,0.5)] transition-all duration-300">
-              <span class="text-white font-black text-lg md:text-2xl 2xl:text-3xl font-mono">S</span>
+            <div class="w-10 h-10 md:w-12 md:h-12 2xl:w-14 2xl:h-14 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-[0_0_20px_rgba(0,245,255,0.5)] transition-all duration-300" style="background: var(--dark-bg);">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-7 h-7 md:w-8 md:h-8 2xl:w-9 2xl:h-9">
+                <defs>
+                  <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#00f5ff;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#a855f7;stop-opacity:1" />
+                  </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="35" fill="none" stroke="url(#headerGrad)" stroke-width="3"/>
+                <circle cx="50" cy="50" r="28" fill="none" stroke="url(#headerGrad)" stroke-width="2" opacity="0.7"/>
+                <circle cx="50" cy="50" r="20" fill="none" stroke="url(#headerGrad)" stroke-width="2" opacity="0.5"/>
+                <path d="M50 30 L50 70 M30 50 L70 50 M36 36 L64 64 M64 36 L36 64" stroke="url(#headerGrad)" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="50" cy="50" r="8" fill="url(#headerGrad)"/>
+              </svg>
             </div>
             <div class="leading-tight hidden sm:block">
               <span class="text-base md:text-xl 2xl:text-2xl font-black text-[var(--text-light)]">SKILL</span>
