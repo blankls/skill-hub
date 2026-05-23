@@ -516,22 +516,23 @@ button:hover {
   max-width: 52px;
   padding: 0 12px 0 0;
   text-align: right;
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(14, 165, 233, 0.35);
   user-select: none;
   font-size: 0.85em;
   vertical-align: top;
   white-space: nowrap;
+  border-right: 1px solid rgba(14, 165, 233, 0.1);
 }
 
 .code-table .line-content {
-  padding: 0 16px;
+  padding: 0 16px 0 12px;
   white-space: pre;
   vertical-align: top;
   overflow: visible;
 }
 
 .code-table .code-row:hover .line-num {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(14, 165, 233, 0.7);
 }
 
 .code-table .code-row:hover .line-content {
