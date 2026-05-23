@@ -23,7 +23,11 @@
           top-offset="0px"
           @back="$emit('update:modelValue', false)"
           @navigate="(id) => $emit('navigate', id)"
-        />
+        >
+          <template #right-actions>
+            <slot name="right-actions"></slot>
+          </template>
+        </DetailSidebar>
       </div>
     </Transition>
   </Teleport>

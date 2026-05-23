@@ -1,10 +1,12 @@
 <template>
   <!-- 左侧边缘指示条 -->
   <div
-    class="fixed left-0 bottom-0 z-20 hidden lg:block pointer-events-none transition-opacity duration-500"
+    class="fixed left-0 bottom-0 z-20 hidden lg:flex flex-col justify-center pointer-events-none transition-opacity duration-500"
     :class="leftVisible ? 'opacity-0' : 'opacity-100'"
     :style="{ top: topOffset, width: '3px', background: 'linear-gradient(to bottom, transparent 5%, var(--neon-cyan) 30%, var(--neon-cyan) 70%, transparent 95%)', boxShadow: '0 0 8px rgba(14,165,233,0.4), 0 0 20px rgba(14,165,233,0.15)' }"
-  ></div>
+  >
+    <span class="indicator-text indicator-text-left">导航</span>
+  </div>
 
   <!-- 左侧浮动导航 -->
   <div
@@ -46,10 +48,12 @@
 
   <!-- 右侧边缘指示条 -->
   <div
-    class="fixed right-0 bottom-0 z-20 hidden lg:block pointer-events-none transition-opacity duration-500"
+    class="fixed right-0 bottom-0 z-20 hidden lg:flex flex-col justify-center pointer-events-none transition-opacity duration-500"
     :class="rightVisible ? 'opacity-0' : 'opacity-100'"
     :style="{ top: topOffset, width: '3px', background: 'linear-gradient(to bottom, transparent 5%, var(--neon-cyan) 30%, var(--neon-cyan) 70%, transparent 95%)', boxShadow: '0 0 8px rgba(14,165,233,0.4), 0 0 20px rgba(14,165,233,0.15)' }"
-  ></div>
+  >
+    <span class="indicator-text indicator-text-right">操作</span>
+  </div>
 
   <!-- 右侧浮动操作栏 -->
   <div
@@ -92,6 +96,25 @@ const { leftVisible, rightVisible, onSidebarEnter, onSidebarLeave } = useHoverSi
 </script>
 
 <style scoped>
+.indicator-text {
+    writing-mode: vertical-rl;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--neon-cyan);
+    opacity: 0.5;
+    font-family: var(--font-mono);
+    text-shadow: 0 0 6px rgba(14, 165, 233, 0.3);
+    position: absolute;
+}
+
+.indicator-text-left {
+    left: 6px;
+}
+
+.indicator-text-right {
+    right: 6px;
+}
+
 .sidebar-btn {
   transform-origin: center;
 }

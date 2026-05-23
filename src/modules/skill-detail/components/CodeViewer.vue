@@ -14,11 +14,11 @@
 
         <div class="ml-auto flex items-center gap-1">
           <button
-            v-if="!isEditing && isAdmin && previewMode === 'code'"
+            v-if="!isEditing && isAdmin && previewMode !== 'image'"
             @click="enterEdit"
             class="w-7 h-7 flex items-center justify-center rounded transition-all hover:bg-white/10"
             style="color: var(--text-muted)"
-            title="编辑"
+            :title="previewMode === 'markdown' ? '编辑源码' : '编辑'"
           >
             ✏️
           </button>
@@ -44,7 +44,16 @@
       </div>
 
       <div class="flex-1 min-h-0" :class="isEditing ? 'overflow-hidden' : 'overflow-y-auto custom-scroll'" style="background: var(--dark-bg)">
-        <template v-if="isEditing">
+        <template v-if="isRendering">
+          <div class="flex items-center justify-center h-full">
+            <div class="text-center">
+              <div class="render-spinner mx-auto mb-3"></div>
+              <p class="text-sm" style="color: var(--text-muted)">渲染中...</p>
+            </div>
+          </div>
+        </template>
+
+        <template v-else-if="isEditing">
           <textarea
             ref="textareaRef"
             v-model="editedContent"
@@ -115,6 +124,7 @@ const isEditing = ref(false)
 const editedContent = ref('')
 const hasUnsavedChanges = ref(false)
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
+const isRendering = ref(false)
 
 const extToHljs: Record<string, string> = {
   ts: 'typescript',
@@ -305,13 +315,34 @@ function handleCancel() {
   emit('cancel')
 }
 
-watch(() => props.file, () => {
+watch(() => props.file, (_newFile, oldFile) => {
   isEditing.value = false
   hasUnsavedChanges.value = false
+  if (_newFile && _newFile !== oldFile) {
+    isRendering.value = true
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        isRendering.value = false
+      })
+    })
+  }
 })
 </script>
 
 <style scoped>
+.render-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(14, 165, 233, 0.15);
+  border-top-color: var(--neon-cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .custom-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(14, 165, 233, 0.2) transparent;

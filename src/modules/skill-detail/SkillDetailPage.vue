@@ -53,60 +53,18 @@
         @navigate="openOverlay"
       >
         <template #right-actions>
-          <button
-            v-if="!isFromAdmin"
-            @click="handleLike"
-            :disabled="likeDisabled"
-            class="sidebar-btn action-btn w-12 h-12 xl:w-14 xl:h-14 rounded-xl flex items-center justify-center transition-all duration-200 group relative"
-            :class="[likeDisabled ? 'opacity-40 cursor-not-allowed' : (liking ? 'bg-orange-500/15 border-orange-500/30 hover:scale-115' : 'hover:bg-[var(--neon-cyan)]/10 hover:scale-115 border-[rgba(14,165,233,0.15)]')]"
-            style="border-width: 1px; border-style: solid"
-            :title="likeDisabled ? '请稍候...' : (liking ? '已点赞' : '点赞')"
-          >
-            <span class="text-xl xl:text-2xl">{{ liking ? '❤️' : '🤍' }}</span>
-            <span
-              class="absolute right-full mr-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(14,165,233,0.2)"
-            >{{ liking ? '已点赞' : '点赞' }}</span>
-          </button>
-          <button
-            v-if="isGitHubSkill && isFromAdmin"
-            @click="handleSync"
-            :disabled="syncing"
-            class="sidebar-btn action-btn w-12 h-12 xl:w-14 xl:h-14 rounded-xl flex items-center justify-center transition-all duration-200 hover:bg-[var(--neon-cyan)]/10 hover:scale-115 group relative border border-[rgba(14,165,233,0.15)]"
-            :class="{ 'opacity-50': syncing }"
-            title="同步"
-          >
-            <span class="text-xl xl:text-2xl">{{ syncing ? '🔄' : '🔁' }}</span>
-            <span
-              class="absolute right-full mr-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(14,165,233,0.2)"
-            >同步</span>
-          </button>
-          <button
-            v-if="isFromAdmin"
-            @click="showEditor = true"
-            class="sidebar-btn action-btn w-12 h-12 xl:w-14 xl:h-14 rounded-xl flex items-center justify-center transition-all duration-200 hover:bg-[var(--neon-cyan)]/10 hover:scale-115 group relative border border-[rgba(14,165,233,0.15)]"
-            title="编辑"
-          >
-            <span class="text-xl xl:text-2xl">✏️</span>
-            <span
-              class="absolute right-full mr-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(14,165,233,0.2)"
-            >编辑</span>
-          </button>
-          <ZipExportBtn :skill="skill" class="w-12 h-12 xl:w-14 xl:h-14" />
-          <button
-            v-if="isFromAdmin"
-            @click="handleDelete"
-            class="sidebar-btn action-btn w-12 h-12 xl:w-14 xl:h-14 rounded-xl flex items-center justify-center transition-all duration-200 hover:bg-red-500/10 hover:scale-115 group relative border border-[rgba(14,165,233,0.15)]"
-            title="删除"
-          >
-            <span class="text-xl xl:text-2xl">🗑️</span>
-            <span
-              class="absolute right-full mr-2 px-2 py-1 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-              style="background: var(--dark-card); color: var(--text-light); border: 1px solid rgba(14,165,233,0.2)"
-            >删除</span>
-          </button>
+          <DetailActions
+            :skill="skill"
+            :is-admin="isFromAdmin"
+            :is-git-hub-skill="isGitHubSkill"
+            :liking="liking"
+            :like-disabled="likeDisabled"
+            :syncing="syncing"
+            @like="handleLike"
+            @sync="handleSync"
+            @edit="showEditor = true"
+            @delete="handleDelete"
+          />
         </template>
       </DetailSidebar>
 
@@ -235,9 +193,39 @@
       </div>
 
       <!-- 全屏覆盖层 -->
-      <OverviewOverlay v-model="showOverview" :skill="skill" @open="activeOverlay = 'overview'" @close="activeOverlay = ''" @navigate="handleOverlayNavigate" />
-      <GuideOverlay v-model="showGuide" :skill="skill" @open="activeOverlay = 'guide'" @close="activeOverlay = ''" @navigate="handleOverlayNavigate" />
-      <FileBrowserOverlay v-model="showFileBrowser" :skill="skill" :is-admin="isFromAdmin" @open="activeOverlay = 'files'" @close="activeOverlay = ''" @navigate="handleOverlayNavigate" @files-update="handleFilesUpdate" />
+      <OverviewOverlay v-model="showOverview" :skill="skill" @open="activeOverlay = 'overview'" @close="activeOverlay = ''" @navigate="handleOverlayNavigate">
+        <template #right-actions>
+          <DetailActions
+            :skill="skill"
+            :is-admin="isFromAdmin"
+            :is-git-hub-skill="isGitHubSkill"
+            :liking="liking"
+            :like-disabled="likeDisabled"
+            :syncing="syncing"
+            @like="handleLike"
+            @sync="handleSync"
+            @edit="showEditor = true"
+            @delete="handleDelete"
+          />
+        </template>
+      </OverviewOverlay>
+      <GuideOverlay v-model="showGuide" :skill="skill" @open="activeOverlay = 'guide'" @close="activeOverlay = ''" @navigate="handleOverlayNavigate">
+        <template #right-actions>
+          <DetailActions
+            :skill="skill"
+            :is-admin="isFromAdmin"
+            :is-git-hub-skill="isGitHubSkill"
+            :liking="liking"
+            :like-disabled="likeDisabled"
+            :syncing="syncing"
+            @like="handleLike"
+            @sync="handleSync"
+            @edit="showEditor = true"
+            @delete="handleDelete"
+          />
+        </template>
+      </GuideOverlay>
+      <FileBrowserOverlay v-model="showFileBrowser" :skill="skill" :is-admin="isFromAdmin" @files-update="handleFilesUpdate" />
 
       <!-- 编辑器 -->
       <SkillEditor v-model="showEditor" :skill="skill" @save="handleSave" />
@@ -263,6 +251,7 @@ import { useSkillStore } from '@/stores/skillStore'
 import { useAuthStore } from '@/stores/authStore'
 import type { GithubMeta, SkillFile } from '@/types'
 import SkillEditor from '@/components/features/SkillEditor.vue'
+import DetailActions from '@/components/features/DetailActions.vue'
 import ZipExportBtn from '@/components/features/ZipExportBtn.vue'
 import DetailSidebar from '@/components/features/DetailSidebar.vue'
 import OverviewOverlay from './components/OverviewOverlay.vue'

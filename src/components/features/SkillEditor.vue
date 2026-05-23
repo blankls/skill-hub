@@ -21,12 +21,14 @@
           multiple
           filterable
           allow-create
+          default-first-option
           :max-collapse-tags="3"
           collapse-tags
           collapse-tags-tooltip
           placeholder="输入标签后按回车添加"
+          @keydown.enter="handleTagEnter"
         >
-          <el-option v-for="tag in form.tags" :key="tag" :label="tag" :value="tag" />
+          <el-option v-for="tag in suggestedTags" :key="tag" :label="tag" :value="tag" />
         </el-select>
       </el-form-item>
     </el-form>
@@ -86,6 +88,9 @@
 import { ref, computed, watch } from 'vue'
 import type { Skill, SkillFile } from '@/types'
 import FileBrowserOverlay from '@/modules/skill-detail/components/FileBrowserOverlay.vue'
+import { useSkillStore } from '@/stores/skillStore'
+
+const skillStore = useSkillStore()
 
 const props = defineProps<{
   modelValue: boolean
@@ -116,6 +121,20 @@ const form = ref<Partial<Skill>>({
 })
 
 const files = ref<SkillFile[]>([])
+
+const suggestedTags = computed(() => {
+  const allTags = new Set<string>()
+  skillStore.skills.forEach(s => s.tags?.forEach(t => allTags.add(t)))
+  return [...allTags].filter(t => !form.value.tags?.includes(t)).sort()
+})
+
+function handleTagEnter(e: KeyboardEvent) {
+  const input = (e.target as HTMLElement)?.querySelector?.('input') || e.target
+  if (input instanceof HTMLInputElement && !input.value.trim()) {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+}
 
 const tempSkill = computed(() => ({
   id: props.skill?.id || 'temp',
