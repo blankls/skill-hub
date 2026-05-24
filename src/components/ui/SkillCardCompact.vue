@@ -56,6 +56,8 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Document } from '@element-plus/icons-vue'
 import type { Skill } from '@/types'
+import { getSourceLabel } from '@/utils/labels'
+import { formatDate } from '@/utils/formatDate'
 
 interface Props {
   skill: Skill
@@ -70,29 +72,6 @@ const displayedTags = computed(() => {
 
 const handleClick = () => {
   router.push(`/skills/${props.skill.id}`)
-}
-
-const formatDate = (date: Date | string) => {
-  const d = new Date(date)
-  const now = new Date()
-  const diff = now.getTime() - d.getTime()
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  
-  if (days === 0) return '今天'
-  if (days === 1) return '昨天'
-  if (days < 7) return `${days}天前`
-  if (days < 30) return `${Math.floor(days / 7)}周前`
-  return `${Math.floor(days / 30)}月前`
-}
-
-const getSourceLabel = (type: string) => {
-  const labels: Record<string, string> = {
-    local: '本地',
-    zip: 'ZIP',
-    github: 'GitHub',
-    skillmd: 'MD'
-  }
-  return labels[type] || '本地'
 }
 </script>
 

@@ -25,6 +25,7 @@ const usePageScroll = computed(() => {
 const showFooter = computed(() => {
   const path = route.path
   if (path.startsWith('/skills') || path.startsWith('/admin')) return false
+  if (path.includes('/groups/')) return false
   return true
 })
 </script>

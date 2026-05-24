@@ -33,8 +33,6 @@ export interface SkillSource {
   lastRemoteUpdate?: Date
   githubMeta?: GithubMeta
   isContentCached?: boolean
-  // 文件 SHA 映射，用于增量更新
-  fileShas?: Record<string, string>
 }
 
 export interface Skill {
@@ -44,6 +42,7 @@ export interface Skill {
   version: string
   author: string
   tags: string[]
+  group?: string
   source: SkillSource
   files: SkillFile[]
   tools?: Tool[]
@@ -76,6 +75,14 @@ export interface FileNode {
   language?: string
 }
 
-export interface ThemeState {
-  isDark: boolean
+export interface SkillGroup {
+  id: string
+  name: string
+  description: string
+  readme?: string
+  iconColor?: string
+  skillIds: string[]
+  likes?: number
+  createdAt: Date
+  updatedAt: Date
 }

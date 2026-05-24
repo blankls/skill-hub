@@ -26,6 +26,7 @@
         </div>
         <div v-else>
           <SkillGridView v-if="skillStore.viewMode === 'grid'" :skills="skillStore.filteredSkills" :showAdminActions="false" />
+          <SkillGroupView v-else-if="skillStore.viewMode === 'group'" :skills="skillStore.filteredSkills" :showAdminActions="false" />
           <SkillListView v-else :skills="skillStore.filteredSkills" :showAdminActions="false" />
         </div>
       </div>
@@ -54,6 +55,7 @@ import { useSkillStore } from '@/stores/skillStore'
 import { Loading, Filter } from '@element-plus/icons-vue'
 import SkillToolbar from './components/SkillToolbar.vue'
 import SkillGridView from './components/SkillGridView.vue'
+import SkillGroupView from './components/SkillGroupView.vue'
 import SkillListView from './components/SkillListView.vue'
 import FilterSidebar from './components/FilterSidebar.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
@@ -69,6 +71,7 @@ const activeFilterCount = computed(() => {
     if (skillStore.sortBy !== 'updated') count += 1
     if (skillStore.searchQuery !== '') count += 1
     if (skillStore.selectedSources.length < 2) count += 1
+    if (skillStore.selectedGroup) count += 1
     return count
 })
 

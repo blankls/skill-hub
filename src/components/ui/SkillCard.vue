@@ -2,7 +2,11 @@
   <div class="group skill-card rounded-2xl overflow-hidden cursor-pointer" @click.stop="handleClick">
     <div class="p-6 relative">
       <!-- 快速操作按钮 - 右侧悬浮 -->
-      <div class="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 z-10">
+      <div
+        v-if="!hideActions"
+        class="absolute top-4 right-4 flex flex-col gap-2 transition-all duration-300 transform z-10"
+        :class="'opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0'"
+      >
         <template v-if="showAdminActions">
           <el-tooltip content="编辑" placement="left">
             <el-button 
@@ -17,16 +21,16 @@
         </template>
 
         <el-tooltip content="下载" placement="left">
-          <el-button 
-            circle 
-            size="small" 
-            class="action-btn export-btn" 
+          <el-button
+            circle
+            size="small"
+            class="action-btn export-btn"
             @click.stop="handleExport"
           >
             <el-icon class="text-[var(--neon-purple)]"><Download /></el-icon>
           </el-button>
         </el-tooltip>
-        
+
         <template v-if="showAdminActions">
           <el-tooltip content="删除" placement="left">
             <el-button 
@@ -42,13 +46,16 @@
       </div>
       
       <div class="flex items-start justify-between mb-4">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-14 md:h-14 2xl:w-16 2xl:h-16 rounded-xl flex items-center justify-center text-white text-2xl sm:text-2xl md:text-2xl 2xl:text-3xl font-black font-mono shadow-lg group-hover:scale-110 transition-transform duration-300"
+        <div class="flex items-center gap-3 min-w-0 flex-1">
+          <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-14 md:h-14 2xl:w-16 2xl:h-16 rounded-xl flex items-center justify-center text-white text-2xl sm:text-2xl md:text-2xl 2xl:text-3xl font-black font-mono shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0"
                :style="{ background: `linear-gradient(to bottom right, ${skill.iconColor || 'var(--neon-cyan),var(--neon-purple)'})` }"
           >
             {{ skill.name.charAt(0).toUpperCase() }}
           </div>
-          <div>
+          <div class="min-w-0">
+            <h3 class="text-lg sm:text-xl md:text-xl 2xl:text-2xl font-bold text-[var(--text-light)] group-hover:text-[var(--neon-cyan)] transition-colors truncate">
+              {{ skill.name }}
+            </h3>
             <span class="text-[var(--neon-yellow)] text-xs font-mono uppercase tracking-wider">
               [{{ getSourceLabel(skill.source.type) }}]
             </span>
@@ -56,15 +63,19 @@
         </div>
       </div>
       
-      <h3 class="text-lg sm:text-xl md:text-xl 2xl:text-2xl font-bold mb-3 text-[var(--text-light)] group-hover:text-[var(--neon-cyan)] transition-colors">
-        {{ skill.name }}
-      </h3>
-      
       <p class="text-[var(--text-muted)] text-sm mb-5 line-clamp-2">
         {{ skill.description }}
       </p>
       
-      <div class="flex flex-wrap gap-2 mb-5">
+      <div class="flex flex-wrap gap-2 items-start min-h-[1.75rem] max-h-[3.75rem] overflow-hidden">
+        <span v-if="skill.group" class="px-3 py-1 bg-[var(--neon-cyan)]/15 border border-[var(--neon-cyan)]/30 text-[var(--neon-cyan)] rounded-full text-xs font-mono">
+          {{ skill.group }}
+        </span>
+        <template v-if="groupInfo">
+          <span v-for="gtag in groupInfo.tags.slice(0, 3)" :key="gtag" class="px-2 py-0.5 bg-[var(--neon-green)]/10 border border-[var(--neon-green)]/25 text-[var(--neon-green)] rounded-full text-xs font-mono">
+            #{{ gtag }}
+          </span>
+        </template>
         <span v-for="tag in skill.tags" :key="tag" class="px-3 py-1 bg-[var(--neon-purple)]/20 border border-[var(--neon-purple)]/30 text-[var(--neon-purple)] rounded-full text-xs font-mono">
           #{{ tag }}
         </span>
@@ -81,9 +92,6 @@
           </span>
         </div>
         <div class="flex items-center gap-3 text-xs text-[var(--text-muted)] font-mono">
-          <span class="flex items-center gap-1 text-orange-400">
-            🔥 {{ skill.likes || 0 }}
-          </span>
           <span class="flex items-center gap-1">
             <el-icon class="text-xs"><Document /></el-icon>
             {{ skill.files.length }} 文件
@@ -102,14 +110,19 @@ import { Edit, Download, Delete, User, Document } from '@element-plus/icons-vue'
 import { useSkillStore } from '@/stores/skillStore'
 import type { Skill } from '@/types'
 import { exportSkillToZip, downloadBlob } from '@/utils/zipHandler'
+import { getSourceLabel } from '@/utils/labels'
+import { formatDate } from '@/utils/formatDate'
 
 interface Props {
   skill: Skill
   showAdminActions?: boolean
+  hideActions?: boolean
+  groupInfo?: { description: string; tags: string[] }
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showAdminActions: false
+  showAdminActions: false,
+  hideActions: false
 })
 
 const emit = defineEmits<{
@@ -157,31 +170,6 @@ const handleDelete = async () => {
     if (e !== 'cancel') {
       ElMessage.error('删除失败')
     }
-  }
-}
-
-const getSourceLabel = (type: string) => {
-  const labels: Record<string, string> = {
-    local: '本地',
-    zip: 'ZIP',
-    github: 'GitHub',
-    skillmd: 'MD'
-  }
-  return labels[type] || '本地'
-}
-
-const formatDate = (date: Date | string) => {
-  const d = new Date(date)
-  const now = new Date()
-  const diff = now.getTime() - d.getTime()
-  const oneDay = 24 * 60 * 60 * 1000
-  
-  if (diff < oneDay) {
-    return '今天'
-  } else if (diff < 7 * oneDay) {
-    return `${Math.floor(diff / oneDay)} 天前`
-  } else {
-    return d.toLocaleDateString('zh-CN')
   }
 }
 </script>

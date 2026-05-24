@@ -335,6 +335,27 @@
       </el-tab-pane>
     </el-tabs>
 
+    <div class="px-6 py-4 border-t border-[rgba(0,245,255,0.15)] bg-[var(--dark-card)]">
+      <el-form label-position="left" label-width="80px">
+        <el-form-item label="技能组">
+          <el-select
+            v-model="selectedGroup"
+            filterable
+            default-first-option
+            clearable
+            placeholder="选择技能组"
+          >
+            <el-option v-for="g in skillStore.groups" :key="g.name" :label="g.name" :value="g.name">
+              <div class="flex flex-col">
+                <span>{{ g.name }}</span>
+                <span v-if="g.description" class="text-xs text-gray-400">{{ g.description }}</span>
+              </div>
+            </el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+    </div>
+
     <template #footer>
       <div class="flex justify-between items-center">
         <span class="text-xs text-[var(--text-muted)]">
@@ -363,27 +384,11 @@ import { fetchGitHubRepo, fetchGitHubRepoFiles, fetchFullSkillFromGitHub } from 
 import type { Skill } from '@/types'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import MarkdownIt from 'markdown-it'
-import hljs from 'highlight.js'
+import { createMarkdownRenderer } from '@/utils/markdown'
 import 'highlight.js/styles/github-dark.css'
 import FileIcon from '@/components/ui/FileIcon.vue'
 
-function escapeHtml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
-
-const md = MarkdownIt({
-  html: false,
-  linkify: true,
-  highlight: function (str, lang) {
-    if (lang && hljs.getLanguage(lang)) {
-      try {
-        return hljs.highlight(str, { language: lang }).value
-      } catch (__) {}
-    }
-    return escapeHtml(str)
-  }
-})
+const md = createMarkdownRenderer()
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -410,6 +415,7 @@ const githubSelectedBranch = ref('')
 const githubLoading = ref(false)
 const githubFilesLoading = ref(false)
 const importing = ref(false)
+const selectedGroup = ref('')
 
 const templatePlaceholder = `# 技能名称
 
@@ -574,6 +580,7 @@ function resetGitHub() {
   githubFolders.value = []
   githubSelectedPath.value = ''
   githubSelectedBranch.value = ''
+  selectedGroup.value = ''
   githubUrl.value = ''
 }
 
@@ -670,6 +677,8 @@ async function doImport() {
     } else {
       throw new Error('请先提供有效的技能数据')
     }
+
+    skill.group = selectedGroup.value || undefined
 
     await skillStore.addSkill(skill)
     ElMessage.success(`技能「${skill.name}」添加成功！`)

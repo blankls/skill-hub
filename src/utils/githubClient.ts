@@ -444,8 +444,6 @@ export async function fetchFullSkillFromGitHub(
       lastRemoteUpdate: new Date(repoMeta.pushed_at),
       githubMeta: meta,
       isContentCached: files.length > 0,
-      // 保存文件 SHA 以便下次比对
-      fileShas: Object.fromEntries(files.map(f => [f.path, (f as any).sha || '']))
     },
     files,
     createdAt: new Date(),
@@ -669,7 +667,6 @@ export async function fetchSkillsFromSameRepo(
           subfolderPath: config.subfolderPath
         },
         isContentCached: files.length > 0,
-        fileShas: Object.fromEntries(files.map(f => [f.path, (f as any).sha || '']))
       },
       files,
       createdAt: new Date(),

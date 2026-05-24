@@ -35,10 +35,6 @@
   --font-mono: 'SF Mono', 'Consolas', 'Courier New', monospace;
 }
 
-* {
-  transition: all 0.2s ease;
-}
-
 html, body {
     height: 100%;
 }

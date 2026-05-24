@@ -32,8 +32,6 @@ function getStoredAuth(): AuthState {
 export const useAuthStore = defineStore('auth', () => {
   const state = ref<AuthState>(getStoredAuth())
 
-  const token = computed(() => state.value.token)
-
   async function login(password: string): Promise<{ success: boolean; error?: string; lockUntil?: string }> {
     try {
       const res = await fetch(`${API_BASE}/auth/verify`, {
@@ -72,7 +70,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     isAuthenticated: computed(() => state.value.isAuthenticated),
-    token,
     login,
     logout,
     checkSession

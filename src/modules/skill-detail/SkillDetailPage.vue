@@ -50,7 +50,7 @@
       <!-- 桌面端侧边栏 -->
       <DetailSidebar
         :nav-items="navItems"
-        top-offset="5.75rem"
+        top-offset="5rem"
         @back="router.back()"
         @navigate="openOverlay"
       >
@@ -72,7 +72,7 @@
 
       <!-- 主内容区 - 占满全宽 -->
       <div class="h-full overflow-y-auto scrollbar-auto">
-        <div class="mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-28 py-6 sm:py-8 lg:py-10 2xl:py-14 pt-24 lg:pt-12 max-w-[100rem]">
+        <div class="mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-12 py-6 sm:py-8 lg:py-10 2xl:py-14 pt-24 lg:pt-12 max-w-[100rem]">
         <div class="rounded-xl overflow-hidden border border-[var(--neon-cyan)]/30 mb-6" style="background: var(--dark-card)">
           <div class="px-6 py-4 border-b border-[var(--neon-cyan)]/15 flex items-center gap-3" style="background: rgba(0,245,255,0.05)">
             <div class="w-10 h-10 sm:w-12 sm:h-12 2xl:w-14 2xl:h-14 rounded-xl flex items-center justify-center text-white text-lg sm:text-xl 2xl:text-2xl font-black font-mono shadow-lg"
@@ -87,6 +87,9 @@
             <div class="flex flex-wrap items-center gap-3 text-sm mb-4">
               <span class="px-3 py-1.5 rounded-full bg-[var(--neon-yellow)]/10 text-[var(--neon-yellow)] border border-[var(--neon-yellow)]/30 text-xs 2xl:text-sm font-mono uppercase tracking-wider">
                 {{ getSourceLabel(skill.source.type) }}
+              </span>
+              <span v-if="skill.group" class="px-3 py-1.5 rounded-full bg-[var(--neon-cyan)]/10 text-[var(--neon-cyan)] border border-[var(--neon-cyan)]/30 text-xs 2xl:text-sm font-mono">
+                {{ skill.group }}
               </span>
               <span v-if="skill.author" class="flex items-center gap-1.5 text-sm 2xl:text-base" style="color: var(--text-muted)">
                 <span>👤</span>
@@ -257,10 +260,12 @@ import type { GithubMeta, SkillFile } from '@/types'
 const SkillEditor = defineAsyncComponent(() => import('@/components/features/SkillEditor.vue'))
 import DetailActions from '@/components/features/DetailActions.vue'
 import ZipExportBtn from '@/components/features/ZipExportBtn.vue'
+import { getLikedSkills, saveLikedSkill, removeLikedSkill } from '@/utils/likedStorage'
 import DetailSidebar from '@/components/features/DetailSidebar.vue'
 import OverviewOverlay from './components/OverviewOverlay.vue'
 import GuideOverlay from './components/GuideOverlay.vue'
 import FileBrowserOverlay from './components/FileBrowserOverlay.vue'
+import { getSourceLabel } from '@/utils/labels'
 
 const route = useRoute()
 const router = useRouter()
@@ -275,29 +280,6 @@ const showFileBrowser = ref(false)
 const liking = ref(false)
 const likeDisabled = ref(false)
 const activeOverlay = ref('')
-
-const LIKED_SKILLS_KEY = 'skill-hub-liked-skills'
-
-const getLikedSkills = (): Set<string> => {
-  try {
-    const stored = localStorage.getItem(LIKED_SKILLS_KEY)
-    return stored ? new Set(JSON.parse(stored)) : new Set()
-  } catch {
-    return new Set()
-  }
-}
-
-const saveLikedSkill = (skillId: string) => {
-  const liked = getLikedSkills()
-  liked.add(skillId)
-  localStorage.setItem(LIKED_SKILLS_KEY, JSON.stringify([...liked]))
-}
-
-const removeLikedSkill = (skillId: string) => {
-  const liked = getLikedSkills()
-  liked.delete(skillId)
-  localStorage.setItem(LIKED_SKILLS_KEY, JSON.stringify([...liked]))
-}
 
 const skill = computed(() => {
   return skillStore.skills.find(sk => sk.id === route.params.id) || null
@@ -324,16 +306,6 @@ const navItems = computed(() => {
     { id: 'files', icon: '📂', label: '文件' },
   ]
 })
-
-function getSourceLabel(type: string) {
-  const labels: Record<string, string> = {
-    local: '本地',
-    zip: 'ZIP',
-    github: 'GitHub',
-    skillmd: 'Markdown'
-  }
-  return labels[type] || '本地'
-}
 
 const githubMeta = computed<GithubMeta | null>(() => {
   return skill.value?.source?.githubMeta || null

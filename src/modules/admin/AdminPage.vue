@@ -10,7 +10,7 @@
     </div>
     
     <!-- 已登录状态：显示管理页面 -->
-    <div v-else class="flex-1 min-h-0 overflow-y-auto scrollbar-auto max-w-[95rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-12">
+    <div v-else class="flex-1 min-h-0 overflow-y-auto scrollbar-auto max-w-[100rem] mx-auto w-full px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-12 py-12">
       <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
@@ -28,6 +28,13 @@
           </button>
           <!-- 添加技能按钮 -->
           <div class="flex items-center gap-3">
+            <button
+              @click="showGroupEditor = true"
+              class="px-5 py-2.5 bg-gradient-to-r from-[var(--neon-purple)] to-[var(--neon-cyan)] text-white font-bold rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] flex items-center gap-2 hover:scale-105"
+            >
+              <el-icon class="text-lg"><FolderAdd /></el-icon>
+              添加分组
+            </button>
             <button
               @click="openCreateSkill"
               class="px-6 py-2.5 bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white font-bold rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,245,255,0.5)] flex items-center gap-2 hover:scale-105"
@@ -110,10 +117,11 @@
         <p class="text-[var(--text-muted)]">暂无技能，点击上方「添加技能」开始</p>
       </div>
       <div v-else>
-        <SkillListView 
-          :skills="skillStore.skills" 
-          :showAdminActions="true"
+        <AdminGroupView
+          :skills="skillStore.skills"
           @edit="handleEdit"
+          @editGroup="handleEditGroup"
+          @deleteSkill="handleDeleteSkill"
         />
       </div>
     </div>
@@ -123,6 +131,9 @@
     
     <!-- 编辑模态框 -->
     <SkillEditor v-model="showEdit" :skill="editingSkill" @save="handleSave" />
+
+    <!-- 分组编辑模态框 -->
+    <GroupEditorModal v-model="showGroupEditor" :group="editingGroup" @save="handleSaveGroup" />
   </div>
 </template>
 
@@ -131,11 +142,12 @@ import { ref, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue
 import { useSkillStore } from '@/stores/skillStore'
 import { useAuthStore } from '@/stores/authStore'
 import SkillImportModal from '@/components/features/SkillImportModal.vue'
-import SkillListView from '@/modules/skill-list/components/SkillListView.vue'
+import GroupEditorModal from '@/components/features/GroupEditorModal.vue'
+import AdminGroupView from '@/modules/admin/AdminGroupView.vue'
 const SkillEditor = defineAsyncComponent(() => import('@/components/features/SkillEditor.vue'))
-import type { Skill } from '@/types'
+import type { Skill, SkillGroup } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Loading, SwitchButton } from '@element-plus/icons-vue'
+import { Plus, Loading, SwitchButton, FolderAdd } from '@element-plus/icons-vue'
 
 import { useRouter } from 'vue-router'
 
@@ -146,6 +158,8 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
 const showImport = ref(false)
 const showEdit = ref(false)
 const editingSkill = ref<Skill | undefined>()
+const showGroupEditor = ref(false)
+const editingGroup = ref<SkillGroup | undefined>()
 
 const totalTags = computed(() => {
   const allTags = new Set<string>()
@@ -182,6 +196,60 @@ async function handleSave(skill: Skill) {
   } catch (e) {
     ElMessage.error('保存失败')
   }
+}
+
+async function handleSaveGroup(group: SkillGroup) {
+  try {
+    const isEdit = skillStore.groups.some(g => g.id === group.id)
+    const oldGroup = isEdit ? skillStore.groups.find(g => g.id === group.id) : null
+    const oldSkillIds = new Set(oldGroup?.skillIds || [])
+    const newSkillIds = new Set(group.skillIds)
+
+    if (isEdit) {
+      await skillStore.updateGroup(group)
+    } else {
+      await skillStore.addGroup(group)
+    }
+
+    for (const id of oldSkillIds) {
+      if (!newSkillIds.has(id)) {
+        const skill = skillStore.skills.find(s => s.id === id)
+        if (skill) {
+          skill.group = ''
+          await skillStore.updateSkill(skill)
+        }
+      }
+    }
+
+    for (const id of newSkillIds) {
+      const skill = skillStore.skills.find(s => s.id === id)
+      if (skill && skill.group !== group.name) {
+        skill.group = group.name
+        await skillStore.updateSkill(skill)
+      }
+    }
+
+    ElMessage.success(isEdit ? '分组已更新' : '分组已创建')
+  } catch (e) {
+    ElMessage.error('保存分组失败')
+  }
+}
+
+function handleEditGroup(group: any) {
+  editingGroup.value = group.groupEntity
+  showGroupEditor.value = true
+}
+
+async function handleDeleteSkill(skill: Skill) {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除技能「${skill.name}」吗？`,
+      '确认删除',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' }
+    )
+    await skillStore.deleteSkill(skill.id)
+    ElMessage.success('删除成功！')
+  } catch { /* cancel */ }
 }
 
 async function handleLogout() {

@@ -31,6 +31,22 @@
           <el-option v-for="tag in suggestedTags" :key="tag" :label="tag" :value="tag" />
         </el-select>
       </el-form-item>
+      <el-form-item label="技能组">
+        <el-select
+          v-model="form.group"
+          filterable
+          default-first-option
+          clearable
+          placeholder="选择技能组"
+        >
+          <el-option v-for="g in suggestedGroups" :key="g.name" :label="g.name" :value="g.name">
+            <div class="flex flex-col">
+              <span>{{ g.name }}</span>
+              <span v-if="g.description" class="text-xs text-gray-400">{{ g.description }}</span>
+            </div>
+          </el-option>
+        </el-select>
+      </el-form-item>
     </el-form>
 
     <div
@@ -114,7 +130,8 @@ const form = ref<Partial<Skill>>({
   version: '1.0.0',
   author: '',
   tags: [],
-  source: { type: 'local' },
+  group: '',
+  source: { type: 'local' } as const,
   files: [],
   createdAt: new Date(),
   updatedAt: new Date()
@@ -126,6 +143,13 @@ const suggestedTags = computed(() => {
   const allTags = new Set<string>()
   skillStore.skills.forEach(s => s.tags?.forEach(t => allTags.add(t)))
   return [...allTags].filter(t => !form.value.tags?.includes(t)).sort()
+})
+
+const suggestedGroups = computed(() => {
+  return skillStore.groups
+    .filter(g => g.name !== form.value.group)
+    .map(g => ({ name: g.name, description: g.description }))
+    .sort((a, b) => a.name.localeCompare(b.name))
 })
 
 function handleTagEnter(e: KeyboardEvent) {
@@ -143,6 +167,7 @@ const tempSkill = computed(() => ({
   version: form.value.version || '1.0.0',
   author: form.value.author || '',
   tags: form.value.tags || [],
+  group: form.value.group || '',
   source: props.skill?.source || { type: 'local' as const },
   files: files.value,
   createdAt: props.skill?.createdAt || new Date(),
@@ -157,6 +182,7 @@ watch(() => props.skill, (s) => {
       version: s.version,
       author: s.author,
       tags: [...s.tags],
+      group: s.group || '',
       source: s.source,
       createdAt: s.createdAt,
       updatedAt: s.updatedAt
@@ -169,7 +195,8 @@ watch(() => props.skill, (s) => {
       version: '1.0.0',
       author: '',
       tags: [],
-      source: { type: 'local' },
+      group: '',
+      source: { type: 'local' as const },
       createdAt: new Date(),
       updatedAt: new Date()
     }

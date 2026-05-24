@@ -112,7 +112,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import hljs from 'highlight.js'
-import MarkdownIt from 'markdown-it'
+import { escapeHtml, createMarkdownRenderer } from '@/utils/markdown'
 import type { SkillFile } from '@/types'
 import FileIcon from '@/components/ui/FileIcon.vue'
 
@@ -289,18 +289,7 @@ const imageDataUrl = computed(() => {
   return `data:${mime};base64,${props.file.content}`
 })
 
-const md = new MarkdownIt({
-  html: false,
-  linkify: true,
-  highlight: function (str: string, lang: string) {
-    if (lang && hljs.getLanguage(lang)) {
-      try {
-        return hljs.highlight(str, { language: lang }).value
-      } catch { /* empty */ }
-    }
-    return ''
-  }
-})
+const md = createMarkdownRenderer()
 
 const renderedMarkdown = computed(() => {
   if (!props.file?.content) return ''
@@ -339,9 +328,6 @@ const highlightedResult = computed(() => {
     .join('')
 })
 
-function escapeHtml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
 
 function enterEdit() {
   editedContent.value = props.file?.content || ''
@@ -418,116 +404,10 @@ watch(() => props.file, (_newFile, oldFile) => {
 button:hover {
   box-shadow: 0 0 8px rgba(14, 165, 233, 0.25);
 }
+</style>
 
-.markdown-body h1,
-.markdown-body h2,
-.markdown-body h3 {
-  margin-top: 1.2em;
-  margin-bottom: 0.6em;
-  font-weight: 600;
-  color: var(--neon-cyan);
-}
-
-.markdown-body h1 { font-size: 1.5rem; }
-.markdown-body h2 { font-size: 1.25rem; }
-.markdown-body h3 { font-size: 1.1rem; }
-
-.markdown-body p {
-  margin-bottom: 1em;
-  color: var(--text-light);
-  line-height: 1.75;
-}
-
-.markdown-body code {
-  background: rgba(14, 165, 233, 0.1);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: var(--font-mono);
-  color: var(--neon-cyan);
-  font-size: 0.9em;
-}
-
-.markdown-body pre {
-  background: rgba(15, 23, 42, 0.6);
-  padding: 16px;
-  border-radius: 8px;
-  overflow-x: auto;
-  border: 1px solid rgba(14, 165, 233, 0.2);
-  margin-bottom: 1em;
-}
-
-.markdown-body pre code:not(.hljs) {
-  background: transparent;
-  padding: 0;
-  border-radius: 0;
-  color: var(--text-light);
-}
-
-.markdown-body pre code.hljs {
-  background: transparent !important;
-  color: var(--text-light) !important;
-}
-
-.markdown-body a {
-  color: var(--neon-purple);
-  text-decoration: underline;
-}
-
-.markdown-body ul,
-.markdown-body ol {
-  color: var(--text-light);
-  padding-left: 1.5em;
-  margin-bottom: 1em;
-}
-
-.markdown-body li {
-  margin-bottom: 0.3em;
-}
-
-.markdown-body blockquote {
-  border-left: 3px solid rgba(14, 165, 233, 0.4);
-  padding-left: 1em;
-  color: var(--text-muted);
-  margin-bottom: 1em;
-}
-
-.markdown-body table {
-  border-collapse: collapse;
-  margin-bottom: 1em;
-  width: 100%;
-}
-
-.markdown-body th,
-.markdown-body td {
-  border: 1px solid rgba(14, 165, 233, 0.2);
-  padding: 8px 12px;
-  text-align: left;
-}
-
-.markdown-body th {
-  background: rgba(14, 165, 233, 0.1);
-  color: var(--neon-cyan);
-  font-weight: 600;
-}
-
-.markdown-body td {
-  color: var(--text-light);
-}
-
-.markdown-body strong {
-  color: var(--neon-yellow);
-}
-
-.markdown-body img {
-  max-width: 100%;
-  border-radius: 8px;
-}
-
-.markdown-body hr {
-  border: none;
-  border-top: 1px solid rgba(14, 165, 233, 0.2);
-  margin: 1.5em 0;
-}
+<style>
+@import '@/assets/markdown-body.css';
 </style>
 
 <style>

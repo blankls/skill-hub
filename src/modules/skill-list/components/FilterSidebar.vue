@@ -21,6 +21,12 @@
             <el-icon><Grid /></el-icon>
           </button>
           <button
+            @click="skillStore.setViewMode('group')"
+            :class="['view-toggle-btn', { active: skillStore.viewMode === 'group' }]"
+          >
+            <el-icon><FolderOpened /></el-icon>
+          </button>
+          <button
             @click="skillStore.setViewMode('list')"
             :class="['view-toggle-btn', { active: skillStore.viewMode === 'list' }]"
           >
@@ -73,6 +79,48 @@
             </span>
           </label>
         </div>
+      </div>
+
+      <!-- 技能组筛选 -->
+      <div class="filter-section">
+        <h3 class="text-sm font-semibold text-[var(--text-light)] mb-3 flex items-center">
+          <span class="w-1 h-4 bg-gradient-to-b from-[var(--neon-cyan)] to-[var(--neon-purple)] rounded-full mr-2"></span>
+          技能组
+        </h3>
+
+        <div v-if="groupList.length > 0" class="space-y-1">
+          <button
+            v-for="g in groupList"
+            :key="g.name"
+            @click="onToggleGroup(g.name)"
+            class="group-filter-btn w-full flex items-center justify-between py-2 px-3 rounded-lg transition-all duration-300 hover:scale-[1.02]"
+            :class="[
+              skillStore.selectedGroup === g.name
+                ? 'ring-2 ring-offset-1 ring-offset-[var(--dark-card)] bg-[var(--neon-cyan)]/10'
+                : 'hover:bg-white/5'
+            ]"
+          >
+            <div class="flex flex-col items-start gap-0.5 min-w-0">
+              <span class="text-sm">{{ g.name }}</span>
+              <span v-if="g.description" class="text-xs text-[var(--text-muted)] truncate w-full">{{ g.description }}</span>
+            </div>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-[var(--text-muted)] flex-shrink-0 ml-2">
+              {{ g.count }}
+            </span>
+          </button>
+        </div>
+
+        <div v-else class="text-center py-4 text-sm text-[var(--text-muted)]">
+          暂无技能组
+        </div>
+
+        <button
+          v-if="skillStore.selectedGroup"
+          @click="skillStore.clearGroupFilter()"
+          class="mt-3 w-full py-1.5 px-3 rounded-lg text-sm text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 transition-colors border border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)]/50"
+        >
+          清除分组筛选
+        </button>
       </div>
 
       <!-- 标签筛选 -->
@@ -182,7 +230,7 @@
 import { ref, computed } from 'vue'
 import { useSkillStore } from '@/stores/skillStore'
 import { getTagColor } from '@/utils/tagColors'
-import { Search, Grid, List, Close } from '@element-plus/icons-vue'
+import { Search, Grid, List, Close, FolderOpened } from '@element-plus/icons-vue'
 
 defineProps<{ mobileOpen: boolean }>()
 
@@ -194,7 +242,7 @@ const skillStore = useSkillStore()
 
 const localSources = ref<string[]>([...skillStore.selectedSources])
 const showAllTags = ref(false)
-const defaultTagLimit = 8
+const defaultTagLimit = 5
 
 const sourceOptions = computed(() => [
   { 
@@ -228,8 +276,18 @@ const displayedTags = computed(() => {
   return tagList.value.slice(0, defaultTagLimit)
 })
 
+const groupList = computed(() => {
+  return skillStore.groups
+    .map(g => ({
+      name: g.name,
+      count: (g.skillIds || []).length,
+      description: g.description || ''
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+})
+
 const hasActiveFilters = computed(() => {
-  return skillStore.selectedTags.length > 0 || skillStore.searchQuery !== ''
+  return skillStore.selectedTags.length > 0 || skillStore.searchQuery !== '' || skillStore.selectedGroup !== ''
 })
 
 const sortOptions = [
@@ -258,6 +316,14 @@ const onToggleTag = (tag: string) => {
 
 const onClearTags = () => {
   skillStore.setSelectedTags([])
+}
+
+const onToggleGroup = (group: string) => {
+  if (skillStore.selectedGroup === group) {
+    skillStore.clearGroupFilter()
+  } else {
+    skillStore.setSelectedGroup(group)
+  }
 }
 
 const onSourceChange = () => {

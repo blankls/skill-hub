@@ -1,4 +1,4 @@
-import type { Skill } from '@/types'
+import type { Skill, SkillGroup } from '@/types'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
@@ -77,12 +77,49 @@ export const db = {
         })
         if (res.status === 401) throw new Error('认证已过期，请重新登录')
         if (!res.ok) throw new Error(`Failed to delete skill: ${res.status}`)
+    }
+}
+
+function restoreGroupDates(group: SkillGroup): SkillGroup {
+    if (typeof group.createdAt === 'string') group.createdAt = new Date(group.createdAt)
+    if (typeof group.updatedAt === 'string') group.updatedAt = new Date(group.updatedAt)
+    return group
+}
+
+export const groupDb = {
+    async getAll(): Promise<SkillGroup[]> {
+        const res = await fetch(`${API_BASE}/groups`)
+        if (!res.ok) throw new Error(`Failed to fetch groups: ${res.status}`)
+        const groups: SkillGroup[] = await res.json()
+        return groups.map(restoreGroupDates)
     },
 
-    async clear(): Promise<void> {
-        const skills = await this.getAll()
-        for (const skill of skills) {
-            await this.delete(skill.id)
-        }
+    async create(group: SkillGroup): Promise<void> {
+        const res = await fetch(`${API_BASE}/groups`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(group)
+        })
+        if (res.status === 401) throw new Error('认证已过期，请重新登录')
+        if (!res.ok) throw new Error(`Failed to create group: ${res.status}`)
+    },
+
+    async update(group: SkillGroup): Promise<void> {
+        const res = await fetch(`${API_BASE}/groups/${encodeURIComponent(group.id)}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(group)
+        })
+        if (res.status === 401) throw new Error('认证已过期，请重新登录')
+        if (!res.ok) throw new Error(`Failed to update group: ${res.status}`)
+    },
+
+    async delete(id: string): Promise<void> {
+        const res = await fetch(`${API_BASE}/groups/${encodeURIComponent(id)}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        })
+        if (res.status === 401) throw new Error('认证已过期，请重新登录')
+        if (!res.ok) throw new Error(`Failed to delete group: ${res.status}`)
     }
 }

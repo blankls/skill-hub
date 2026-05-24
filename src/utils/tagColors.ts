@@ -21,7 +21,3 @@ export function getTagColor(tag: string, index: number): TagColor {
   const colorIndex = (hash + index) % tagColors.length
   return tagColors[colorIndex]
 }
-
-export function getTagCount(skills: any[], tag: string): number {
-  return skills.filter(skill => skill.tags.includes(tag)).length
-}

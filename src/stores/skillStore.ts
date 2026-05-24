@@ -1,11 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed, toRaw } from 'vue'
-import type { Skill } from '@/types'
-import { db } from '@/utils/db'
+import type { Skill, SkillGroup } from '@/types'
+import { db, groupDb } from '@/utils/db'
 import { fetchFullSkillFromGitHub, fetchSkillsFromSameRepo, fetchGitHubRepo, clearRepoCache, type SyncProgress } from '@/utils/githubClient'
 import { ElMessage } from 'element-plus'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
 // 定时任务配置
 const SYNC_INTERVAL_HOURS = 24
@@ -14,7 +12,6 @@ export const useSkillStore = defineStore('skill', () => {
   const skills = ref<Skill[]>([])
   const selectedSkill = ref<Skill | null>(null)
   const searchQuery = ref('')
-  const selectedTag = ref('')
   const selectedTags = ref<string[]>([])
   const selectedSources = ref<string[]>(['local', 'github'])
   const sortBy = ref('updated')
@@ -22,7 +19,9 @@ export const useSkillStore = defineStore('skill', () => {
   const loading = ref(false)
   const syncingSkillIds = ref<Set<string>>(new Set())
   const syncProgress = ref<Map<string, SyncProgress>>(new Map())
-  const viewMode = ref<'grid' | 'list'>('grid')
+  const viewMode = ref<'grid' | 'list' | 'group'>('grid')
+  const selectedGroup = ref('')
+  const groups = ref<SkillGroup[]>([])
   
   // 批量同步状态
   const batchSyncing = ref(false)
@@ -37,17 +36,21 @@ export const useSkillStore = defineStore('skill', () => {
 
   const filteredSkills = computed(() => {
     let result = skills.value
-    
-    if (selectedTag.value) {
-      result = result.filter(skill => 
-        skill.tags.includes(selectedTag.value)
-      )
-    }
 
     if (selectedTags.value.length > 0) {
       result = result.filter(skill =>
         selectedTags.value.some(tag => skill.tags.includes(tag))
       )
+    }
+
+    if (selectedGroup.value) {
+      const group = groups.value.find(g => g.name === selectedGroup.value)
+      if (group) {
+        const ids = new Set(group.skillIds || [])
+        result = result.filter(skill => ids.has(skill.id))
+      } else {
+        result = []
+      }
     }
 
     if (selectedSources.value.length > 0) {
@@ -107,10 +110,65 @@ export const useSkillStore = defineStore('skill', () => {
     skills.value.filter(s => s.source.type === 'github')
   )
 
+  const groupMap = computed(() => {
+    const map = new Map<string, SkillGroup>()
+    for (const g of groups.value) {
+      map.set(g.name, g)
+    }
+    return map
+  })
+
+  async function syncGroupSkillIds() {
+    const changed: SkillGroup[] = []
+    for (const group of groups.value) {
+      const expectedIds = skills.value
+        .filter(s => s.group === group.name)
+        .map(s => s.id)
+      const currentIds = group.skillIds || []
+      if (expectedIds.sort().join(',') !== [...currentIds].sort().join(',')) {
+        group.skillIds = expectedIds
+        changed.push(group)
+      }
+    }
+    for (const g of changed) {
+      await groupDb.update(JSON.parse(JSON.stringify(toRaw(g)))).catch(() => {})
+    }
+  }
+
+  async function loadGroups() {
+    try {
+      groups.value = await groupDb.getAll()
+    } catch {
+      groups.value = []
+    }
+  }
+
+  async function addGroup(group: SkillGroup) {
+    await groupDb.create(group)
+    groups.value.unshift(group)
+  }
+
+  async function updateGroup(group: SkillGroup) {
+    group.updatedAt = new Date()
+    await groupDb.update(group)
+    const index = groups.value.findIndex(g => g.id === group.id)
+    if (index !== -1) groups.value[index] = group
+  }
+
+  async function deleteGroup(id: string) {
+    await groupDb.delete(id)
+    groups.value = groups.value.filter(g => g.id !== id)
+  }
+
+  function getGroupByName(name: string): SkillGroup | undefined {
+    return groups.value.find(g => g.name === name)
+  }
+
   async function loadSkills() {
     loading.value = true
     try {
       skills.value = await db.getAll()
+      await loadGroups()
       const toUpdate: Skill[] = []
       for (const skill of skills.value) {
         if (!skill.iconColor) {
@@ -123,6 +181,7 @@ export const useSkillStore = defineStore('skill', () => {
           db.update(JSON.parse(JSON.stringify(toRaw(skill)))).catch(() => {})
         }
       }
+      await syncGroupSkillIds()
     } finally {
       loading.value = false
     }
@@ -154,23 +213,56 @@ export const useSkillStore = defineStore('skill', () => {
     const plain = JSON.parse(JSON.stringify(toRaw(skill)))
     await db.create(plain)
     skills.value.unshift(skill)
+    if (skill.group) {
+      const group = groups.value.find(g => g.name === skill.group)
+      if (group && !group.skillIds.includes(skill.id)) {
+        group.skillIds.push(skill.id)
+        await groupDb.update(JSON.parse(JSON.stringify(toRaw(group)))).catch(() => {})
+      }
+    }
   }
 
   async function updateSkill(skill: Skill) {
+    const oldSkill = skills.value.find(s => s.id === skill.id)
+    const oldGroup = oldSkill?.group
     skill.updatedAt = new Date()
     const plain = JSON.parse(JSON.stringify(toRaw(skill)))
     await db.update(plain)
     const index = skills.value.findIndex(s => s.id === skill.id)
     if (index !== -1) skills.value[index] = skill
+    if (oldGroup !== skill.group) {
+      if (oldGroup) {
+        const oldG = groups.value.find(g => g.name === oldGroup)
+        if (oldG) {
+          oldG.skillIds = oldG.skillIds.filter(id => id !== skill.id)
+          await groupDb.update(JSON.parse(JSON.stringify(toRaw(oldG)))).catch(() => {})
+        }
+      }
+      if (skill.group) {
+        const newG = groups.value.find(g => g.name === skill.group)
+        if (newG && !newG.skillIds.includes(skill.id)) {
+          newG.skillIds.push(skill.id)
+          await groupDb.update(JSON.parse(JSON.stringify(toRaw(newG)))).catch(() => {})
+        }
+      }
+    }
   }
 
   async function deleteSkill(id: string) {
+    const skill = skills.value.find(s => s.id === id)
     await db.delete(id)
     skills.value = skills.value.filter(s => s.id !== id)
     if (selectedSkill.value?.id === id) {
       selectedSkill.value = null
     }
     syncProgress.value.delete(id)
+    if (skill?.group) {
+      const group = groups.value.find(g => g.name === skill.group)
+      if (group) {
+        group.skillIds = group.skillIds.filter(sid => sid !== id)
+        await groupDb.update(JSON.parse(JSON.stringify(toRaw(group)))).catch(() => {})
+      }
+    }
   }
 
   function selectSkill(skill: Skill) {
@@ -179,10 +271,6 @@ export const useSkillStore = defineStore('skill', () => {
 
   function setSearchQuery(query: string) {
     searchQuery.value = query
-  }
-
-  function setSelectedTag(tag: string) {
-    selectedTag.value = tag
   }
 
   function setSelectedTags(tags: string[]) {
@@ -215,22 +303,30 @@ export const useSkillStore = defineStore('skill', () => {
   }
 
   function clearAllFilters() {
-    selectedTag.value = ''
     selectedTags.value = []
+    selectedGroup.value = ''
     selectedSources.value = ['local', 'github']
     sortBy.value = 'updated'
     sortOrder.value = 'desc'
     searchQuery.value = ''
   }
 
-  function setViewMode(mode: 'grid' | 'list') {
+  function setViewMode(mode: 'grid' | 'list' | 'group') {
     viewMode.value = mode
+  }
+
+  function setSelectedGroup(group: string) {
+    selectedGroup.value = group
+  }
+
+  function clearGroupFilter() {
+    selectedGroup.value = ''
   }
 
   async function toggleLike(skillId: string, unlike: boolean = false): Promise<number> {
     const skill = skills.value.find(s => s.id === skillId)
     if (!skill) return 0
-    const res = await fetch(`${API_BASE}/skills/${skillId}/like`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/skills/${skillId}/like`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ unlike })
@@ -506,7 +602,6 @@ export const useSkillStore = defineStore('skill', () => {
     gitHubSkills,
     selectedSkill,
     searchQuery,
-    selectedTag,
     selectedTags,
     selectedSources,
     sortBy,
@@ -517,13 +612,15 @@ export const useSkillStore = defineStore('skill', () => {
     syncProgress,
     batchSyncing,
     batchSyncProgress,
+    selectedGroup,
+    groups,
+    groupMap,
     loadSkills,
     addSkill,
     updateSkill,
     deleteSkill,
     selectSkill,
     setSearchQuery,
-    setSelectedTag,
     setSelectedTags,
     toggleSelectedTag,
     setSelectedSources,
@@ -532,6 +629,13 @@ export const useSkillStore = defineStore('skill', () => {
     toggleSortOrder,
     clearAllFilters,
     setViewMode,
+    setSelectedGroup,
+    clearGroupFilter,
+    loadGroups,
+    addGroup,
+    updateGroup,
+    deleteGroup,
+    getGroupByName,
     syncGitHubSkill,
     batchSyncAllGitHubSkills,
     isSyncing,

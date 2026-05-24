@@ -108,8 +108,14 @@ function rateLimitLikes(req, res, next) {
     next()
 }
 
+const GROUPS_DIR = path.join(__dirname, 'data', 'groups')
+
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true })
+}
+
+if (!fs.existsSync(GROUPS_DIR)) {
+    fs.mkdirSync(GROUPS_DIR, { recursive: true })
 }
 
 const app = express()
@@ -330,6 +336,99 @@ app.post('/api/auth/verify', (req, res) => {
             error: '密码错误', 
             attemptsLeft 
         })
+    } catch (e) {
+        res.status(500).json({ error: e.message })
+    }
+})
+
+// ==========================================
+// Groups API
+// ==========================================
+
+function readGroupFile(id) {
+    const safeId = sanitizeId(id)
+    if (!safeId) return null
+    const filePath = path.join(GROUPS_DIR, `${safeId}.json`)
+    if (!fs.existsSync(filePath)) return null
+    const raw = fs.readFileSync(filePath, 'utf-8')
+    return JSON.parse(raw)
+}
+
+function writeGroupFile(id, data) {
+    const safeId = sanitizeId(id)
+    if (!safeId) throw new Error('Invalid group ID')
+    const filePath = path.join(GROUPS_DIR, `${safeId}.json`)
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8')
+}
+
+function deleteGroupFile(id) {
+    const safeId = sanitizeId(id)
+    if (!safeId) return
+    const filePath = path.join(GROUPS_DIR, `${safeId}.json`)
+    if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath)
+    }
+}
+
+// GET /api/groups
+app.get('/api/groups', (_req, res) => {
+    try {
+        const files = fs.readdirSync(GROUPS_DIR).filter(f => f.endsWith('.json'))
+        const groups = files.map(f => {
+            const raw = fs.readFileSync(path.join(GROUPS_DIR, f), 'utf-8')
+            return JSON.parse(raw)
+        })
+        groups.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        res.json(groups)
+    } catch (e) {
+        res.status(500).json({ error: e.message })
+    }
+})
+
+// GET /api/groups/:id
+app.get('/api/groups/:id', (req, res) => {
+    try {
+        const group = readGroupFile(req.params.id)
+        if (!group) return res.status(404).json({ error: 'Group not found' })
+        res.json(group)
+    } catch (e) {
+        res.status(500).json({ error: e.message })
+    }
+})
+
+// POST /api/groups
+app.post('/api/groups', requireAuth, (req, res) => {
+    try {
+        const group = req.body
+        if (!group.id) {
+            return res.status(400).json({ error: 'Group id is required' })
+        }
+        writeGroupFile(group.id, group)
+        res.status(201).json(group)
+    } catch (e) {
+        res.status(500).json({ error: e.message })
+    }
+})
+
+// PUT /api/groups/:id
+app.put('/api/groups/:id', requireAuth, (req, res) => {
+    try {
+        const existing = readGroupFile(req.params.id)
+        if (!existing) return res.status(404).json({ error: 'Group not found' })
+        writeGroupFile(req.params.id, req.body)
+        res.json(req.body)
+    } catch (e) {
+        res.status(500).json({ error: e.message })
+    }
+})
+
+// DELETE /api/groups/:id
+app.delete('/api/groups/:id', requireAuth, (req, res) => {
+    try {
+        const existing = readGroupFile(req.params.id)
+        if (!existing) return res.status(404).json({ error: 'Group not found' })
+        deleteGroupFile(req.params.id)
+        res.json({ success: true })
     } catch (e) {
         res.status(500).json({ error: e.message })
     }

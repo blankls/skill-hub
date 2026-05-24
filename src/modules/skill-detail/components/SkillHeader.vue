@@ -63,8 +63,10 @@
 import { ref, watch } from 'vue'
 import { Link, User, Clock } from '@element-plus/icons-vue'
 import ZipExportBtn from '@/components/features/ZipExportBtn.vue'
+import { getLikedSkills, saveLikedSkill, removeLikedSkill } from '@/utils/likedStorage'
 import { useSkillStore } from '@/stores/skillStore'
 import type { Skill } from '@/types'
+import { formatDate } from '@/utils/formatDate'
 
 interface Props {
   skill: Skill
@@ -72,29 +74,6 @@ interface Props {
 
 const props = defineProps<Props>()
 const skillStore = useSkillStore()
-
-const LIKED_SKILLS_KEY = 'skill-hub-liked-skills'
-
-const getLikedSkills = (): Set<string> => {
-  try {
-    const stored = localStorage.getItem(LIKED_SKILLS_KEY)
-    return stored ? new Set(JSON.parse(stored)) : new Set()
-  } catch {
-    return new Set()
-  }
-}
-
-const saveLikedSkill = (skillId: string) => {
-  const liked = getLikedSkills()
-  liked.add(skillId)
-  localStorage.setItem(LIKED_SKILLS_KEY, JSON.stringify([...liked]))
-}
-
-const removeLikedSkill = (skillId: string) => {
-  const liked = getLikedSkills()
-  liked.delete(skillId)
-  localStorage.setItem(LIKED_SKILLS_KEY, JSON.stringify([...liked]))
-}
 
 const liking = ref(getLikedSkills().has(props.skill.id))
 const likeDisabled = ref(false)
@@ -107,18 +86,6 @@ const openGithub = () => {
   if (props.skill.source?.githubMeta?.html_url) {
     window.open(props.skill.source.githubMeta.html_url, '_blank')
   }
-}
-
-const formatDate = (date: Date | string) => {
-  const d = new Date(date)
-  const now = new Date()
-  const diff = now.getTime() - d.getTime()
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  if (days === 0) return '今天'
-  if (days === 1) return '昨天'
-  if (days < 7) return `${days} 天前`
-  if (days < 30) return `${Math.floor(days / 7)} 周前`
-  return d.toLocaleDateString('zh-CN')
 }
 
 const handleLike = async () => {

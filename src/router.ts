@@ -18,6 +18,11 @@ const routes = [
     component: () => import('@/modules/skill-detail/SkillDetailPage.vue')
   },
   {
+    path: '/groups/:id',
+    name: 'group-detail',
+    component: () => import('@/modules/group-detail/GroupDetailPage.vue')
+  },
+  {
     path: '/admin',
     name: 'admin',
     component: () => import('@/modules/admin/AdminPage.vue')
@@ -26,6 +31,12 @@ const routes = [
     path: '/admin/skills/:id',
     name: 'admin-skill-detail',
     component: () => import('@/modules/skill-detail/SkillDetailPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/groups/:id',
+    name: 'admin-group-detail',
+    component: () => import('@/modules/group-detail/GroupDetailPage.vue'),
     meta: { requiresAuth: true }
   }
 ]

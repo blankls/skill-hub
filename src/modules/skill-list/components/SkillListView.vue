@@ -33,9 +33,6 @@
             </span>
           </div>
           <div class="flex items-center gap-2 text-[var(--text-muted)] text-xs font-mono">
-            <span class="flex items-center gap-1 text-orange-400">
-              🔥 {{ skill.likes || 0 }}
-            </span>
             <span class="flex items-center gap-1">
               <el-icon class="text-xs"><Document /></el-icon>
               {{ skill.files.length }} 文件
@@ -98,6 +95,7 @@ import { Edit, Download, Delete, User, Document } from '@element-plus/icons-vue'
 import { useSkillStore } from '@/stores/skillStore'
 import type { Skill } from '@/types'
 import { exportSkillToZip, downloadBlob } from '@/utils/zipHandler'
+import { getSourceLabel } from '@/utils/labels'
 
 interface Props {
   skills: Skill[]
@@ -158,16 +156,6 @@ const handleDelete = async (skill: Skill) => {
 
 const isDescriptionLong = (skill: any) => {
   return (skill.description?.length || 0) > 100
-}
-
-const getSourceLabel = (type: string) => {
-  const labels: Record<string, string> = {
-    local: '本地',
-    zip: 'ZIP',
-    github: 'GitHub',
-    skillmd: 'MD'
-  }
-  return labels[type] || '本地'
 }
 </script>
 
