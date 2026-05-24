@@ -1,6 +1,6 @@
 <template>
   <div class="h-full bg-[var(--dark-bg)] flex flex-col overflow-hidden">
-    <!-- 未登录状态：显示提示信息 -->
+    <!-- 未登录状态 -->
     <div v-if="!isAuthenticated" class="h-full flex items-center justify-center">
       <div class="text-center">
         <div class="text-6xl mb-6">🔒</div>
@@ -8,26 +8,24 @@
         <p class="text-[var(--text-muted)] mb-6">正在跳转到登录...</p>
       </div>
     </div>
-    
-    <!-- 已登录状态：显示管理页面 -->
-    <div v-else class="flex-1 min-h-0 overflow-y-auto scrollbar-auto max-w-[100rem] mx-auto w-full px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-12 py-12">
-      <!-- Header -->
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-          <h1 class="text-3xl font-bold text-[var(--text-light)]">技能管理</h1>
-          <p class="mt-1 text-[var(--text-muted)]">管理技能库中的技能，添加、编辑和删除技能</p>
-        </div>
-        <div class="flex items-center gap-3">
-          <!-- 登出按钮 -->
-          <button
-            @click="handleLogout"
-            class="px-4 py-2.5 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 text-[var(--text-light)] font-medium rounded-lg transition-all duration-300 hover:bg-[var(--neon-cyan)]/10 hover:border-[var(--neon-cyan)] flex items-center gap-2"
-          >
-            <el-icon><SwitchButton /></el-icon>
-            登出
-          </button>
-          <!-- 添加技能按钮 -->
+
+    <!-- 已登录 -->
+    <div v-else class="flex-1 min-h-0 flex flex-col">
+      <!-- 顶部区 -->
+      <div class="px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-12 py-6 border-b border-white/5">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div>
+            <h1 class="text-3xl font-bold text-[var(--text-light)]">技能管理</h1>
+            <p class="mt-1 text-[var(--text-muted)]">管理技能库中的技能和分组</p>
+          </div>
           <div class="flex items-center gap-3">
+            <button
+              @click="handleLogout"
+              class="px-4 py-2.5 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 text-[var(--text-light)] font-medium rounded-lg transition-all duration-300 hover:bg-[var(--neon-cyan)]/10 hover:border-[var(--neon-cyan)] flex items-center gap-2"
+            >
+              <el-icon><SwitchButton /></el-icon>
+              登出
+            </button>
             <button
               @click="showGroupEditor = true"
               class="px-5 py-2.5 bg-gradient-to-r from-[var(--neon-purple)] to-[var(--neon-cyan)] text-white font-bold rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] flex items-center gap-2 hover:scale-105"
@@ -44,95 +42,151 @@
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- 统计卡片 -->
-      <div class="flex items-center gap-6 mb-6 flex-wrap">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1 min-w-0">
-          <div class="bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 rounded-xl p-4 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[var(--neon-cyan)]/20 to-[var(--neon-cyan)]/5 flex items-center justify-center">
+        <!-- 统计卡片 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 rounded-xl p-5 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-[var(--neon-cyan)]/20 to-[var(--neon-cyan)]/5 flex items-center justify-center">
               <span class="text-2xl">🧠</span>
             </div>
             <div>
-              <div class="text-2xl font-bold text-[var(--neon-cyan)] font-mono">{{ skillStore.skills.length }}</div>
-              <div class="text-sm text-[var(--text-muted)]">技能总数</div>
+              <div class="text-3xl font-bold text-[var(--neon-cyan)] font-mono">{{ skillStore.skills.length }}</div>
+              <div class="text-sm text-[var(--text-muted)] mt-0.5">技能总数</div>
             </div>
           </div>
-          <div class="bg-[var(--dark-card)] border border-[var(--neon-purple)]/30 rounded-xl p-4 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[var(--neon-purple)]/20 to-[var(--neon-purple)]/5 flex items-center justify-center">
+          <div class="bg-[var(--dark-card)] border border-[var(--neon-purple)]/30 rounded-xl p-5 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-[var(--neon-purple)]/20 to-[var(--neon-purple)]/5 flex items-center justify-center">
               <span class="text-2xl">🏷️</span>
             </div>
             <div>
-              <div class="text-2xl font-bold text-[var(--neon-purple)] font-mono">{{ totalTags }}</div>
-              <div class="text-sm text-[var(--text-muted)]">标签数量</div>
+              <div class="text-3xl font-bold text-[var(--neon-purple)] font-mono">{{ totalTags }}</div>
+              <div class="text-sm text-[var(--text-muted)] mt-0.5">标签数量</div>
             </div>
           </div>
-          <div class="bg-[var(--dark-card)] border border-[var(--neon-yellow)]/30 rounded-xl p-4 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[var(--neon-yellow)]/20 to-[var(--neon-yellow)]/5 flex items-center justify-center">
+          <div class="bg-[var(--dark-card)] border border-[var(--neon-yellow)]/30 rounded-xl p-5 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-[var(--neon-yellow)]/20 to-[var(--neon-yellow)]/5 flex items-center justify-center">
               <span class="text-2xl">📄</span>
             </div>
             <div>
-              <div class="text-2xl font-bold text-[var(--neon-yellow)] font-mono">{{ totalFiles }}</div>
-              <div class="text-sm text-[var(--text-muted)]">文件总数</div>
+              <div class="text-3xl font-bold text-[var(--neon-yellow)] font-mono">{{ totalFiles }}</div>
+              <div class="text-sm text-[var(--text-muted)] mt-0.5">文件总数</div>
             </div>
           </div>
-          <div class="bg-[var(--dark-card)] border border-[var(--neon-green)]/30 rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:bg-[var(--neon-green)]/5 transition-all duration-300" @click="handleQuickSync">
-            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[var(--neon-green)]/20 to-[var(--neon-green)]/5 flex items-center justify-center">
+          <div class="bg-[var(--dark-card)] border border-[var(--neon-green)]/30 rounded-xl p-5 flex items-center gap-4 cursor-pointer hover:bg-[var(--neon-green)]/5 transition-all duration-300" @click="handleQuickSync">
+            <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-[var(--neon-green)]/20 to-[var(--neon-green)]/5 flex items-center justify-center">
               <el-icon v-if="skillStore.batchSyncing" class="text-2xl animate-spin text-[var(--neon-green)]"><Loading /></el-icon>
               <span v-else class="text-2xl">🐙</span>
             </div>
             <div class="flex-1">
-              <div class="text-2xl font-bold text-[var(--neon-green)] font-mono">{{ gitHubSkillCount }}</div>
-              <div class="text-sm text-[var(--text-muted)]">GitHub 技能</div>
+              <div class="text-3xl font-bold text-[var(--neon-green)] font-mono">{{ gitHubSkillCount }}</div>
+              <div class="text-sm text-[var(--text-muted)] mt-0.5">GitHub 技能</div>
             </div>
-            <div class="text-[var(--neon-green)] text-xs opacity-70">
-              点击同步
+            <div class="text-[var(--neon-green)] text-xs opacity-70">点击同步</div>
+          </div>
+        </div>
+
+        <!-- 同步进度 -->
+        <div v-if="skillStore.batchSyncing" class="mt-4 p-4 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 rounded-xl">
+          <div class="flex items-center gap-3">
+            <el-icon class="animate-spin text-[var(--neon-cyan)]"><Loading /></el-icon>
+            <div class="flex-1">
+              <div class="text-[var(--text-light)]">正在同步 GitHub 技能</div>
+              <div class="text-sm text-[var(--text-muted)] mt-1">
+                {{ skillStore.batchSyncProgress.current }}/{{ skillStore.batchSyncProgress.total }}
+                <span v-if="skillStore.batchSyncProgress.currentSkill" class="text-[var(--neon-cyan)] ml-2">
+                  {{ skillStore.batchSyncProgress.currentSkill }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 同步进度提示 -->
-      <div v-if="skillStore.batchSyncing" class="mb-6 p-4 bg-[var(--dark-card)] border border-[var(--neon-cyan)]/30 rounded-xl">
-        <div class="flex items-center gap-3">
-          <el-icon class="animate-spin text-[var(--neon-cyan)]"><Loading /></el-icon>
-          <div class="flex-1">
-            <div class="text-[var(--text-light)]">正在同步 GitHub 技能</div>
-            <div class="text-sm text-[var(--text-muted)] mt-1">
-              {{ skillStore.batchSyncProgress.current }}/{{ skillStore.batchSyncProgress.total }}
-              <span v-if="skillStore.batchSyncProgress.currentSkill" class="text-[var(--neon-cyan)] ml-2">
-                {{ skillStore.batchSyncProgress.currentSkill }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 技能列表 -->
-      <div v-if="skillStore.loading" class="flex items-center justify-center py-20">
-        <el-icon class="animate-spin text-4xl text-[var(--neon-cyan)]"><Loading /></el-icon>
-      </div>
-      <div v-else-if="skillStore.skills.length === 0" class="text-center py-20">
-        <div class="text-4xl mb-4">📦</div>
-        <p class="text-[var(--text-muted)]">暂无技能，点击上方「添加技能」开始</p>
-      </div>
-      <div v-else>
-        <AdminGroupView
-          :skills="skillStore.skills"
-          @edit="handleEdit"
-          @editGroup="handleEditGroup"
-          @deleteSkill="handleDeleteSkill"
+      <!-- 主体两栏 -->
+      <div class="flex-1 min-h-0 flex overflow-hidden px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-12 py-6 gap-6">
+        <!-- 侧边栏 -->
+        <AdminSidebar
+          :groups="sidebarGroups"
+          :selected-group="selectedGroup"
+          :ungrouped-count="ungroupedSkills.length"
+          @select="handleGroupSelect"
         />
+
+        <!-- 内容区 -->
+        <div class="flex-1 min-w-0 overflow-y-auto scrollbar-auto">
+          <div v-if="skillStore.loading" class="flex items-center justify-center py-20">
+            <el-icon class="animate-spin text-4xl text-[var(--neon-cyan)]"><Loading /></el-icon>
+          </div>
+
+          <div v-else-if="skillStore.skills.length === 0" class="text-center py-20">
+            <div class="text-4xl mb-4">📦</div>
+            <p class="text-[var(--text-muted)]">暂无技能，点击上方「添加技能」开始</p>
+          </div>
+
+          <!-- 全部技能视图 -->
+          <template v-else-if="selectedGroup === undefined">
+            <AdminGroupView
+              :skills="skillStore.skills"
+              @edit="handleEdit"
+              @editGroup="handleEditGroup"
+            />
+            <div v-if="ungroupedSkills.length > 0" class="mt-8">
+              <div class="flex items-baseline gap-2 mb-4">
+                <h2 class="text-lg font-semibold text-[var(--text-muted)]">未分组技能</h2>
+                <span class="text-sm text-[var(--text-muted)] opacity-70">{{ ungroupedSkills.length }} 个</span>
+              </div>
+              <div class="skill-grid">
+                <SkillCard
+                  v-for="skill in ungroupedSkills"
+                  :key="skill.id"
+                  :skill="skill"
+                  :show-admin-actions="true"
+                  @edit="handleEdit"
+                />
+              </div>
+            </div>
+          </template>
+
+          <!-- 特定分组视图 -->
+          <template v-else-if="selectedGroup !== '__ungrouped__'">
+            <div class="mb-4">
+              <h2 class="text-xl font-bold text-[var(--text-light)]">{{ selectedGroup }}</h2>
+              <p class="text-sm text-[var(--text-muted)] mt-1">{{ selectedGroupSkills.length }} 个技能</p>
+            </div>
+            <div class="skill-grid">
+              <SkillCard
+                v-for="skill in selectedGroupSkills"
+                :key="skill.id"
+                :skill="skill"
+                :show-admin-actions="true"
+                @edit="handleEdit"
+              />
+            </div>
+          </template>
+
+          <!-- 未分组视图 -->
+          <template v-else>
+            <div class="mb-4">
+              <h2 class="text-xl font-bold text-[var(--text-muted)]">未分组技能</h2>
+              <p class="text-sm text-[var(--text-muted)] mt-1">{{ ungroupedSkills.length }} 个</p>
+            </div>
+            <div class="skill-grid">
+              <SkillCard
+                v-for="skill in ungroupedSkills"
+                :key="skill.id"
+                :skill="skill"
+                :show-admin-actions="true"
+                @edit="handleEdit"
+              />
+            </div>
+          </template>
+        </div>
       </div>
     </div>
 
-    <!-- 导入模态框 -->
+    <!-- 模态框 -->
     <SkillImportModal v-model="showImport" @imported="handleImported" />
-    
-    <!-- 编辑模态框 -->
     <SkillEditor v-model="showEdit" :skill="editingSkill" @save="handleSave" />
-
-    <!-- 分组编辑模态框 -->
     <GroupEditorModal v-model="showGroupEditor" :group="editingGroup" @save="handleSaveGroup" />
   </div>
 </template>
@@ -144,11 +198,12 @@ import { useAuthStore } from '@/stores/authStore'
 import SkillImportModal from '@/components/features/SkillImportModal.vue'
 import GroupEditorModal from '@/components/features/GroupEditorModal.vue'
 import AdminGroupView from '@/modules/admin/AdminGroupView.vue'
+import AdminSidebar from '@/modules/admin/components/AdminSidebar.vue'
+import SkillCard from '@/components/ui/SkillCard.vue'
 const SkillEditor = defineAsyncComponent(() => import('@/components/features/SkillEditor.vue'))
 import type { Skill, SkillGroup } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Loading, SwitchButton, FolderAdd } from '@element-plus/icons-vue'
-
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -160,6 +215,7 @@ const showEdit = ref(false)
 const editingSkill = ref<Skill | undefined>()
 const showGroupEditor = ref(false)
 const editingGroup = ref<SkillGroup | undefined>()
+const selectedGroup = ref<string | undefined>(undefined)
 
 const totalTags = computed(() => {
   const allTags = new Set<string>()
@@ -174,6 +230,37 @@ const totalFiles = computed(() => {
 const gitHubSkillCount = computed(() => {
   return skillStore.gitHubSkills.length
 })
+
+const ungroupedSkills = computed(() => {
+  const groupedIds = new Set<string>()
+  for (const g of skillStore.groups) {
+    for (const id of g.skillIds || []) {
+      groupedIds.add(id)
+    }
+  }
+  return skillStore.skills.filter(s => !groupedIds.has(s.id))
+})
+
+const sidebarGroups = computed(() => {
+  const skillMap = new Map(skillStore.skills.map(s => [s.id, s]))
+  return skillStore.groups.map(g => ({
+    name: g.name,
+    iconColor: g.iconColor,
+    skills: (g.skillIds || []).map(id => skillMap.get(id)).filter(s => !!s) as { id: string }[]
+  }))
+})
+
+const selectedGroupSkills = computed(() => {
+  if (!selectedGroup.value || selectedGroup.value === '__ungrouped__') return []
+  const group = skillStore.groups.find(g => g.name === selectedGroup.value)
+  if (!group) return []
+  const skillMap = new Map(skillStore.skills.map(s => [s.id, s]))
+  return (group.skillIds || []).map(id => skillMap.get(id)).filter(s => !!s) as Skill[]
+})
+
+function handleGroupSelect(name: string | undefined) {
+  selectedGroup.value = name
+}
 
 function openCreateSkill() {
   showImport.value = true
@@ -240,18 +327,6 @@ function handleEditGroup(group: any) {
   showGroupEditor.value = true
 }
 
-async function handleDeleteSkill(skill: Skill) {
-  try {
-    await ElMessageBox.confirm(
-      `确定要删除技能「${skill.name}」吗？`,
-      '确认删除',
-      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' }
-    )
-    await skillStore.deleteSkill(skill.id)
-    ElMessage.success('删除成功！')
-  } catch { /* cancel */ }
-}
-
 async function handleLogout() {
   try {
     await ElMessageBox.confirm('确定要退出登录吗？', '确认登出', {
@@ -285,7 +360,7 @@ onMounted(async () => {
 async function promptPassword() {
   const maxRetries = 3
   let lockedMessage = ''
-  
+
   for (let i = 0; i < maxRetries; i++) {
     try {
       const { value } = await ElMessageBox.prompt(
@@ -301,14 +376,13 @@ async function promptPassword() {
           }
         }
       )
-      
+
       const result = await authStore.login(value!)
-      
+
       if (result.success) {
         return
       }
-      
-      // 处理锁定
+
       if (result.lockUntil) {
         const lockTime = new Date(result.lockUntil)
         const minutes = Math.ceil((lockTime.getTime() - Date.now()) / 60000)
@@ -316,8 +390,7 @@ async function promptPassword() {
         ElMessage.error(result.error)
         break
       }
-      
-      // 普通错误，继续循环
+
       lockedMessage = ''
     } catch {
       break
@@ -332,64 +405,15 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .px-4.sm\:px-6.lg\:px-8 {
-    padding: 1rem !important;
-  }
-  
-  .py-12 {
-    padding-top: 2rem !important;
-    padding-bottom: 2rem !important;
-  }
-  
-  .flex.flex-col.md\:flex-row {
-    flex-direction: column !important;
-    gap: 1rem !important;
-  }
-  
-  h1 {
-    font-size: 1.5rem !important;
-  }
-  
-  .flex.items-center.gap-3 {
-    width: 100% !important;
-  }
-  
-  .flex.items-center.gap-3 button {
-    flex: 1 !important;
-  }
-  
-  .grid.grid-cols-1.md\:grid-cols-4 {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-  
-  .w-12.h-12 {
-    width: 2.5rem !important;
-    height: 2.5rem !important;
-  }
-  
-  .text-2xl.font-bold {
-    font-size: 1.25rem !important;
-  }
-  
-  .flex.items-center.gap-6.mb-6 {
-    flex-direction: column !important;
-  }
-  
-  .flex.items-center.gap-6.mb-6 .flex.flex-col {
-    flex-direction: row !important;
-    width: 100% !important;
-  }
+.skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
 }
 
-@media (max-width: 640px) {
-  .grid.grid-cols-1.md\:grid-cols-4 {
-    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
-  }
-  
-  .flex.items-center.gap-3 button {
-    width: 100% !important;
+@media (max-width: 768px) {
+  .skill-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
